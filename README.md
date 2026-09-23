@@ -999,6 +999,20 @@ Report / Archive
 
 ---
 
+## 21. STEP 6 — 회의 화면 / 보고서 시각화
+
+STEP 5에서 추가한 해석 데이터를 실제 사용자 화면까지 연결했습니다.
+
+- Meeting HIGHLIGHT 이벤트를 2D Office 상단 메모 카드로 표시
+- KEY_POINT / EVIDENCE / RISK / WATCH / INSIGHT 구분 표시
+- AI 분석 Import Preview에 VIEWER TAKEAWAYS와 코인별 INTERPRETATION 표시
+- Daily Report에 INTERPRETATION / COUNTER VIEW / VERIFICATION / TAKEAWAYS 기록
+- Report text export에도 새 분석 필드 포함
+
+현재 흐름:
+
+AI Research → CryptoMarketBrief → Interpretation / Counter View / Verification → Meeting Highlight → Report / Archive
+
 ## 22. 실행
 
 개발:
