@@ -170,6 +170,7 @@ export function parseResearch(raw: string): ParseResult {
       counterView: stringValue(coin.counterView ?? coin.counter_view, 320),
       verification: listValue(coin.verification, 3),
       takeaways: listValue(coin.takeaways, 3),
+      advancedSignals: listValue(coin.advancedSignals ?? coin.advanced_signals, 4),
     });
   }
   if (![...recognized.values()].some((coin) => coin.summary || coin.technical.length)) {
