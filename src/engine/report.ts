@@ -5,7 +5,7 @@ export function createReport(brief: CryptoMarketBrief, market: MarketSnapshot): 
   const watchlist = [...COIN_IDS]
     .sort((a, b) => Math.abs(market.coins.find((coin) => coin.id === b)?.change24h || 0) - Math.abs(market.coins.find((coin) => coin.id === a)?.change24h || 0))
     .slice(0, 3) as CoinId[];
-  const crossMarket = [brief.globalFactors[0], brief.correlations[0]].filter(Boolean).join(" ") || "자산 간 상대 강도와 거시 흐름의 동시 확인이 필요합니다.";
+  const crossMarket = [brief.globalFactors?.[0], brief.correlations?.[0]].filter(Boolean).join(" ") || "자산 간 상대 강도와 거시 흐름의 동시 확인이 필요합니다.";
   const conclusion = `변동폭 기준 관찰: ${watchlist.join(", ")}. ${brief.risks[0] || "시장 불확실성을 확인하세요."}`;
   return {
     report: {
