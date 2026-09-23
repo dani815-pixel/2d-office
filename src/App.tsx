@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Office from "./components/Office";
 import { type AppState, type ArchiveItem, type CoinId, type View } from "./types";
-import { COIN_META, DEMO_RESEARCH, MOCK_MARKET, TEAM } from "./data/mock";
+import { COIN_META } from "./data/coins";
+import { TEAM } from "./data/team";
+import { DEMO_RESEARCH, MOCK_MARKET } from "./data/demo";
 import { getMarketSnapshot } from "./services/market";
 import { readArchive, saveArchive } from "./services/storage";
 import { copyText } from "./services/clipboard";
