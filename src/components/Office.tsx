@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { COIN_IDS, type CharacterStatus, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingState, type RoleId } from "../types";
 import { COIN_META } from "../data/coins";
 import { TEAM } from "../data/team";
-import { changeText, priceUSD, timeText } from "../utils/format";
+import { changeText, priceUSD, resolveMeetingLiveText, timeText } from "../utils/format";
 
 const DESK_POSITIONS: Record<RoleId, [number, number]> = {
   leader: [13, 51], market: [32, 51], onchain: [13, 73],
@@ -155,7 +155,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
               {state === "SPEAK" && current?.type === "SPEAK" && current.speaker === agent.id && current.text && (
                 <div className={`agent-speech-bubble agent-speech-bubble--${left < 23 ? "left" : left > 77 ? "right" : "center"} agent-speech-bubble--${intent.toLowerCase()} ${current.live ? "agent-speech-bubble--live" : ""}`} role="status" aria-live="polite">
                   <strong>{agent.name} <small>{agent.short}</small><em>{intent}</em></strong>
-                  <span>{current.text}</span>
+                  <span>{resolveMeetingLiveText(current.text, market)}</span>
                 </div>
               )}
               <PixelAgent color={agent.color} skin={agent.skin} variant={index} />
