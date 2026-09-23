@@ -34,7 +34,7 @@ ${market.status !== "LIVE" ? `IMPORTANT: st=${market.status}. These prices are $
 
 RESEARCH:
 1. Assess overall market, macro/liquidity context, cross-coin relationships, and the most important change today.
-2. For EACH coin, provide: concise summary, up to 3 technical observations, up to ${PROMPT_BUDGET.maxNews} verified recent news items, one bull scenario, one bear scenario, up to 3 risks, a concise interpretation, a counter-view, 2-3 verification checks, and up to 3 viewer takeaways.
+2. For EACH coin, provide: concise summary, up to 3 technical observations, up to ${PROMPT_BUDGET.maxNews} verified recent news items, one bull scenario, one bear scenario, up to 3 risks, a concise interpretation, a counter-view, 2-3 verification checks, and up to 3 viewer takeaways. Also provide 2-4 advancedSignals when verified, using non-obvious professional indicators such as funding rates, open interest, futures basis, liquidations, ETF flows, exchange netflows, stablecoin flows, active addresses, realized price, or token-specific liquidity/holder behavior. Only include metrics actually verified today; never invent them.
 3. Find what is genuinely different or surprising today. Prefer a concrete divergence, catalyst, contradiction, rotation, liquidity change, event, or risk over generic market commentary.
 4. Separate every important claim into FACT, INTERPRETATION, and UNCERTAINTY. Do not turn correlation into causation. Distinguish a verified event from its possible market impact.\n5. Build a TV-friendly meeting story from the research. The story is NOT fiction: every hook, conflict, twist, and conclusion must be grounded in the supplied data or verified research.
 
