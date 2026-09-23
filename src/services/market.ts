@@ -24,6 +24,8 @@ let streamSocket: WebSocket | null = null;
 let streamRetry: number | null = null;
 let streamListeners = new Set<(snapshot: MarketSnapshot) => void>();
 let streamErrorListeners = new Set<(message: string) => void>();
+let streamBuffer = new Map<string, BinanceTicker>();
+let streamFlushTimer: number | null = null;
 
 async function fetchFromCoinGecko(): Promise<MarketSnapshot> {
   const params = new URLSearchParams({
@@ -82,6 +84,39 @@ const BINANCE_SYMBOLS = COIN_IDS.map((id) => `${COIN_META[id].providerId === "bi
 
 function applyBinanceTicker(ticker: BinanceTicker) {
   if (!sessionSnapshot || sessionSnapshot.status === "MOCK") return;
+  streamBuffer.set(ticker.s.toLowerCase(), ticker);
+}
+
+function flushBinanceStream() {
+  if (!sessionSnapshot || streamBuffer.size === 0) return;
+  const buffered = [...streamBuffer.values()];
+  streamBuffer.clear();
+  let next = sessionSnapshot;
+  buffered.forEach((ticker) => {
+    const id = COIN_IDS.find((coinId) => `${coinId === "BNB" ? "bnb" : coinId.toLowerCase()}usdt` === ticker.s.toLowerCase());
+    if (!id) return;
+    const values = [ticker.c, ticker.P, ticker.q, ticker.h, ticker.l].map(Number);
+    if (!values.every(Number.isFinite)) return;
+    const [price, change24h, volume24h, high24h, low24h] = values;
+    next = { ...next, coins: next.coins.map((coin) => coin.id === id ? { ...coin, price, change24h, volume24h, high24h, low24h } : coin) };
+  });
+  sessionSnapshot = { ...next, timestamp: new Date().toISOString(), status: "LIVE" };
+  streamListeners.forEach((listener) => listener(sessionSnapshot!));
+}
+
+function startStreamFlush() {
+  if (streamFlushTimer !== null) return;
+  streamFlushTimer = window.setInterval(flushBinanceStream, 1000);
+}
+
+function stopStreamFlush() {
+  if (streamFlushTimer !== null) window.clearInterval(streamFlushTimer);
+  streamFlushTimer = null;
+  streamBuffer.clear();
+}
+
+function applyBinanceTickerLegacy(ticker: BinanceTicker) {
+  if (!sessionSnapshot || sessionSnapshot.status === "MOCK") return;
   const id = COIN_IDS.find((coinId) => BINANCE_SYMBOLS.includes(ticker.s.toLowerCase().replace("usdt", "usdt")));
   if (!id) return;
   const price = Number(ticker.c);
@@ -134,6 +169,7 @@ export function subscribeMarketStream(
 ) {
   streamListeners.add(onSnapshot);
   if (onError) streamErrorListeners.add(onError);
+  startStreamFlush();
   connectBinanceStream();
 
   return () => {
@@ -144,6 +180,7 @@ export function subscribeMarketStream(
       streamRetry = null;
       streamSocket?.close();
       streamSocket = null;
+      stopStreamFlush();
     }
   };
 }
