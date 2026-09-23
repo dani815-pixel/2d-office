@@ -85,6 +85,7 @@ export interface MeetingEvent {
   target?: string;
   replyTo?: RoleId;
   intent?: MeetingDialogueIntent;
+  live?: boolean;
   duration?: number;
 }
 
