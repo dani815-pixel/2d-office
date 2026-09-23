@@ -20,6 +20,13 @@ export interface MarketSnapshot {
   coins: CoinMarket[];
 }
 
+export interface LiveMeetingSignal {
+  coin: CoinId;
+  direction: "UP" | "DOWN";
+  movePercent: number;
+  text: string;
+}
+
 export interface CoinBrief {
   id: CoinId;
   summary: string;
