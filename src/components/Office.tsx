@@ -117,7 +117,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
               </div></div>
             )}
           </div>
-          <div className="monitor-bottom"><span>DATA: {market.status} / SYNC {timeText(market.timestamp)}</span><span>● ● ●</span></div>
+          <div className="monitor-bottom"><span>DATA: {market.status} / LIVE SYNC {timeText(market.timestamp)}</span><span className="monitor-live-indicator"><i /> STREAM</span><span>● ● ●</span></div>
         </div>
 
         {TEAM.map((agent, index) => {
