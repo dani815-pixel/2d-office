@@ -38,9 +38,11 @@ export class LiveMeetingController {
       if (Math.abs(move) < MIN_MOVE_PERCENT) continue;
 
       const direction = Math.sign(move);
-      const confirmations = this.points.slice(-MIN_CONFIRMATIONS).filter((point) => {
-        const previous = point.prices[coin.id];
-        return previous && Math.sign(((coin.price - previous) / previous) * 100) === direction;
+      const recent = this.points.slice(-(MIN_CONFIRMATIONS + 1));
+      const confirmations = recent.slice(1).filter((point, index) => {
+        const previous = recent[index]?.prices[coin.id];
+        const current = point.prices[coin.id];
+        return previous && current && Math.sign(((current - previous) / previous) * 100) === direction;
       }).length;
       if (confirmations < MIN_CONFIRMATIONS) continue;
       if (!candidate || Math.abs(move) > Math.abs(candidate.move)) candidate = { coin: coin.id, move, confirmations };
