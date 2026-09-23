@@ -123,7 +123,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
               style={{ left: `${left}%`, top: `${top}%`, "--agent-color": agent.color } as CSSProperties} title={`${agent.name} / ${agent.role} / ${state}`}>
               {state === "SPEAK" && <span className="agent-voice"><i /><i /><i /></span>}
               {state === "SPEAK" && current?.type === "SPEAK" && current.speaker === agent.id && current.text && (
-                <div className="agent-speech-bubble" role="status" aria-live="polite">
+                <div className={`agent-speech-bubble agent-speech-bubble--${left < 23 ? "left" : left > 77 ? "right" : "center"}`} role="status" aria-live="polite">
                   <strong>{agent.name} <small>{agent.short}</small></strong>
                   <span>{current.text}</span>
                 </div>
