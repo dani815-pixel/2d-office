@@ -10,7 +10,7 @@ import { copyText } from "./services/clipboard";
 import { buildDailyPrompt } from "./engine/prompt";
 import { parseResearch, type ParseResult } from "./engine/parser";
 import { createMeetingEvents } from "./engine/meeting";
-import { createReport, reportToText } from "./engine/report";
+import { createMeetingMemory, createReport, reportToText } from "./engine/report";
 import { LiveMeetingController } from "./services/liveMeeting";
 import { changeText, compactUSD, dateText, priceUSD, resolveMeetingLiveText, timeText } from "./utils/format";
 
@@ -116,12 +116,15 @@ export default function App() {
       if (previous.meeting.status === "FINISHED") return previous;
       const snapshot = previous.meeting.snapshot || previous.market;
       const { report, summary } = createReport(app.brief!, snapshot);
+      const previousSession = previous.archive.reduce((max, item) => Math.max(max, item.memory?.session || 0), 0);
+      const memory = createMeetingMemory(app.brief!, previousSession + 1);
       const item: ArchiveItem = {
         meetingId: report.id,
         date: report.date,
         marketSnapshot: snapshot,
         brief: app.brief!,
         meetingSummary: summary,
+        memory,
         report,
       };
       return {
