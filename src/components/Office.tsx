@@ -52,6 +52,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
   const activeIntent = current?.type === "SPEAK" ? current.intent || "STATEMENT" : undefined;
   const activeTarget = current?.type === "SPEAK" ? current.replyTo : undefined;
   const cameraTarget = activeTarget || activeSpeaker;
+  const isTurningPoint = current?.type === "SPEAK" && current.intent === "TURNING_POINT";
 
   const agentState = (id: RoleId): CharacterStatus => {
     if (!active) return "IDLE";
@@ -67,7 +68,8 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
   };
 
   return (
-    <div className={`office-unit ${meeting ? "office-unit--meeting" : ""}`}>
+    <div className={`office-unit ${meeting ? "office-unit--meeting" : ""} ${isTurningPoint ? "office-unit--turning-point" : ""}`}>
+      {isTurningPoint && <div className="turning-point-banner" role="status" aria-live="polite"><span>TURNING POINT</span><strong>STORY SHIFT</strong></div>}
       <div className="scene-toolbar">
         <div className="scene-toolbar-left"><span className="scene-led" /> <span>OFFICE FLOOR</span><span className="toolbar-separator">/</span><span className="toolbar-dim">LEVEL 01</span></div>
         <div className="scene-toolbar-right"><span className="tiny-live-dot" /> {active ? meeting.status : "6 AGENTS ONLINE"}<span className="toolbar-divider" /> <span className={`toolbar-dim ${cameraTarget ? "toolbar-dim--camera-focus" : ""}`}>CAM 01 {cameraTarget ? `/ ${activeIntent} / ${cameraTarget.toUpperCase()}` : ""}</span></div>
