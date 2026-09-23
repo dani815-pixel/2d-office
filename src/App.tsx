@@ -212,7 +212,7 @@ export default function App() {
   const startMeeting = () => {
     if (!app.brief) return;
     liveMeetingRef.current.reset();
-    setApp((previous) => ({ ...previous, meeting: { status: "RUNNING", events: createMeetingEvents(previous.brief!, previous.market), index: 0, snapshot: previous.market }, report: undefined }));
+    setApp((previous) => ({ ...previous, meeting: { status: "RUNNING", events: createMeetingEvents(previous.brief!, previous.market, previous.archive[0]?.memory), index: 0, snapshot: previous.market }, report: undefined }));
     setSelectedArchiveId(null);
     go("MEETING");
   };
