@@ -156,8 +156,8 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
   const coinIntro = (id: CoinId) => {
     const fact = coinFact(id);
     say("leader", id + "를 보겠습니다. " + (fact
-      ? (market.status === "MOCK" ? "예시" : market.status === "STALE" ? "저장된" : "API") + " 시세 " + priceUSD(fact.price) + ", 24시간 " + changeText(fact.change24h) + "입니다."
-      : "핵심 관찰점을 들어보죠."));
+      ? "현재 시세는 {{PRICE:" + id + "}}, 24시간 변동은 {{CHANGE:" + id + "}}입니다."
+      : "핵심 관찰점을 들어보죠."), "STATEMENT");
   };
   const coinEvidence = (id: CoinId) => {
     const coin = coinBrief(id);
