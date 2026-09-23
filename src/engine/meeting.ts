@@ -20,6 +20,13 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     .slice(0, 3);
 
   const screen = (target: string) => events.push({ type: "SCREEN", target, duration: 2200 });
+  const turningPoint = (text: string, speaker: RoleId = "leader") => {
+    if (!text.trim()) return;
+    screen("TURNING_POINT");
+    events.push({ type: "EMOTION", speaker, target: "ALERT", duration: 1800 });
+    say(speaker, text, "TURNING_POINT");
+    pause(3200);
+  };
   const pause = (duration = 2200) => events.push({ type: "PAUSE", duration });
   const say = (
     speaker: RoleId,
@@ -126,9 +133,8 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     say("altcoin", mode === "ROTATION" ? "오늘은 자산별 움직임보다 자금과 관심의 이동 순서를 보겠습니다." : "오늘의 질문은 누가 시장의 리더십을 차지하고 있는가입니다.");
     say("market", story?.debateTopics?.[0] || "상대 강도와 거래량을 함께 비교하겠습니다.");
     allCoins(leadersFirst);
-    screen("SCENARIO");
-    say("altcoin", story?.turningPoint || "상대 강도 변화가 지속되는지 확인해야 합니다.");
-    if (story?.surprise && story.surprise !== "없음") say("onchain", "의외의 관찰은 " + story.surprise);
+    if (story?.turningPoint) turningPoint(story.turningPoint, "altcoin");
+    if (story?.surprise && story.surprise !== "없음") say("onchain", "의외의 관찰은 " + story.surprise, "EVIDENCE", "altcoin");
   } else if (mode === "CORRELATION_BREAK" || mode === "DIVERGENCE") {
     say("market", mode === "DIVERGENCE" ? "같은 시장인데도 움직임이 달라진 자산을 먼저 비교하겠습니다." : "평소 함께 움직이던 관계가 달라졌는지부터 확인하겠습니다.");
     say("onchain", correlations[0] || "비교 가능한 상관관계 데이터가 제한적이므로 가격과 거래량을 함께 보겠습니다.");
@@ -136,24 +142,21 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     if (topics[0]) debate(topics[0], "market", "risk");
     if (topics[1]) debate(topics[1], "risk", "trader", "market");
     allCoins();
-    screen("SCENARIO");
-    if (story?.turningPoint) say("market", "전환점은 여기입니다. " + story.turningPoint);
-    if (story?.surprise && story.surprise !== "없음") say("onchain", "의외의 관찰은 " + story.surprise);
+    if (story?.turningPoint) turningPoint(story.turningPoint, "market");
+    if (story?.surprise && story.surprise !== "없음") say("onchain", "의외의 관찰은 " + story.surprise, "EVIDENCE", "market");
   } else if (mode === "BREAKOUT_TENSION") {
     screen("SCENARIO");
     say("trader", "움직임이 나왔다는 사실과 조건이 확인됐다는 것은 다릅니다. 어떤 조건을 통과해야 하는지 보겠습니다.");
     if (story?.debateTopics?.[0]) debate(story.debateTopics[0], "market", "risk", "trader");
     else say("market", "가격과 거래량이 함께 확인되는지 살펴보겠습니다.", "QUESTION");
     allCoins(leadersFirst);
-    screen("SCENARIO");
-    say("trader", story?.turningPoint || "다음 확인 지점에서 조건이 유지되는지가 핵심입니다.");
+    if (story?.turningPoint) turningPoint(story.turningPoint, "trader");
   } else if (mode === "QUIET_BEFORE_MOVE") {
     say("leader", "오늘은 결론을 서두르지 않는 것이 오히려 중요한 회의입니다.");
     if (story?.debateTopics?.[0]) debate(story.debateTopics[0], "risk", "market", "leader");
     else say("risk", "서로 반대되는 신호가 있는지 확인하겠습니다.", "QUESTION");
     allCoins();
-    screen("SCENARIO");
-    say("market", story?.turningPoint || "아직 해소되지 않은 변수가 무엇인지 정리하겠습니다.");
+    if (story?.turningPoint) turningPoint(story.turningPoint, "market");
     say("trader", story?.endingQuestion || "다음 움직임을 확인할 관찰 조건을 남기겠습니다.");
   } else {
     const topics = story?.debateTopics ?? [];
@@ -161,9 +164,8 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     if (topics[1]) debate(topics[1], "risk", "trader", "market");
     if (topics[2]) debate(topics[2], "trader", "onchain", "leader");
     allCoins();
-    screen("SCENARIO");
-    if (story?.turningPoint) say("market", "전환점은 여기입니다. " + story.turningPoint);
-    if (story?.surprise && story.surprise !== "없음") say("onchain", "의외의 관찰은 " + story.surprise);
+    if (story?.turningPoint) turningPoint(story.turningPoint, "market");
+    if (story?.surprise && story.surprise !== "없음") say("onchain", "의외의 관찰은 " + story.surprise, "EVIDENCE", "market");
   }
 
   screen("RISK");
