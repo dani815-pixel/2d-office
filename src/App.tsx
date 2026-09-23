@@ -11,6 +11,7 @@ import { buildDailyPrompt } from "./engine/prompt";
 import { parseResearch, type ParseResult } from "./engine/parser";
 import { createMeetingEvents } from "./engine/meeting";
 import { createReport, reportToText } from "./engine/report";
+import { LiveMeetingController } from "./services/liveMeeting";
 import { changeText, compactUSD, dateText, priceUSD, timeText } from "./utils/format";
 
 type IconName = "office" | "market" | "prompt" | "import" | "meeting" | "report" | "archive" | "refresh" | "arrow" | "copy" | "play" | "pause" | "skip" | "check" | "trash" | "clock" | "expand" | "close";
@@ -74,6 +75,7 @@ export default function App() {
   const [meetingFullscreen, setMeetingFullscreen] = useState(false);
   const parseJob = useRef(0);
   const transcriptEnd = useRef<HTMLDivElement>(null);
+  const liveMeetingRef = useRef(new LiveMeetingController());
 
   useEffect(() => {
     let mounted = true;
@@ -122,7 +124,22 @@ export default function App() {
   useEffect(() => {
     return subscribeMarketStream(
       (snapshot) => {
-        setApp((previous) => ({ ...previous, market: snapshot }));
+        setApp((previous) => {
+          if (previous.meeting.status !== "RUNNING") return { ...previous, market: snapshot };
+          let nextMeeting = previous.meeting;
+          const current = nextMeeting.events[nextMeeting.index];
+          if (current?.type !== "END") {
+            liveMeetingRef.current.observe(snapshot, (signal) => {
+              const events = [...nextMeeting.events];
+              events.splice(Math.min(nextMeeting.index + 1, events.length), 0, {
+                type: "SPEAK", speaker: "market", text: signal.text, intent: "EVIDENCE", duration: 8500,
+              });
+              nextMeeting = { ...nextMeeting, events };
+              liveMeetingRef.current.markTriggered(signal.coin);
+            });
+          }
+          return { ...previous, market: snapshot, meeting: nextMeeting };
+        });
         setMarketError("");
       },
       (message) => setMarketError(message),
@@ -157,6 +174,7 @@ export default function App() {
 
   const startMeeting = () => {
     if (!app.brief) return;
+    liveMeetingRef.current.reset();
     setApp((previous) => ({ ...previous, meeting: { status: "RUNNING", events: createMeetingEvents(previous.brief!, previous.market), index: 0, snapshot: previous.market }, report: undefined }));
     setSelectedArchiveId(null);
     go("MEETING");
