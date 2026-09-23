@@ -69,7 +69,7 @@ export type CharacterStatus =
   | "IDLE" | "WALK" | "SIT" | "STAND" | "SPEAK"
   | "LISTEN" | "THINK" | "POINT" | "ALERT" | "END";
 
-export type MeetingDialogueIntent = "STATEMENT" | "QUESTION" | "REPLY" | "CHALLENGE" | "AGREE" | "EVIDENCE" | "SUMMARY";
+export type MeetingDialogueIntent = "STATEMENT" | "QUESTION" | "REPLY" | "CHALLENGE" | "AGREE" | "EVIDENCE" | "SUMMARY" | "TURNING_POINT";
 
 export interface MeetingEvent {
   type: "MOVE" | "SPEAK" | "LISTEN" | "SCREEN" | "EMOTION" | "PAUSE" | "END";
