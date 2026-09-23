@@ -109,9 +109,9 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     say(analyst, coin.summary || "제공된 분석이 없어 추가 확인이 필요합니다.", "STATEMENT");
     if (coin.technical[0]) {
       react("trader");
-      say("trader", "가격과 구조를 기준으로 보면 " + coin.technical[0], "EVIDENCE", analyst);
+      say("trader", "방금 말씀하신 흐름에서 제가 확인하고 싶은 건 " + coin.technical[0], "EVIDENCE", analyst);
       react(analyst, "ALERT");
-      say(analyst, "그 지표만으로 결론을 내리기보다 다른 조건도 함께 확인하겠습니다.", "REPLY", "trader");
+      say(analyst, "네, 그 지표는 중요한 단서입니다. 다만 이것만으로 방향을 확정하지 말고 다른 조건과 같이 보겠습니다.", "REPLY", "trader");
     }
     if (coin.news[0]) {
       react("altcoin");
