@@ -34,9 +34,9 @@ ${market.status !== "LIVE" ? `IMPORTANT: st=${market.status}. These prices are $
 
 RESEARCH:
 1. Assess overall market, macro/liquidity context, cross-coin relationships, and the most important change today.
-2. For EACH coin, provide: concise summary, up to 3 technical observations, up to ${PROMPT_BUDGET.maxNews} verified recent news items, one bull scenario, one bear scenario, and up to 3 risks.
+2. For EACH coin, provide: concise summary, up to 3 technical observations, up to ${PROMPT_BUDGET.maxNews} verified recent news items, one bull scenario, one bear scenario, up to 3 risks, a concise interpretation, a counter-view, 2-3 verification checks, and up to 3 viewer takeaways.
 3. Find what is genuinely different or surprising today. Prefer a concrete divergence, catalyst, contradiction, rotation, liquidity change, event, or risk over generic market commentary.
-4. Build a TV-friendly meeting story from the research. The story is NOT fiction: every hook, conflict, twist, and conclusion must be grounded in the supplied data or verified research.
+4. Separate every important claim into FACT, INTERPRETATION, and UNCERTAINTY. Do not turn correlation into causation. Distinguish a verified event from its possible market impact.\n5. Build a TV-friendly meeting story from the research. The story is NOT fiction: every hook, conflict, twist, and conclusion must be grounded in the supplied data or verified research.
 
 STORY ENGINE:
 Choose ONE storyMode that best fits today's evidence. Do not rotate modes mechanically.
@@ -61,7 +61,7 @@ Create:
 - surprise: one non-obvious but evidence-based observation; use "없음" if none.
 - endingQuestion: one unresolved question for viewers to watch after the meeting.
 - watchItems: 3-5 concrete things to monitor today.
-- changes: 2-4 meaningful changes versus the prior context; if no prior context, compare against recent verified market context when available, otherwise say "비교 자료 부족".
+- changes: 2-4 meaningful changes versus the prior context; if no prior context, compare against recent verified market context when available, otherwise say "비교 자료 부족".\n- viewerTakeaways: 3-5 short memo-worthy points across the market.
 
 CHARACTER PROFILES:
 The six speakers are recurring office characters. Write dialogue as spoken Korean, not report prose.
@@ -81,7 +81,7 @@ Do not assign each character to one coin. Give the meeting room reasons to disag
 - altcoin: compares relative strength, rotation, and coin-specific catalysts.
 - risk: attacks assumptions and presents the bear case.
 - trader: asks what observable condition would confirm or invalidate a scenario.
-Do not invent data for any role.
+Do not invent data for any role. Each debate topic should expose at least one fact, one interpretation, and one condition that could prove the interpretation wrong.
 
 NEWS/SOURCES:
 Use recent, verifiable information only. For each news item use "title | source | short summary".
@@ -106,7 +106,7 @@ Do not place Markdown, citations, URLs, or unescaped line breaks inside JSON str
 If your interface automatically adds web citations, do not include them in the output; use only the plain source name.
 Format:
 \`\`\`json
-{"date":"YYYY-MM-DD","marketSummary":"max 2 sentences","story":{"mode":"DIVERGENCE","title":"...","openingHook":"...","centralQuestion":"...","debateTopics":["..."],"turningPoint":"...","surprise":"...","endingQuestion":"...","watchItems":["..."],"changes":["..."]},"coins":[{"id":"BTC","summary":"max 2 sentences","technical":["..."],"news":["title | source | short summary"],"bullScenario":"one sentence","bearScenario":"one sentence","risks":["..."]}],"globalFactors":["..."],"events":["..."],"risks":["..."],"correlations":["..."],"sources":["Reuters","CoinDesk"]}
+{"date":"YYYY-MM-DD","marketSummary":"max 2 sentences","viewerTakeaways":["..."],"story":{"mode":"DIVERGENCE","title":"...","openingHook":"...","centralQuestion":"...","debateTopics":["..."],"turningPoint":"...","surprise":"...","endingQuestion":"...","watchItems":["..."],"changes":["..."]},"coins":[{"id":"BTC","summary":"max 2 sentences","technical":["..."],"news":["title | source | short summary"],"bullScenario":"one sentence","bearScenario":"one sentence","risks":["..."],"interpretation":"...","counterView":"...","verification":["..."],"takeaways":["..."]}],"globalFactors":["..."],"events":["..."],"risks":["..."],"correlations":["..."],"sources":["Reuters","CoinDesk"]}
 \`\`\`
 Include BTC, ETH, BNB, XRP, SOL exactly once. Keep every array concise. Do not repeat input data or instructions. The story must be grounded in evidence and should create a different meeting narrative when the evidence genuinely differs.`;
 
