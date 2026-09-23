@@ -112,12 +112,29 @@ export interface MeetingReport {
   conclusion: string;
 }
 
+export interface MeetingFollowUp {
+  text: string;
+  coin?: CoinId;
+  status: "OPEN" | "RESOLVED";
+}
+
+export interface MeetingMemory {
+  session: number;
+  question: string;
+  keyFindings: string[];
+  openFollowUps: MeetingFollowUp[];
+  resolvedFollowUps: MeetingFollowUp[];
+  watchItems: string[];
+  turningPoint?: string;
+}
+
 export interface ArchiveItem {
   meetingId: string;
   date: string;
   marketSnapshot: MarketSnapshot;
   brief: CryptoMarketBrief;
   meetingSummary: string;
+  memory?: MeetingMemory;
   report: MeetingReport;
 }
 
@@ -125,7 +142,6 @@ export interface AppState {
   market: MarketSnapshot;
   brief?: CryptoMarketBrief;
   meeting: MeetingState;
-  report?: MeetingReport;
   archive: ArchiveItem[];
 }
 
