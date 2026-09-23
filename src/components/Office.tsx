@@ -69,6 +69,8 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
   const cameraTarget = activeTarget || activeSpeaker;
   const isTurningPoint = current?.type === "SPEAK" && current.intent === "TURNING_POINT";
   const isLiveSpeech = current?.type === "SPEAK" && current.live === true;
+  const highlightKind = current?.type === "HIGHLIGHT" ? current.highlight || "KEY_POINT" : undefined;
+  const highlightText = current?.type === "HIGHLIGHT" ? current.text : undefined;
 
   const agentState = (id: RoleId): CharacterStatus => {
     if (!active) return "IDLE";
@@ -79,12 +81,14 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
     if (current?.type === "SCREEN" && id === "leader") return "POINT";
     if (current?.type === "LISTEN") return id === "leader" ? "STAND" : "LISTEN";
     if (current?.type === "PAUSE") return "THINK";
+    if (current?.type === "HIGHLIGHT") return id === "leader" ? "POINT" : "LISTEN";
     if (current?.type === "SPEAK") return current.speaker === id ? "SPEAK" : "LISTEN";
     return "SIT";
   };
 
   return (
     <div className={`office-unit ${meeting ? "office-unit--meeting" : ""} ${isTurningPoint ? "office-unit--turning-point" : ""} ${isLiveSpeech ? "office-unit--live-speech" : ""}`}>
+      {highlightText && <div className={`meeting-highlight meeting-highlight--${highlightKind.toLowerCase()}`} role="status" aria-live="polite"><span>{highlightKind.replace("_", " ")}</span><strong>{highlightText}</strong><small>NOTE THIS</small></div>}
       {isTurningPoint && <div className="turning-point-banner" role="status" aria-live="polite"><span>TURNING POINT</span><strong>STORY SHIFT</strong></div>}
       <div className="scene-toolbar">
         <div className="scene-toolbar-left"><span className="scene-led" /> <span>OFFICE FLOOR</span><span className="toolbar-separator">/</span><span className="toolbar-dim">LEVEL 01</span></div>
