@@ -26,6 +26,8 @@ let streamListeners = new Set<(snapshot: MarketSnapshot) => void>();
 let streamErrorListeners = new Set<(message: string) => void>();
 let streamBuffer = new Map<string, BinanceTicker>();
 let streamFlushTimer: number | null = null;
+let streamStaleTimer: number | null = null;
+const STREAM_STALE_MS = 5000;
 
 async function fetchFromCoinGecko(): Promise<MarketSnapshot> {
   const params = new URLSearchParams({
@@ -87,6 +89,16 @@ function applyBinanceTicker(ticker: BinanceTicker) {
   streamBuffer.set(ticker.s.toLowerCase(), ticker);
 }
 
+function scheduleStreamStale() {
+  if (streamStaleTimer !== null) window.clearTimeout(streamStaleTimer);
+  streamStaleTimer = window.setTimeout(() => {
+    streamStaleTimer = null;
+    if (!sessionSnapshot || streamListeners.size === 0 || sessionSnapshot.status !== "LIVE") return;
+    sessionSnapshot = { ...sessionSnapshot, status: "STALE" };
+    streamListeners.forEach((listener) => listener(sessionSnapshot!));
+  }, STREAM_STALE_MS);
+}
+
 function flushBinanceStream() {
   if (!sessionSnapshot || streamBuffer.size === 0) return;
   const buffered = [...streamBuffer.values()];
@@ -101,6 +113,7 @@ function flushBinanceStream() {
     next = { ...next, coins: next.coins.map((coin) => coin.id === id ? { ...coin, price, change24h, volume24h, high24h, low24h } : coin) };
   });
   sessionSnapshot = { ...next, timestamp: new Date().toISOString(), status: "LIVE" };
+  scheduleStreamStale();
   streamListeners.forEach((listener) => listener(sessionSnapshot!));
 }
 
@@ -111,7 +124,9 @@ function startStreamFlush() {
 
 function stopStreamFlush() {
   if (streamFlushTimer !== null) window.clearInterval(streamFlushTimer);
+  if (streamStaleTimer !== null) window.clearTimeout(streamStaleTimer);
   streamFlushTimer = null;
+  streamStaleTimer = null;
   streamBuffer.clear();
 }
 
@@ -119,6 +134,9 @@ function connectBinanceStream() {
   if (streamSocket || typeof WebSocket === "undefined") return;
   const streams = BINANCE_SYMBOLS.map((symbol) => `${symbol}@ticker`).join("/");
   streamSocket = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+  streamSocket.onopen = () => {
+    scheduleStreamStale();
+  };
   streamSocket.onmessage = (event) => {
     try {
       const payload = JSON.parse(event.data) as { data?: BinanceTicker };
