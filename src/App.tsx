@@ -138,9 +138,14 @@ export default function App() {
                   ? "altcoin"
                   : "trader";
               const intent = signal.direction === "DOWN" ? "CHALLENGE" : "EVIDENCE";
-              events.splice(Math.min(nextMeeting.index + 1, events.length), 0, {
-                type: "SPEAK", speaker, text: signal.text, intent, duration: 8500,
-              });
+              const responder = speaker === "market" ? "risk" : speaker === "altcoin" ? "market" : "risk";
+              const responseText = signal.direction === "DOWN"
+                ? (responder === "risk" ? "하락 신호는 리스크 관점에서도 확인하겠습니다." : "시장 데이터와 함께 추가 확인하겠습니다.")
+                : (responder === "risk" ? "상승 흐름이 다른 지표에서도 이어지는지 확인하겠습니다." : "이 움직임이 다른 자산으로 확산되는지도 보겠습니다.");
+              events.splice(Math.min(nextMeeting.index + 1, events.length), 0,
+                { type: "SPEAK", speaker, text: signal.text, intent, duration: 8500 },
+                { type: "SPEAK", speaker: responder, text: responseText, intent: "REPLY", replyTo: speaker, duration: 5000 },
+              );
               nextMeeting = { ...nextMeeting, events };
               liveMeetingRef.current.markTriggered(signal.coin);
             });
