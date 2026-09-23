@@ -7,6 +7,13 @@ const analystFor: Record<CoinId, RoleId> = {
 
 export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnapshot): MeetingEvent[] {
   const events: MeetingEvent[] = [];
+  const globalFactors = brief.globalFactors ?? [];
+  const correlations = brief.correlations ?? [];
+  const briefEvents = brief.events ?? [];
+  const watchlist = [...COIN_IDS]
+    .sort((a, b) => Math.abs(market.coins.find((coin) => coin.id === b)?.change24h || 0) - Math.abs(market.coins.find((coin) => coin.id === a)?.change24h || 0))
+    .slice(0, 3);
+
   const screen = (target: string) => events.push({ type: "SCREEN", target, duration: 450 });
   const say = (speaker: RoleId, text: string) => events.push({ type: "SPEAK", speaker, text, duration: Math.min(3900, 1700 + text.length * 26) });
 
@@ -16,8 +23,8 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
   events.push({ type: "LISTEN", duration: 450 });
   screen("OVERVIEW");
   say("leader", "오늘의 시장 브리핑을 시작하겠습니다. 사실과 해석을 구분해서 살펴보죠.");
-  say("market", brief.marketSummary);
-  say("risk", brief.globalFactors[0] || "거시 환경과 유동성 변화는 계속 확인이 필요합니다.");
+  say("market", brief.marketSummary || "시장 전반에 대한 요약이 제공되지 않았습니다.");
+  say("risk", globalFactors[0] || "거시 환경과 유동성 변화는 계속 확인이 필요합니다.");
 
   for (const id of COIN_IDS) {
     const coin = brief.coins.find((item) => item.id === id);
@@ -34,15 +41,16 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
 
   screen("SCENARIO");
   say("leader", "이제 자산 간 연결고리를 짚어보죠.");
-  say("onchain", brief.correlations[0] || "BTC와 주요 알트코인의 상대 강도 및 생태계 흐름을 함께 봐야 합니다.");
-  say("altcoin", brief.events[0] || "개별 이벤트는 전체 시장 방향과 분리해서 해석하겠습니다.");
+  say("onchain", correlations[0] || "BTC와 주요 알트코인의 상대 강도 및 생태계 흐름을 함께 봐야 합니다.");
+  const event = briefEvents[0];
+  say("altcoin", event ? `${event.title}${event.summary && event.summary !== event.title ? ` — ${event.summary}` : ""}` : "개별 이벤트는 전체 시장 방향과 분리해서 해석하겠습니다.");
   screen("RISK");
   events.push({ type: "EMOTION", speaker: "risk", target: "ALERT", duration: 500 });
   say("risk", brief.risks[0] || "시장 리스크가 명시되지 않았습니다. 불확실성을 우선 고려하겠습니다.");
   say("trader", "확인되지 않은 신호만으로 결론을 내리지 않겠습니다.");
   say("market", brief.risks[1] ? `추가로 ${brief.risks[1]}` : "거래량과 시장 폭을 다시 확인하겠습니다.");
   screen("CONCLUSION");
-  say("leader", "오늘의 관찰 목록은 변동폭을 기준으로 정리하고, 시나리오가 바뀌는지 확인하겠습니다.");
+  say("leader", `오늘의 관찰 목록은 24시간 변동폭 기준 ${watchlist.join(", ")}입니다. 시나리오가 바뀌는지 확인하겠습니다.`);
   say("leader", "회의를 마칩니다. 이 내용은 투자 지시가 아닌 시장 해석입니다.");
   events.push({ type: "END", duration: 600 });
   return events;
