@@ -12,7 +12,7 @@ import { parseResearch, type ParseResult } from "./engine/parser";
 import { createMeetingEvents } from "./engine/meeting";
 import { createReport, reportToText } from "./engine/report";
 import { LiveMeetingController } from "./services/liveMeeting";
-import { changeText, compactUSD, dateText, priceUSD, timeText } from "./utils/format";
+import { changeText, compactUSD, dateText, priceUSD, resolveMeetingLiveText, timeText } from "./utils/format";
 
 type IconName = "office" | "market" | "prompt" | "import" | "meeting" | "report" | "archive" | "refresh" | "arrow" | "copy" | "play" | "pause" | "skip" | "check" | "trash" | "clock" | "expand" | "close";
 
@@ -302,7 +302,7 @@ export default function App() {
               </div></div>
             </div><aside className="transcript-panel"><div className="transcript-header"><span><i className="record-dot" />LIVE TRANSCRIPT</span><small>{playedLines.length.toString().padStart(2, "0")} / {totalLines.toString().padStart(2, "0")}</small></div><div className="transcript-body">{app.meeting.status === "READY" ? <div className="brief-ready"><span className="eyebrow-small">BRIEF LOADED / {app.brief.date}</span><h2>Ready when<br />you are.</h2><p>{app.brief.marketSummary}</p><div className="brief-ready-divider" /><small>6명의 AI 직원이 5개 코인과 시장 리스크를 순서대로 검토합니다.</small></div> : <>
               {playedLines.length === 0 && <div className="transcript-waiting"><span className="loading-bars"><i /><i /><i /></span><p>팀이 회의실로 이동하고 있습니다...</p></div>}
-              {playedLines.map(({ event, index }) => { const member = TEAM.find((person) => person.id === event.speaker); return <div className={`transcript-line ${index === app.meeting.index && app.meeting.status === "RUNNING" ? "transcript-line--current" : ""}`} key={index}><div className="transcript-avatar" style={{ background: member?.color }}>{member?.name.slice(0, 1)}</div><div><div className="transcript-speaker"><strong>{member?.name}</strong><span>{member?.role}</span></div><p>{event.text}</p></div></div>; })}
+              {playedLines.map(({ event, index }) => { const member = TEAM.find((person) => person.id === event.speaker); return <div className={`transcript-line ${index === app.meeting.index && app.meeting.status === "RUNNING" ? "transcript-line--current" : ""}`} key={index}><div className="transcript-avatar" style={{ background: member?.color }}>{member?.name.slice(0, 1)}</div><div><div className="transcript-speaker"><strong>{member?.name}</strong><span>{member?.role}</span></div><p>{event.text ? resolveMeetingLiveText(event.text, app.market) : ""}</p></div></div>; })}
               {app.meeting.status === "FINISHED" && <div className="transcript-finished"><Icon name="check" size={18} /><strong>MEETING COMPLETE</strong><span>보고서가 생성되고 로컬 아카이브에 저장되었습니다.</span></div>}<div ref={transcriptEnd} /></>}</div><div className="transcript-footer"><span>ENGINE / LOCAL EVENTS</span><span>NO AI CALLS DURING MEETING</span></div></aside></div>
             <div className="meeting-teamline"><span>IN THE ROOM</span>{TEAM.map((member) => <div key={member.id}><i style={{ background: member.color }} />{member.role}</div>)}</div>
           </>}
