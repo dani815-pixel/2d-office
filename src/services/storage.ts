@@ -7,7 +7,7 @@ export function readMarketCache(): MarketSnapshot | null {
   try {
     const value = JSON.parse(localStorage.getItem(MARKET_KEY) || "null") as MarketSnapshot | null;
     if (!value || !Array.isArray(value.coins) || value.coins.length !== 5 || !value.timestamp) return null;
-    if (value.coins.some((coin, index) => coin.id !== COIN_IDS[index] || !Number.isFinite(coin.price) || !Number.isFinite(coin.change24h) || !Number.isFinite(coin.volume24h))) return null;
+    if (value.coins.some((coin, index) => coin.id !== COIN_IDS[index] || !Number.isFinite(coin.price) || !Number.isFinite(coin.change24h) || !Number.isFinite(coin.volume24h) || !Number.isFinite(coin.marketCap) || !Number.isFinite(coin.high24h) || !Number.isFinite(coin.low24h))) return null;
     return { ...value, status: "STALE" };
   } catch {
     return null;
