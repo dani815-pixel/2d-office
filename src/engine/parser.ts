@@ -174,12 +174,13 @@ export function parseResearch(raw: string): ParseResult {
   const risks = listValue(data.risks, 8);
   if (!risks.length) warnings.push("시장 전체 리스크가 제공되지 않았습니다.");
 
+  const events = listValue(data.events, 8).map((event) => ({ title: event, summary: event }));
   const brief: CryptoMarketBrief = {
     date: validDate ? date : today,
     marketSummary,
     coins,
     globalFactors: listValue(data.globalFactors ?? data.global_factors, 8),
-    events: listValue(data.events, 8),
+    events,
     risks,
     correlations: listValue(data.correlations, 8),
     sources: listValue(data.sources, 8),
