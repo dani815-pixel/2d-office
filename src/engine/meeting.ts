@@ -84,15 +84,23 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     challenger: RoleId,
     response: RoleId = proposer,
   ) => {
-    say(proposer, topic, "STATEMENT");
+    const cleanTopic = topic.trim();
+    if (!cleanTopic) return;
+    const topicShort = cleanTopic.length > 70 ? cleanTopic.slice(0, 70) + "…" : cleanTopic;
+    say(proposer, cleanTopic, "STATEMENT");
+    pause(1400);
     react(challenger);
-    say(challenger, voice(challenger, "challenge"), "CHALLENGE", proposer);
+    say(challenger, "그 부분은 동의하지만, " + topicShort + "만으로 결론을 내리기는 이릅니다.", "CHALLENGE", proposer);
     react(response, "ALERT");
-    say(response, voice(response, "question"), "QUESTION", challenger);
-    react("risk");
-    say("risk", voice("risk", "challenge"), "CHALLENGE", response);
+    say(response, "맞습니다. 그렇다면 제가 확인하고 싶은 건 이겁니다. " + voice(response, "question"), "QUESTION", challenger);
+    pause(1200);
+    react(challenger);
+    say(challenger, "그 조건이 확인되면 방금 주장의 신뢰도가 올라갈 수 있습니다. 반대로 확인되지 않으면 해석을 낮춰야 합니다.", "REPLY", response);
+    react("risk", "ALERT");
+    say("risk", "저는 한 가지를 더 보겠습니다. " + topicShort + "이 반대로 움직일 가능성도 열어두죠.", "CHALLENGE", challenger);
     react("leader");
-    say("leader", voice("leader", "summary"), "SUMMARY", "risk");
+    say("leader", "좋습니다. 지금까지 나온 의견을 나누면, 확인된 사실은 하나이고 해석은 두 갈래입니다.", "SUMMARY", "risk");
+    say("leader", "다음으로는 이 논쟁을 판단할 실제 데이터가 있는지 확인하겠습니다.", "QUESTION", "risk");
   };
   const evidenceDebate = (id: CoinId) => {
     const coin = coinBrief(id);
