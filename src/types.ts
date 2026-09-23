@@ -71,6 +71,7 @@ export interface CryptoMarketBrief {
   sources: Source[];
   globalFactors?: string[];
   correlations?: string[];
+  viewerTakeaways?: string[];
   story?: MeetingStory;
 }
 
