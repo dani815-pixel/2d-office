@@ -576,3 +576,24 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 @keyframes live-price-down { 0% { color: #f4d0c8; text-shadow: 0 0 0 transparent; transform: translateY(-2px); } 25% { color: #efa393; text-shadow: 0 0 14px #efa39366; transform: translateY(0); } 100% { color: inherit; text-shadow: 0 0 0 transparent; } }
 .monitor-live-indicator { display: inline-flex; align-items: center; gap: 4px; color: #a8dca0; }
 .monitor-live-indicator i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; box-shadow: 0 0 7px currentColor; animation: pulse 1s ease-in-out infinite; }
+
+
+.agent-speech-bubble--live {
+  border-color: #8fbc68;
+  box-shadow: 0 0 0 1px #8fbc6844, 0 8px 24px #02070788;
+  background: #f0f6e9;
+}
+.agent-speech-bubble--live::before {
+  content: "LIVE MARKET";
+  display: block;
+  margin-bottom: 5px;
+  color: #5f8d42;
+  font: 8px var(--mono);
+  letter-spacing: .12em;
+}
+.agent-speech-bubble--live strong em {
+  color: #5f8d42;
+}
+.office-unit--live-speech .scene-toolbar {
+  box-shadow: inset 0 -1px 0 #86aa5a66;
+}
