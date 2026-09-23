@@ -55,6 +55,9 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     };
     return lines[role][kind];
   };
+  const react = (speaker: RoleId, target: "THINK" | "ALERT" = "THINK") => {
+    events.push({ type: "EMOTION", speaker, target, duration: target === "ALERT" ? 1100 : 900 });
+  };
   const debate = (
     topic: string,
     proposer: RoleId,
@@ -62,9 +65,13 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     response: RoleId = proposer,
   ) => {
     say(proposer, topic, "STATEMENT");
+    react(challenger);
     say(challenger, voice(challenger, "challenge"), "CHALLENGE", proposer);
+    react(response, "ALERT");
     say(response, voice(response, "question"), "QUESTION", challenger);
+    react("risk");
     say("risk", voice("risk", "challenge"), "CHALLENGE", response);
+    react("leader");
     say("leader", voice("leader", "summary"), "SUMMARY", "risk");
   };
   const evidenceDebate = (id: CoinId) => {
@@ -73,11 +80,15 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     if (!coin) return;
     say(analyst, coin.summary || "제공된 분석이 없어 추가 확인이 필요합니다.", "STATEMENT");
     if (coin.technical[0]) {
+      react("trader");
       say("trader", "가격과 구조를 기준으로 보면 " + coin.technical[0], "EVIDENCE", analyst);
+      react(analyst, "ALERT");
       say(analyst, "그 지표만으로 결론을 내리기보다 다른 조건도 함께 확인하겠습니다.", "REPLY", "trader");
     }
     if (coin.news[0]) {
+      react("altcoin");
       say("altcoin", "최근 확인된 변수는 " + coin.news[0], "EVIDENCE", analyst);
+      react("risk", "ALERT");
       say("risk", "이 변수가 실제 가격에 반영됐다고 단정할 근거가 충분한지도 보겠습니다.", "CHALLENGE", "altcoin");
     }
     say("risk", coin.bearScenario || coin.risks[0] || "반대 시나리오도 열어 두겠습니다.", "CHALLENGE", analyst);
