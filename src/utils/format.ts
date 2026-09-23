@@ -1,3 +1,5 @@
+import type { CoinId, MarketSnapshot } from "../types";
+
 export function priceUSD(value: number): string {
   const digits = value >= 100 ? 2 : value >= 1 ? 3 : 5;
   return `$${new Intl.NumberFormat("en-US", { maximumFractionDigits: digits, minimumFractionDigits: 2 }).format(value)}`;
