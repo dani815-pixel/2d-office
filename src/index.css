@@ -415,3 +415,37 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .agent-speech-bubble--right {
   animation-name: speech-in-left;
 }
+
+
+.scene-agent--active-speaker .pixel-agent {
+  filter: drop-shadow(0 0 7px var(--agent-color)) drop-shadow(0 0 15px #b7d8a455);
+}
+.scene-agent--active-speaker .agent-tag {
+  color: #f1f6e9;
+  border-color: var(--agent-color);
+  background: #1b2b21;
+  box-shadow: 0 0 12px #78976a55;
+}
+.scene-agent--active-speaker .agent-tag-dot {
+  background: var(--agent-color);
+  box-shadow: 0 0 8px var(--agent-color);
+}
+.scene-agent--active-speaker::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 36px;
+  height: 5px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: var(--agent-color);
+  opacity: .65;
+  filter: blur(3px);
+  animation: speaker-pulse 1.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes speaker-pulse {
+  0%, 100% { opacity: .35; transform: translateX(-50%) scaleX(.75); }
+  50% { opacity: .8; transform: translateX(-50%) scaleX(1.08); }
+}
