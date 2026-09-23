@@ -48,6 +48,10 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
     ? [...meeting.events.slice(0, meeting.index + 1)].reverse().find((event) => event.type === "SCREEN")?.target || "OVERVIEW"
     : "OVERVIEW";
   const focusedCoin = COIN_IDS.includes(screenTarget as CoinId) ? market.coins.find((coin) => coin.id === screenTarget) : undefined;
+  const activeSpeaker = current?.type === "SPEAK" ? current.speaker : undefined;
+  const activeIntent = current?.type === "SPEAK" ? current.intent || "STATEMENT" : undefined;
+  const activeTarget = current?.type === "SPEAK" ? current.replyTo : undefined;
+  const cameraTarget = activeTarget || activeSpeaker;
 
   const agentState = (id: RoleId): CharacterStatus => {
     if (!active) return "IDLE";
@@ -66,7 +70,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
     <div className={`office-unit ${meeting ? "office-unit--meeting" : ""}`}>
       <div className="scene-toolbar">
         <div className="scene-toolbar-left"><span className="scene-led" /> <span>OFFICE FLOOR</span><span className="toolbar-separator">/</span><span className="toolbar-dim">LEVEL 01</span></div>
-        <div className="scene-toolbar-right"><span className="tiny-live-dot" /> {active ? meeting.status : "6 AGENTS ONLINE"}<span className="toolbar-divider" /> <span className="toolbar-dim">CAM 01</span></div>
+        <div className="scene-toolbar-right"><span className="tiny-live-dot" /> {active ? meeting.status : "6 AGENTS ONLINE"}<span className="toolbar-divider" /> <span className={`toolbar-dim ${cameraTarget ? "toolbar-dim--camera-focus" : ""}`}>CAM 01 {cameraTarget ? `/ ${activeIntent} / ${cameraTarget.toUpperCase()}` : ""}</span></div>
       </div>
 
       <div className="office-canvas">
@@ -122,9 +126,9 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
           const isTargeted = !!dialogueTarget && dialogueTarget === agent.id && current?.speaker !== agent.id;
           const intent = current?.intent || "STATEMENT";
           return (
-            <div key={agent.id} className={`scene-agent ${moved ? "scene-agent--meeting" : ""} ${state === "SPEAK" ? "scene-agent--speaking scene-agent--active-speaker" : ""} ${isTargeted ? "scene-agent--dialogue-target" : ""} ${current?.type === "SPEAK" && intent === "CHALLENGE" && current.speaker === agent.id ? "scene-agent--challenging" : ""} ${current?.type === "SPEAK" && intent === "QUESTION" && current.speaker === agent.id ? "scene-agent--questioning" : ""} ${state === "WALK" ? "scene-agent--walking" : ""} ${state === "POINT" ? "scene-agent--pointing" : ""} ${state === "ALERT" ? "scene-agent--alert" : ""}`}
+            <div key={agent.id} className={`scene-agent ${cameraTarget === agent.id ? "scene-agent--camera-focus" : ""} ${moved ? "scene-agent--meeting" : ""} ${state === "SPEAK" ? "scene-agent--speaking scene-agent--active-speaker" : ""} ${isTargeted ? "scene-agent--dialogue-target" : ""} ${current?.type === "SPEAK" && intent === "CHALLENGE" && current.speaker === agent.id ? "scene-agent--challenging" : ""} ${current?.type === "SPEAK" && intent === "QUESTION" && current.speaker === agent.id ? "scene-agent--questioning" : ""} ${state === "WALK" ? "scene-agent--walking" : ""} ${state === "POINT" ? "scene-agent--pointing" : ""} ${state === "ALERT" ? "scene-agent--alert" : ""}`}
               style={{ left: `${left}%`, top: `${top}%`, "--agent-color": agent.color } as CSSProperties} title={`${agent.name} / ${agent.role} / ${state}`}>
-              {isTargeted && <span className="agent-interjection">RESPONSE</span>}
+              {isTargeted && <span className="agent-interjection">{intent === "CHALLENGE" ? "CHALLENGE" : "RESPONSE"}</span>}
               {state === "SPEAK" && <span className="agent-voice"><i /><i /><i /></span>}
               {state === "SPEAK" && current?.type === "SPEAK" && current.speaker === agent.id && current.text && (
                 <div className={`agent-speech-bubble agent-speech-bubble--${left < 23 ? "left" : left > 77 ? "right" : "center"} agent-speech-bubble--${intent.toLowerCase()}`} role="status" aria-live="polite">
