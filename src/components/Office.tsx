@@ -121,7 +121,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
                 <div className="monitor-caption">ASSET FOCUS <span>/ {focusedCoin.id}</span></div>
                 <div className="monitor-focus-main"><strong className={`live-price ${pricePulse[focusedCoin.id] ? `live-price--${pricePulse[focusedCoin.id]}` : ""}`}>{priceUSD(focusedCoin.price)}</strong><span className={focusedCoin.change24h >= 0 ? "up" : "down"}>{changeText(focusedCoin.change24h)}</span></div>
                 <div className="monitor-meter"><span style={{ width: `${Math.min(88, 26 + Math.abs(focusedCoin.change24h) * 9)}%`, background: COIN_META[focusedCoin.id].color }} /></div>
-                <div className="monitor-foot">24H CHANGE <span>{market.status} / USD</span></div>
+                <div className="monitor-foot">LIVE QUOTES <span>{market.status} / BINANCE WS</span></div>
               </div>
             ) : screenTarget === "RISK" ? (
               <div className="monitor-message"><div className="monitor-caption">RISK ASSESSMENT / 07</div><strong>CHECK THE DOWNSIDE.</strong><p>{brief?.risks[0] || "확인된 리스크를 점검합니다."}</p></div>
@@ -133,7 +133,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
               </div></div>
             )}
           </div>
-          <div className="monitor-bottom"><span>DATA: {market.status} / LIVE SYNC {timeText(market.timestamp)}</span><span className="monitor-live-indicator"><i /> STREAM</span><span>● ● ●</span></div>
+          <div className="monitor-bottom"><span>QUOTES: {market.status} / BINANCE WS · {timeText(market.timestamp)}</span><span className="monitor-live-indicator"><i /> STREAM</span><span>● ● ●</span></div>
         </div>
 
         {TEAM.map((agent, index) => {
