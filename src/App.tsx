@@ -4,7 +4,7 @@ import { type AppState, type ArchiveItem, type CoinId, type View } from "./types
 import { COIN_META } from "./data/coins";
 import { TEAM } from "./data/team";
 import { DEMO_RESEARCH, MOCK_MARKET } from "./data/demo";
-import { getMarketSnapshot } from "./services/market";
+import { getMarketSnapshot, subscribeMarketStream } from "./services/market";
 import { readArchive, saveArchive } from "./services/storage";
 import { copyText } from "./services/clipboard";
 import { buildDailyPrompt } from "./engine/prompt";
@@ -120,18 +120,14 @@ export default function App() {
   }, [app.brief, app.market, app.meeting.snapshot]);
 
   useEffect(() => {
-    if (app.meeting.status === "READY" || app.meeting.status === "FINISHED") return;
-    let mounted = true;
-    const syncMarket = async () => {
-      const { snapshot, error } = await getMarketSnapshot(true);
-      if (!mounted) return;
-      setApp((previous) => ({ ...previous, market: snapshot }));
-      setMarketError(error || "");
-    };
-    syncMarket();
-    const timer = window.setInterval(syncMarket, 30000);
-    return () => { mounted = false; window.clearInterval(timer); };
-  }, [app.meeting.status]);
+    return subscribeMarketStream(
+      (snapshot) => {
+        setApp((previous) => ({ ...previous, market: snapshot }));
+        setMarketError("");
+      },
+      (message) => setMarketError(message),
+    );
+  }, []);
 
   useEffect(() => {
     if (app.meeting.status !== "RUNNING") return;
