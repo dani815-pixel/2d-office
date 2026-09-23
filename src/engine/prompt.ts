@@ -95,9 +95,15 @@ Inside the JSON, use only valid JSON: double quotes for strings, no trailing com
 Do not place Markdown, citations, URLs, or unescaped line breaks inside JSON strings.
 If your interface automatically adds web citations, do not include them in the output; use only the plain source name.
 Format:
+<<<<<<< HEAD
 ```json
 {"date":"YYYY-MM-DD","marketSummary":"max 2 sentences","story":{"mode":"DIVERGENCE","title":"...","openingHook":"...","centralQuestion":"...","debateTopics":["..."],"turningPoint":"...","surprise":"...","endingQuestion":"...","watchItems":["..."],"changes":["..."]},"coins":[{"id":"BTC","summary":"max 2 sentences","technical":["..."],"news":["title | source | short summary"],"bullScenario":"one sentence","bearScenario":"one sentence","risks":["..."]}],"globalFactors":["..."],"events":["..."],"risks":["..."],"correlations":["..."],"sources":["Reuters","CoinDesk"]}
 ```
+=======
+\`\`\`json
+{"date":"YYYY-MM-DD","marketSummary":"max 2 sentences","story":{"mode":"DIVERGENCE","title":"...","openingHook":"...","centralQuestion":"...","debateTopics":["..."],"turningPoint":"...","surprise":"...","endingQuestion":"...","watchItems":["..."],"changes":["..."]},"coins":[{"id":"BTC","summary":"max 2 sentences","technical":["..."],"news":["title | source | short summary"],"bullScenario":"one sentence","bearScenario":"one sentence","risks":["..."]}],"globalFactors":["..."],"events":["..."],"risks":["..."],"correlations":["..."],"sources":["Reuters","CoinDesk"]}
+\`\`\`
+>>>>>>> 1b442da (Fix prompt template syntax error in daily AI research prompt)
 Include BTC, ETH, BNB, XRP, SOL exactly once. Keep every array concise. Do not repeat input data or instructions. The story must be grounded in evidence and should create a different meeting narrative when the evidence genuinely differs.`;
 
   return prompt.slice(0, PROMPT_BUDGET.maxChars);
