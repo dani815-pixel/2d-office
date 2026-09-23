@@ -35,6 +35,10 @@ export interface CoinBrief {
   bullScenario: string;
   bearScenario: string;
   risks: string[];
+  interpretation?: string;
+  counterView?: string;
+  verification?: string[];
+  takeaways?: string[];
 }
 
 export interface MarketEvent {
