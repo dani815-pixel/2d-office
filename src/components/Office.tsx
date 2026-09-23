@@ -68,6 +68,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
   const activeTarget = current?.type === "SPEAK" ? current.replyTo : undefined;
   const cameraTarget = activeTarget || activeSpeaker;
   const isTurningPoint = current?.type === "SPEAK" && current.intent === "TURNING_POINT";
+  const isLiveSpeech = current?.type === "SPEAK" && current.live === true;
 
   const agentState = (id: RoleId): CharacterStatus => {
     if (!active) return "IDLE";
@@ -83,7 +84,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
   };
 
   return (
-    <div className={`office-unit ${meeting ? "office-unit--meeting" : ""} ${isTurningPoint ? "office-unit--turning-point" : ""}`}>
+    <div className={`office-unit ${meeting ? "office-unit--meeting" : ""} ${isTurningPoint ? "office-unit--turning-point" : ""} ${isLiveSpeech ? "office-unit--live-speech" : ""}`}>
       {isTurningPoint && <div className="turning-point-banner" role="status" aria-live="polite"><span>TURNING POINT</span><strong>STORY SHIFT</strong></div>}
       <div className="scene-toolbar">
         <div className="scene-toolbar-left"><span className="scene-led" /> <span>OFFICE FLOOR</span><span className="toolbar-separator">/</span><span className="toolbar-dim">LEVEL 01</span></div>
@@ -148,7 +149,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
               {isTargeted && <span className="agent-interjection">{intent === "CHALLENGE" ? "CHALLENGE" : "RESPONSE"}</span>}
               {state === "SPEAK" && <span className="agent-voice"><i /><i /><i /></span>}
               {state === "SPEAK" && current?.type === "SPEAK" && current.speaker === agent.id && current.text && (
-                <div className={`agent-speech-bubble agent-speech-bubble--${left < 23 ? "left" : left > 77 ? "right" : "center"} agent-speech-bubble--${intent.toLowerCase()}`} role="status" aria-live="polite">
+                <div className={`agent-speech-bubble agent-speech-bubble--${left < 23 ? "left" : left > 77 ? "right" : "center"} agent-speech-bubble--${intent.toLowerCase()} ${current.live ? "agent-speech-bubble--live" : ""}`} role="status" aria-live="polite">
                   <strong>{agent.name} <small>{agent.short}</small><em>{intent}</em></strong>
                   <span>{current.text}</span>
                 </div>
