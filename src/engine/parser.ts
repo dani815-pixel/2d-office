@@ -172,6 +172,19 @@ export function parseResearch(raw: string): ParseResult {
     return { id, summary: "제공된 분석이 없습니다. 별도 확인이 필요합니다.", technical: [], news: [], bullScenario: "", bearScenario: "", risks: [] };
   });
   const risks = listValue(data.risks, 8);
+  const rawStory = isObject(data.story) ? data.story : undefined;
+  const story = rawStory ? {
+    mode: stringValue(rawStory.mode, 40),
+    title: stringValue(rawStory.title, 80),
+    openingHook: stringValue(rawStory.openingHook, 240),
+    centralQuestion: stringValue(rawStory.centralQuestion, 240),
+    debateTopics: listValue(rawStory.debateTopics, 3),
+    turningPoint: stringValue(rawStory.turningPoint, 240),
+    surprise: stringValue(rawStory.surprise, 240),
+    endingQuestion: stringValue(rawStory.endingQuestion, 240),
+    watchItems: listValue(rawStory.watchItems, 5),
+    changes: listValue(rawStory.changes, 4),
+  } : undefined;
   if (!risks.length) warnings.push("시장 전체 리스크가 제공되지 않았습니다.");
 
   const events = listValue(data.events, 8).map((event) => ({ title: event, summary: event }));
@@ -184,6 +197,7 @@ export function parseResearch(raw: string): ParseResult {
     risks,
     correlations: listValue(data.correlations, 8),
     sources: listValue(data.sources, 8),
+    story,
   };
   return { format, brief: errors.length ? undefined : brief, errors, warnings };
 }
