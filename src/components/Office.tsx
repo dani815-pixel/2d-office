@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { COIN_IDS, type CharacterStatus, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingState, type RoleId } from "../types";
-import { COIN_META, TEAM } from "../data/mock";
+import { COIN_META } from "../data/coins";
+import { TEAM } from "../data/team";
 import { changeText, priceUSD } from "../utils/format";
 
 const DESK_POSITIONS: Record<RoleId, [number, number]> = {
