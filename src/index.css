@@ -221,6 +221,26 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
 
+.meeting-layout:fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  margin: 0;
+  padding: 18px;
+  background: #080d0d;
+  overflow: auto;
+}
+.meeting-layout:fullscreen .meeting-stage .office-unit {
+  flex: 1;
+  min-height: 0;
+}
+.meeting-layout:fullscreen .meeting-stage .office-canvas {
+  height: min(62vh, 620px);
+}
+
 .meeting-layout--fullscreen {
   position: fixed;
   inset: 0;
