@@ -39,6 +39,7 @@ export interface CoinBrief {
   counterView?: string;
   verification?: string[];
   takeaways?: string[];
+  advancedSignals?: string[];
 }
 
 export interface MarketEvent {
