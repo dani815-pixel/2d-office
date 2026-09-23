@@ -1,18 +1,18 @@
 # 2D CRYPTO AI OFFICE
 
-> 실시간 암호화폐 시장 데이터 → 일일 AI 리서치 → 구조화된 Market Brief → 2D AI 회의 → 보고서 → Archive
+> 실시간 암호화폐 시장 데이터 → Daily AI Research → CryptoMarketBrief → Story-driven 2D AI Meeting → Report → Archive
 
-**BTC · ETH · BNB · XRP · SOL** 5개 자산을 기준으로 시장을 관찰하고, 외부 AI의 조사 결과를 회의용 데이터로 정규화한 뒤 2D 사무실에서 가상의 분석팀이 토론하는 React + Vite + TypeScript 프로젝트입니다.
+**BTC · ETH · BNB · XRP · SOL** 5개 자산을 기준으로 시장을 관찰하고, 외부 AI의 조사 결과를 정규화한 뒤 2D 사무실에서 가상 분석팀이 토론하는 **React + Vite + TypeScript** 프로젝트입니다.
 
-AI API를 앱 내부에서 직접 호출하지 않는 **External AI Research / Paste & Parse 구조**를 기본으로 합니다.
+현재 AI API는 앱 내부에서 직접 호출하지 않고 **External AI Research / Copy & Paste / Parse** 구조를 사용합니다.
 
 ---
 
 ## 1. 프로젝트 목표
 
-이 프로젝트는 단순한 암호화폐 대시보드가 아니라 **시장 데이터와 AI 리서치를 하나의 방송형 회의 흐름으로 연결하는 2D Crypto AI Office**를 목표로 합니다.
+단순한 암호화폐 대시보드가 아니라, 매일의 시장 데이터와 외부 AI 리서치를 **방송형 회의 콘텐츠**로 연결하는 것이 목표입니다.
 
-핵심 흐름:
+핵심 파이프라인:
 
 ```
 Real-time Crypto Data
@@ -21,7 +21,7 @@ Daily Research Prompt
         ↓
 External AI Research
         ↓
-Copy / Paste
+ONE CANVAS / Copy
         ↓
 AI Result Parser
         ↓
@@ -31,14 +31,14 @@ Story Engine
         ↓
 Meeting Engine
         ↓
-2D Office Meeting
+2D Crypto Office
         ↓
 Meeting Report
         ↓
 Archive
 ```
 
-중요한 설계 원칙은 **AI 응답 자체를 회의 엔진이 직접 실행하지 않는 것**입니다.
+핵심 원칙은 **AI 응답이 UI나 HTML을 직접 실행하지 않는 것**입니다.
 
 ```
 AI Result
@@ -54,118 +54,259 @@ MeetingEvent[]
 Office Renderer
 ```
 
-즉, AI가 HTML이나 UI를 직접 조작하지 않고 구조화된 데이터만 제공합니다.
+---
+
+## 2. 현재 지원 자산
+
+초기 및 핵심 지원 자산은 변경하지 않습니다.
+
+- BTC
+- ETH
+- BNB
+- XRP
+- SOL
+
+캐릭터는 특정 코인에 1:1로 고정하지 않고 역할 중심으로 회의에 참여합니다.
 
 ---
 
-## 2. 현재 구현 범위
-
-현재까지 다음 기능이 구현되어 있습니다.
+## 3. 현재 구현 상태
 
 ### Market
 
-- BTC / ETH / BNB / XRP / SOL 고정 지원
-- CoinGecko 기반 시장 데이터 조회
+현재 시장 데이터는 **CoinGecko 초기 스냅샷 + Binance WebSocket 실시간 스트림** 구조입니다.
+
+```
+CoinGecko REST
+    ↓
+Initial MarketSnapshot
+    ├── marketCap
+    └── initial price / volume / high / low / 24h change
+
+Binance WebSocket
+    ↓
+1초 단위 buffer / flush
+    ↓
+MarketSnapshot
+    ├── price
+    ├── 24h change
+    ├── volume
+    ├── high
+    └── low
+```
+
+지원 데이터:
+
 - USD 가격
 - 24시간 변동률
 - 24시간 거래량
 - 시가총액
 - 24시간 고가 / 저가
-- 시장 데이터 상태 표시
-- 세션 스냅샷 재사용
-- localStorage 캐시
-- API 실패 시 STALE / MOCK fallback
-- 회의 진행 중 30초 간격 시장 데이터 동기화
-- 회의 화면의 모니터와 ticker에 최신 스냅샷 반영
+- timestamp
+- market status
 
-### Daily AI Research Prompt
+Binance 스트림 대상:
 
-- 현재 시장 스냅샷을 compact JSON 형태로 프롬프트에 포함
-- 이전 회의의 짧은 요약 / 리스크 / watchlist를 선택적으로 전달
-- 토큰 사용량을 줄이기 위해 입력 데이터 압축
-- 최근 뉴스와 출처 검증 요구
-- 사실과 해석 분리 요구
+- BTCUSDT
+- ETHUSDT
+- BNBUSDT
+- XRPUSDT
+- SOLUSDT
+
+### Fallback
+
+CoinGecko 요청 실패 시:
+
+```
+Session Snapshot
+      ↓
+Cached Snapshot
+      ↓
+Mock Data
+```
+
+순서로 fallback합니다.
+
+상태:
+
+| 상태 | 의미 |
+|---|---|
+| LIVE | 현재 스냅샷이 live 데이터 기준 |
+| STALE | 이전 저장 데이터를 사용 |
+| MOCK | 고정 예시 데이터 |
+| ERROR | 오류 상태 표현용 타입 |
+
+> 현재 `LIVE`는 MarketSnapshot의 데이터 상태를 의미하며 Binance WebSocket 연결 상태와 완전히 동일한 개념은 아닙니다. WebSocket 상태 분리는 후속 안정화 대상입니다.
+
+---
+
+## 4. Daily AI Research Prompt
+
+`src/engine/prompt.ts`에서 매일 사용할 외부 AI 조사 프롬프트를 생성합니다.
+
+프롬프트에는 다음이 포함됩니다.
+
+- 현재 날짜
+- snapshot timestamp
+- market status
+- BTC / ETH / BNB / XRP / SOL 압축 시장 데이터
+- 이전 회의의 짧은 summary / risks / watchlist
+- 시장 전체 분석 요구
+- 코인별 분석 요구
+- 최근 뉴스 및 출처 검증 요구
+- Story Engine 요구
+- 캐릭터별 분석 관점
+- 사실과 해석 분리
 - 직접적인 매수 / 매도 지시 금지
-- JSON 출력 강제
-- 5개 코인 전체 포함 강제
-- Story Engine용 구조화 필드 생성
 
-### AI Result Import
+### 토큰 절약
 
-외부 AI에서 생성한 결과를 복사해 붙여넣는 방식입니다.
+입력 시장 데이터는 긴 객체 대신 compact 형태를 사용합니다.
+
+```
+BTC: [price, change24h, volumeM, low, high]
+```
+
+현재 Prompt Budget:
+
+- 최대 프롬프트 약 12,000 characters
+- 뉴스 최대 3개
+- 출처 최대 8개
+- 이전 회의 요약 최대 800 characters
+
+---
+
+## 5. ONE CANVAS External AI Workflow
+
+외부 AI 결과는 **하나의 Canvas / 하나의 Document**에 완성하도록 프롬프트에서 명시합니다.
+
+목표 workflow:
+
+```
+Daily Prompt
+    ↓
+External AI
+    ↓
+ONE CANVAS
+    ↓
+Canvas 전체 복사
+    ↓
+AI Result Import
+    ↓
+Parser
+```
+
+외부 AI 출력 규칙:
+
+- 하나의 Canvas / Document만 사용
+- 여러 메시지로 결과 분할 금지
+- 분석 과정 / reasoning 출력 금지
+- 최종 결과 외 설명 금지
+- JSON 하나만 출력
+- URL 금지
+- Markdown 링크 금지
+- footnote / citation marker 금지
+- JSON 내부의 주석 / trailing comma 금지
+- BTC / ETH / BNB / XRP / SOL 각각 정확히 한 번 포함
+
+이 구조의 목적은 **사용자가 Canvas 전체를 한 번 복사하여 앱에 바로 붙여넣을 수 있게 하는 것**입니다.
+
+> Canvas 동작 자체는 사용하는 외부 AI 서비스의 UI 지원 여부에 따라 달라질 수 있습니다. 앱은 Canvas 결과를 문자열로 받아 Parse하는 구조입니다.
+
+---
+
+## 6. AI Result Import / Parser
+
+`src/engine/parser.ts`가 외부 AI 결과를 `CryptoMarketBrief`로 변환합니다.
 
 지원 형식:
 
 - JSON
+- JSON code fence
 - Markdown
-- 일반 텍스트
-- `BTC: ...` 형태의 간단한 텍스트
+- Plain text
+- 간단한 `BTC: ...` 형태
 
-Import 단계에서:
+처리:
 
-- 코인별 추출 상태 표시
-- 누락 코인 확인
-- 부분 추출 경고
-- 데이터 정규화
-- Market Brief 미리보기
-- 수정 후 회의 준비
+```
+Raw AI Result
+    ↓
+Format Detection
+    ↓
+Extraction
+    ↓
+Validation
+    ↓
+Normalization
+    ↓
+CryptoMarketBrief
+```
 
-AI 원문을 회의 엔진에 직접 전달하지 않습니다.
+검사 항목:
 
-### Market Brief
+- JSON 유효성
+- 최상위 object 여부
+- 코인 ID
+- 필수 필드
+- 누락 코인
+- 부분 추출
+- warnings / errors
 
-정규화된 `CryptoMarketBrief`가 앱 내부의 핵심 AI 결과 모델입니다.
-
-주요 구조:
-
-- 날짜
-- 전체 시장 요약
-- BTC / ETH / BNB / XRP / SOL 분석
-- 기술적 관찰
-- 뉴스
-- Bull Scenario
-- Bear Scenario
-- 코인별 리스크
-- 글로벌 요인
-- 이벤트
-- 시장 리스크
-- 상관관계
-- 출처
-- 회의 Story
+AI 원문을 Meeting Engine에 직접 전달하지 않습니다.
 
 ---
 
-## 3. Story Engine
+## 7. CryptoMarketBrief
 
-현재 프로젝트에서 가장 중요한 확장 기능 중 하나입니다.
+앱 내부의 표준 AI 리서치 모델입니다.
 
-매일 동일한:
+주요 구조:
 
-> 시장 요약 → BTC → ETH → BNB → XRP → SOL → 리스크 → 결론
+- date
+- marketSummary
+- coins
+- risks
+- events
+- sources
+- globalFactors
+- correlations
+- story
 
-형태만 반복하지 않도록 AI가 당일 데이터에 맞는 **회의 스토리 모드**를 생성합니다.
+코인별:
 
-### 지원 Story Mode
+- summary
+- technical
+- news
+- bullScenario
+- bearScenario
+- risks
 
-| Mode | 회의 중심 |
+이 모델을 기준으로 이후의 Story / Meeting / Report가 동작합니다.
+
+---
+
+## 8. Story Engine
+
+매일 동일한 순서로 발표하지 않도록 당일 조사 결과에 맞는 회의 스토리를 선택합니다.
+
+지원 모드:
+
+| Mode | 중심 내용 |
 |---|---|
-| `BREAKOUT_TENSION` | 중요한 조건을 통과하는지 검증 |
-| `LEADERSHIP_SHIFT` | 시장 리더십 변화 |
-| `DIVERGENCE` | 같은 시장에서 나타나는 자산별 차이 |
-| `CATALYST_COUNTDOWN` | 예정된 이벤트 / 촉매 중심 |
-| `RISK_ALERT` | 하방 위험과 충돌 신호 중심 |
-| `ROTATION` | 자금 / 관심의 이동과 상대 강도 |
-| `CORRELATION_BREAK` | 기존 상관관계 변화 |
-| `QUIET_BEFORE_MOVE` | 아직 해결되지 않은 혼재 신호 |
-| `CROSSROADS` | Bull / Bear 근거가 팽팽한 상황 |
+| BREAKOUT_TENSION | 중요한 조건을 통과하는지 검증 |
+| LEADERSHIP_SHIFT | 시장 리더십 변화 |
+| DIVERGENCE | 자산별 행동 차이 |
+| CATALYST_COUNTDOWN | 이벤트 / 촉매 |
+| RISK_ALERT | 하방 위험 / 충돌 신호 |
+| ROTATION | 자금 / 관심 이동 |
+| CORRELATION_BREAK | 상관관계 변화 |
+| QUIET_BEFORE_MOVE | 아직 해결되지 않은 혼재 신호 |
+| CROSSROADS | Bull / Bear 근거가 팽팽한 상황 |
 
-스토리 모드는 임의로 순환하지 않습니다.
+Story는 허구의 사건을 만드는 장치가 아니라 **검증 가능한 시장 데이터와 리서치에서 회의의 논쟁 구조를 만드는 장치**입니다.
 
-**당일 조사 결과에서 실제로 확인되는 근거에 맞는 모드를 선택하도록 프롬프트에서 요구합니다.**
-
-### Story 데이터
-
-현재 Story는 다음 정보를 포함합니다.
+Story 데이터:
 
 - mode
 - title
@@ -178,81 +319,50 @@ AI 원문을 회의 엔진에 직접 전달하지 않습니다.
 - watchItems
 - changes
 
-목표는 **허구의 드라마를 만드는 것**이 아니라 실제 시장 데이터와 검증된 리서치를 이용해 회의의 서사 구조를 만드는 것입니다.
+---
+
+## 9. 2D Meeting Engine
+
+Meeting Engine:
+
+```
+CryptoMarketBrief
+      +
+Meeting Start MarketSnapshot
+      ↓
+MeetingEngine
+      ↓
+MeetingEvent[]
+```
+
+기본 이벤트:
+
+- MOVE
+- SPEAK
+- LISTEN
+- SCREEN
+- EMOTION
+- PAUSE
+- END
+
+발언에는 대화 의도를 표현할 수 있습니다.
+
+- STATEMENT
+- QUESTION
+- REPLY
+- CHALLENGE
+- AGREE
+- EVIDENCE
+- SUMMARY
+- TURNING_POINT
+
+또한 실시간 시장 발언은 `live: true`로 구분합니다.
 
 ---
 
-## 4. 2D Meeting Engine
+## 10. 6인 AI 회의팀
 
-회의 엔진은 `CryptoMarketBrief`와 `MarketSnapshot`만 사용하여 `MeetingEvent[]`를 생성합니다.
-
-### 기본 이벤트
-
-- `MOVE`
-- `SPEAK`
-- `LISTEN`
-- `SCREEN`
-- `EMOTION`
-- `PAUSE`
-- `END`
-
-### 현재 구현
-
-회의 시작:
-
-- 캐릭터가 테이블로 이동
-- Overview 화면 표시
-- 오늘의 Hook
-- 시장 요약
-- Central Question
-- 회의 제목
-- 글로벌 요인
-
-이후 Story Mode에 따라 회의 진행 구조가 달라집니다.
-
-예:
-
-- Risk Alert → 초반부터 Risk Manager가 위험 조건을 제기
-- Catalyst Countdown → 촉매 / 이벤트를 먼저 확인
-- Rotation → 상대 강도와 리더십 중심
-- Divergence → 자산 간 차이를 먼저 비교
-- Correlation Break → 상관관계 변화부터 검토
-- Breakout Tension → 돌파 조건과 확인 기준 중심
-- Quiet Before Move → 결론보다 미해결 조건 중심
-- Crossroads → 균형형 토론
-
-각 코인 분석에는 가능한 경우:
-
-- 현재 시장 스냅샷
-- 요약
-- 기술적 관찰
-- 뉴스
-- Bear Scenario
-- Bull Scenario
-- 추가 리스크
-
-가 포함됩니다.
-
-### 회의 시간
-
-현재 이벤트들의 duration을 마지막에 자동 정규화합니다.
-
-- **1x: 약 20분**
-- **2x: 약 10분**
-
-콘텐츠 양이 달라도 전체 회의가 목표 시간에 맞도록 스케일링합니다.
-
----
-
-## 5. 2D Office UI
-
-현재 Office는 CSS / SVG 기반의 2D 픽셀풍 UI로 구성되어 있습니다.
-
-### 캐릭터
-
-총 6명:
-
-| 이름 | 역할 |
+| 캐릭터 | 역할 |
 |---|---|
 | Alex | Team Leader |
 | Mina | Market Analyst |
@@ -261,152 +371,168 @@ AI 원문을 회의 엔진에 직접 전달하지 않습니다.
 | Rae | Macro / Risk Manager |
 | Kai | Trader |
 
-캐릭터는 특정 코인에 1:1 고정되지 않습니다.
+역할 중심으로 회의를 구성하며 캐릭터와 코인을 1:1로 연결하지 않습니다.
 
-회의 상황에 따라 역할별로 발언합니다.
+회의 중 역할:
 
-### 회의 연출
-
-현재 구현:
-
-- 캐릭터 이동
-- 발언자 상태
-- 듣기 상태
-- 생각 상태
-- 포인트 / 화면 지시
-- Risk Alert 감정 상태
-- 현재 발언자 강조
-- 캐릭터 위 말풍선
-- 이름 / 역할 표시
-- 발언 내용 표시
-- 말풍선 애니메이션
-- 화면의 코인별 데이터 포커스
-
-### Speech Bubble
-
-현재 `SPEAK` 이벤트의:
-
-```
-speaker
-text
-duration
-```
-
-을 그대로 사용합니다.
-
-따라서 별도의 AI 호출 없이 현재 발언자의 캐릭터 위에 해당 발언 내용이 표시됩니다.
-
-긴 발언은 말풍선에서 제한된 줄 수로 보여주고 전체 내용은 하단 transcript에서 확인할 수 있도록 구성되어 있습니다.
+- Leader → 핵심 질문과 결론
+- Market → 가격 / 거래량 / 시장 구조
+- On-chain → 온체인 / 생태계 근거
+- Altcoin → 상대 강도 / 순환
+- Risk → 반대 근거 / 위험
+- Trader → 확인 / 무효화 조건
 
 ---
 
-## 6. Meeting Fullscreen / Terminal Transcript
+## 11. 약 20분 Story-driven Meeting
 
-회의 화면에는 별도의 **Meeting Fullscreen Mode**가 있습니다.
-
-전체화면에서는:
-
-- 2D 회의실
-- 캐릭터
-- 모니터
-- 재생 컨트롤
-- 하단 transcript
-
-을 회의 전용 화면으로 구성합니다.
-
-브라우저의 실제 Fullscreen API가 아니라 앱 내부 overlay 방식입니다.
-
-### Transcript
-
-하단에는 VS Code 터미널과 유사한 형태의 회의 로그 영역을 사용합니다.
+현재 Meeting Engine은 전체 이벤트 시간을 자동 정규화합니다.
 
 목표:
 
-- 현재 회의 진행 상황 확인
-- 발언 기록 확인
-- 이벤트 진행 위치 확인
+- 1x → 약 20분
+- 2x → 약 10분
+
+Story Mode에 따라:
+
+- 분석 순서
+- 논쟁 순서
+- Risk 개입
+- Turning Point
+- 화면 전환
+- 결론
+
+이 달라질 수 있습니다.
+
+---
+
+## 12. 실시간 회의 시장 신호
+
+회의 중 Binance WebSocket 데이터는 `LiveMeetingController`에서 관찰할 수 있습니다.
+
+현재 탐지 기준:
+
+- 최근 30초 window
+- 최소 약 0.7% 움직임
+- 3회 연속 방향 확인
+- 120초 cooldown
+- 최대 5개 live trigger
+
+신호 예:
+
+```
+BTC
+최근 30초 +0.82%
+↓
+실시간 흐름 확인
+↓
+Live SPEAK
+↓
+다른 역할의 REPLY
+```
+
+Live 발언은 일반 발언과 구분되어 Office에서 **LIVE MARKET** 표시로 보여집니다.
+
+> 현재 live signal은 회의의 안전한 이벤트 지점에서 주입하는 단계입니다. 시장 신호를 항상 먼저 수집한 뒤 안전 지점에서 queue로 주입하는 구조는 다음 안정화 단계의 핵심 과제입니다.
+
+---
+
+## 13. 2D Office UI
+
+CSS / SVG 기반의 2D 픽셀풍 Office입니다.
+
+현재 구현:
+
+- 2D 회의실
+- 6개 캐릭터
+- 책상 / 모니터
+- 코인 ticker
+- 시장 monitor
+- 캐릭터 이동
+- 발언 상태
+- 듣기 상태
+- 생각 상태
+- Point / Screen
+- Risk Alert
+- Active Speaker Highlight
+- Speech Bubble
+- Transcript
+- 가격 변화 pulse
+- Live Market Speech 표시
+
+### Live Price Visual
+
+가격이 WebSocket으로 변경되면:
+
+- focused monitor 가격 pulse
+- ticker 가격 pulse
+- 상승 / 하락 방향별 animation
+
+을 표시합니다.
+
+시장 모니터에는:
+
+```
+DATA: LIVE / LIVE SYNC ...
+● STREAM
+```
+
+형태의 live indicator가 표시됩니다.
+
+---
+
+## 14. Meeting Fullscreen / Transcript
+
+회의 화면은 앱 내부 fullscreen overlay 방식입니다.
+
+구성:
+
+- 2D Office
+- 캐릭터
+- Monitor
+- 재생 속도
+- 회의 진행 상태
+- 현재 발언자
+- Speech Bubble
+- 하단 terminal-style transcript
+
+Transcript:
+
 - 자동 스크롤
-- 회의 화면과 실제 발언 데이터의 일치
+- 현재 이벤트 표시
+- 발언자 / 역할 표시
+- intent 표시
+- 전체 발언 기록
 
-현재 ESC로 fullscreen을 종료할 수 있습니다.
-
----
-
-## 7. Market Data Architecture
-
-시장 데이터는 하나의 공통 스냅샷으로 관리합니다.
-
-```
-CoinGecko
-    ↓
-MarketService
-    ↓
-MarketSnapshot
-    ├── Market Dashboard
-    ├── Daily Prompt
-    ├── Meeting Monitor
-    └── Meeting Report
-```
-
-코인별로 개별 API를 호출하는 구조가 아닙니다.
-
-### MarketSnapshot
-
-각 코인에 대해 현재 다음 정보를 관리합니다.
-
-- price
-- change24h
-- volume24h
-- marketCap
-- high24h
-- low24h
-
-스냅샷에는:
-
-- timestamp
-- status
-- coins
-
-가 포함됩니다.
-
-### 상태
-
-| 상태 | 의미 |
-|---|---|
-| LIVE | API에서 정상 수신 |
-| STALE | 이전 저장 데이터 사용 |
-| MOCK | 고정 예시 데이터 사용 |
-| ERROR | 오류 상태 표현용 타입 |
-
-MOCK 데이터는 실시간 가격으로 취급하지 않습니다.
+ESC로 fullscreen을 종료할 수 있습니다.
 
 ---
 
-## 8. Meeting 중 실시간 데이터와 회의 사실 데이터 분리
+## 15. Meeting Snapshot과 Live Market 분리
 
-회의 진행 중 시장 데이터는 30초 간격으로 새로 동기화됩니다.
-
-하지만 회의 보고서의 기준이 되는 `meeting.snapshot`과 현재 live `market`은 분리되어 있습니다.
-
-즉:
+회의 시작 시점의 스냅샷은 `meeting.snapshot`으로 보관합니다.
 
 ```
 Meeting Start Snapshot
         ↓
-보고서 / 당시 회의 사실
-
-Current Live Snapshot
+Meeting Report
         ↓
-회의 화면 모니터 / ticker
+회의 당시 사실 기록
+
+Current Live Market
+        ↓
+Office Monitor
+        ↓
+Ticker / 실시간 화면
 ```
 
-이 구조를 통해 회의 중 화면은 최신 상태를 보여주면서도, 보고서는 회의 시작 당시의 시장 데이터를 기준으로 기록할 수 있습니다.
+따라서 회의 중 시장이 움직여도 보고서는 회의 시작 시점 데이터를 기준으로 작성할 수 있습니다.
 
 ---
 
-## 9. Report / Archive
+## 16. Report / Archive
 
-회의 종료 시:
+회의 종료:
 
 ```
 Meeting
@@ -420,92 +546,22 @@ ArchiveItem
 localStorage
 ```
 
-보고서에는 현재 다음 내용이 포함됩니다.
+현재:
 
-- 날짜
-- 생성 시간
-- 시장 데이터 상태
-- 시장 요약
-- 코인별 분석
-- 가격 / 24h 변화
-- 기술적 관찰
-- Bull / Bear 시나리오
-- 코인별 리스크
-- 뉴스
-- Cross Market
-- Risk
-- Watchlist
-- Conclusion
-- Meeting Summary
-- Sources
-
-### Archive
-
-- 최대 20개 저장
-- 최신 기록 우선
-- 과거 회의 보고서 다시 열기
-- 기록 삭제
+- Meeting Report 생성
+- Meeting Summary 저장
+- 시장 스냅샷 저장
+- CryptoMarketBrief 저장
 - 보고서 텍스트 복사
+- Archive 최대 20개
+- 과거 회의 다시 열기
+- 기록 삭제
 
-localStorage 사용이 불가능해도 현재 세션의 핵심 동작은 유지하도록 처리되어 있습니다.
-
----
-
-## 10. 데이터 모델
-
-주요 TypeScript 모델은 `src/types.ts`에서 관리합니다.
-
-핵심 타입:
-
-```
-CoinId
-MarketStatus
-CoinMarket
-MarketSnapshot
-CoinBrief
-MarketEvent
-CryptoMarketBrief
-MeetingStory
-MeetingEvent
-MeetingState
-MeetingReport
-ArchiveItem
-AppState
-View
-```
-
-### 핵심 데이터 흐름
-
-```
-MarketSnapshot
-      │
-      ├── Prompt Builder
-      │       ↓
-      │   External AI
-      │       ↓
-      │   Parser
-      │       ↓
-      └── CryptoMarketBrief
-                  │
-                  ├── Story
-                  │
-                  ↓
-             MeetingEngine
-                  ↓
-             MeetingEvent[]
-                  ↓
-               Office
-                  ↓
-             MeetingReport
-                  ↓
-               Archive
-```
+localStorage가 실패해도 현재 세션에서 핵심 동작이 유지되도록 방어합니다.
 
 ---
 
-## 11. 프로젝트 구조
-
-현재 주요 구조:
+## 17. 프로젝트 구조
 
 ```
 src/
@@ -529,6 +585,7 @@ src/
 │
 ├── services/
 │   ├── market.ts
+│   ├── liveMeeting.ts
 │   ├── storage.ts
 │   └── clipboard.ts
 │
@@ -536,370 +593,273 @@ src/
     └── format.ts
 ```
 
-### 역할
+### 주요 파일
 
 | 파일 | 역할 |
 |---|---|
-| `App.tsx` | 전체 앱 상태 및 화면 흐름 |
-| `types.ts` | 공통 데이터 모델 |
-| `Office.tsx` | 2D 사무실 / 캐릭터 / 회의 렌더링 |
+| `App.tsx` | 앱 상태 / 화면 흐름 / 회의 진행 |
+| `types.ts` | 공통 TypeScript 모델 |
+| `Office.tsx` | 2D Office 렌더링 |
 | `coins.ts` | 5개 코인 메타데이터 |
-| `team.ts` | 회의 캐릭터 / 역할 |
-| `demo.ts` | fallback / 데모 데이터 |
-| `prompt.ts` | 일일 AI 조사 프롬프트 생성 |
-| `parser.ts` | AI 결과 파싱 / 정규화 |
-| `meeting.ts` | Story 기반 회의 이벤트 생성 |
-| `report.ts` | 보고서 생성 / 텍스트 변환 |
-| `market.ts` | 시장 API 및 snapshot 관리 |
-| `storage.ts` | localStorage 저장 / 복구 |
-| `clipboard.ts` | 프롬프트 / 보고서 복사 |
-| `format.ts` | 가격 / 숫자 / 시간 포맷 |
+| `team.ts` | 6인 회의팀 |
+| `demo.ts` | fallback / demo data |
+| `prompt.ts` | Daily AI Research Prompt |
+| `parser.ts` | AI 결과 parsing / normalization |
+| `meeting.ts` | Story-driven Meeting Event 생성 |
+| `report.ts` | Meeting Report |
+| `market.ts` | CoinGecko + Binance market service |
+| `liveMeeting.ts` | 실시간 시장 신호 탐지 |
+| `storage.ts` | localStorage |
+| `clipboard.ts` | 복사 기능 |
+| `format.ts` | 숫자 / 가격 / 시간 formatting |
 
 ---
 
-## 12. 외부 AI 사용 방식
+## 18. 현재 완료된 개발 단계
 
-현재 앱은 OpenAI / Claude / Gemini 등의 API를 앱에서 직접 호출하지 않습니다.
-
-사용자가:
-
-1. Daily Prompt 생성
-2. Prompt 복사
-3. 외부 AI에 붙여넣기
-4. AI 조사 실행
-5. 결과 복사
-6. 앱의 AI Result Import에 붙여넣기
-7. Parse
-8. Meeting 준비
-
-하는 구조입니다.
-
-장점:
-
-- API Key 관리 부담 감소
-- AI 서비스 교체 가능
-- AI 결과를 사용자가 직접 검토 가능
-- 앱과 AI 공급자의 결합도 감소
-- 불필요한 반복 API 호출 방지
-
----
-
-## 13. 토큰 사용량 최적화
-
-현재 프롬프트는 토큰 사용량을 고려해 설계되어 있습니다.
-
-### Compact Input
-
-시장 데이터를 긴 JSON 객체 대신 다음과 같이 압축합니다.
-
-```
-BTC: [price, change24h, volumeM, low, high]
-```
-
-또한:
-
-- 뉴스 최대 3개
-- 출처 최대 8개
-- 이전 회의 요약 최대 800자
-- Story 배열 길이 제한
-- 프롬프트 전체 최대 약 12,000 characters
-
-등의 제한을 사용합니다.
-
-목표는 **회의 품질을 유지하면서 불필요한 AI 입력 토큰을 줄이는 것**입니다.
-
----
-
-## 14. 안전한 데이터 처리 원칙
-
-AI가 제공한 정보와 시장 API 데이터는 서로 다른 역할을 가집니다.
-
-### 시장 가격
-
-가격 / 거래량 / 고가 / 저가 등의 기본 시장 수치는 MarketSnapshot을 기준으로 합니다.
-
-AI 응답에서 가격을 다시 읽어 시장 가격을 덮어쓰지 않습니다.
-
-### 뉴스
-
-AI가 최근 뉴스와 출처를 제공하도록 요구하지만:
-
-- 출처를 검증할 수 없으면 비워둘 수 있음
-- 존재하지 않는 출처 생성 금지
-- 확인되지 않은 이벤트 생성 금지
-- 확인되지 않은 온체인 데이터 생성 금지
-
-를 프롬프트에서 요구합니다.
-
-### 해석
-
-Bull / Bear Scenario는 예측 결과가 아니라 **조건부 시나리오**로 취급합니다.
-
-앱 자체는 매수 / 매도 지시를 생성하는 구조가 아닙니다.
-
----
-
-## 15. 현재 완료된 개발 단계
-
-### Phase 1 — 기반 정리
-
-- Mock 데이터 분리
-- Coin / Team / Demo 데이터 구조화
-- TypeScript 데이터 모델 정리
+### Phase 1 — 기반 구조
+- Mock / Coin / Team data 분리
+- TypeScript 모델 정리
 
 ### Phase 2 — Market Data
-
-- MarketSnapshot 도입
-- CoinGecko 연동
-- 고가 / 저가 / 거래량 / 시가총액 추가
-- 캐시 / fallback
-- LIVE / STALE / MOCK 상태
+- MarketSnapshot
+- CoinGecko REST
+- 가격 / 거래량 / 시가총액 / 고가 / 저가
+- cache / fallback
+- LIVE / STALE / MOCK
 
 ### Phase 3 — Dashboard
-
-- 5개 코인 시장 카드
-- 24H 변화
-- 거래량
-- 시가총액
-- 24H Range
-- LIVE 상태 표시
+- 5개 코인 카드
+- 24H change
+- volume
+- market cap
+- 24H range
+- live 상태
 
 ### Phase 4 — Daily Research
-
-- Daily Prompt Builder
 - Compact Prompt
 - 이전 회의 context
-- 외부 AI 조사 workflow
+- 외부 AI research workflow
+- token budget
 
 ### Phase 5 — AI Import
+- JSON / Markdown / Text parser
+- 누락 코인 확인
+- normalization
+- CryptoMarketBrief
 
-- JSON parser
-- Markdown parser
-- Plain text parser
-- 누락 코인 처리
-- 정규화된 CryptoMarketBrief 생성
-
-### Phase 6 — Meeting Engine
-
-- MeetingEvent 구조
-- 6개 캐릭터
-- 시장 데이터 기반 발언
-- 코인별 분석
-- Risk / Scenario / Conclusion
-- 보고서 연결
-
-### Phase 7 — Live Meeting
-
-- 회의 중 30초 market sync
-- 모니터 live data
-- SCREEN 이벤트와 코인 포커스 연결
-- 현재 발언자 표시
-
-### Phase 8 — Meeting UX
-
-- Meeting Fullscreen
-- 하단 terminal-style transcript
-- 자동 스크롤
-- ESC 종료
-- Speech Bubble
-- Active Speaker Highlight
-
-### Phase 9 — Story Engine
-
-- MeetingStory 데이터 모델
+### Phase 6 — Story Engine
 - 9개 Story Mode
 - Hook / Central Question
 - Debate Topics
 - Turning Point
 - Surprise
 - Ending Question
-- Watch Items
-- Changes
+- Watch Items / Changes
 
-### Phase 10 — Story-driven 20분 회의
+### Phase 7 — Meeting Engine
+- MeetingEvent
+- 6인 역할
+- Story-driven event sequence
+- 대화 intent
+- 약 20분 normalization
 
-- Story Mode별 실제 이벤트 순서 분기
-- 코인 분석 순서 변화
-- Risk / Catalyst / Rotation / Divergence 등 모드별 연출
-- 약 20분 회의 시간 정규화
-- 2배속 약 10분
+### Phase 8 — 2D Office / Meeting UX
+- 2D Office
+- 캐릭터 상태
+- Speech Bubble
+- Fullscreen overlay
+- terminal transcript
+- auto scroll
+- ESC 종료
+- active speaker
+- 가격 변화 animation
+
+### Phase 9 — Real-time Market Stream
+- Binance WebSocket ticker
+- 5개 코인 실시간 stream
+- 1초 buffer / flush
+- reconnect
+- subscriber architecture
+- CoinGecko market cap 유지
+
+### Phase 10 — Live Meeting Signal
+- 30초 가격 변화 window
+- 방향 확인
+- cooldown
+- 최대 trigger 제한
+- Live SPEAK / REPLY
+- LIVE MARKET 시각 표시
 
 ### Phase 11 — Report / Archive
-
 - MeetingReport
-- Meeting Summary
 - ArchiveItem
 - localStorage
 - 최대 20개 archive
-- 보고서 복사
-- 기록 삭제
+- 보고서 복사 / 삭제
+
+### Phase 12 — External AI Output Hardening
+- JSON code block 강제
+- Canvas / Document 단일 출력 요구
+- URL / citation / markdown link 차단 요구
+- plain source name 요구
+- copy-once / paste-direct workflow
 
 ---
 
-## 16. 현재 확인된 기술적 상태
-
-### 정상적으로 연결된 핵심 파이프라인
+## 19. 현재 확인된 핵심 파이프라인
 
 ```
-MarketService
-   ↓
-MarketSnapshot
-   ↓
-Prompt Builder
-   ↓
-External AI
-   ↓
-Parser
-   ↓
-CryptoMarketBrief
-   ↓
-Meeting Story
-   ↓
-MeetingEngine
-   ↓
+CoinGecko
+    ↓
+Initial MarketSnapshot
+    ↓
+Binance WebSocket
+    ↓
+Live Market Stream
+    ↓
+┌─────────────────────────┐
+│                         │
+↓                         ↓
+Daily Prompt          Live Detector
+↓                         ↓
+External AI           Live Signal
+↓                         │
+Parser                    │
+↓                         │
+CryptoMarketBrief         │
+↓                         │
+Story Engine              │
+↓                         │
+Meeting Engine ←──────────┘
+↓
 MeetingEvent[]
-   ↓
-Office
-   ↓
-MeetingReport
-   ↓
+↓
+2D Office
+↓
+Meeting Report
+↓
 Archive
 ```
 
-### 현재 회의에서 AI를 다시 호출하지 않음
-
-회의 시작 후에는 이미 정규화된 `CryptoMarketBrief`를 사용합니다.
-
-따라서:
+회의 중 AI API를 다시 호출하지 않습니다.
 
 ```
-회의 중
+Meeting 중
 ❌ AI API 호출
-❌ 새로운 AI 분석 요청
-❌ HTML 직접 생성
-```
+❌ HTML 직접 실행
+❌ AI가 UI를 직접 변경
 
-대신:
-
-```
-회의 중
-✓ 기존 Brief 사용
+Meeting 중
+✓ 기존 CryptoMarketBrief 사용
 ✓ MeetingEvent 재생
-✓ Live Market Snapshot 표시
+✓ Binance live market 표시
+✓ Live signal 처리
 ✓ 캐릭터 상태 변경
 ✓ Transcript 출력
 ```
 
 ---
 
-## 17. 아직 구현되지 않은 항목
+## 20. 현재 알려진 안정화 과제
 
-현재 프로젝트는 핵심 프로토타입 구조가 잡힌 단계이며 다음 항목은 후속 개발 대상입니다.
+현재 핵심 기능은 연결되어 있지만, **실제 브라우저 장시간 실행 전 안정화 테스트가 필요합니다.**
+
+우선순위:
+
+1. Live Detector가 시장 신호를 항상 먼저 기록하고 안전한 회의 지점에서 queue로 주입하도록 분리
+2. Binance WebSocket 상태와 Market Data 상태 분리
+3. WebSocket reconnect / duplicate socket / timer / listener 장시간 검증
+4. Live signal 삽입으로 회의 시간이 과도하게 늘어나지 않도록 duration 정책 보정
+5. Market source label을 데이터별 실제 provider와 일치시킴
+6. Parser에 URL / citation 잔여 데이터가 들어왔을 때의 sanitize 강화
+7. localStorage schema / migration 정책
+8. 실제 브라우저에서 20분 회의 + 실시간 stream 장시간 테스트
+9. Report / Archive 재실행 테스트
+10. 모바일 / 작은 화면 검증
+
+### 중요한 설계 원칙
+
+앞으로 live 기능은 다음 구조로 안정화합니다.
+
+```
+Binance WebSocket
+      ↓
+Market Stream
+      ↓
+Live Detector
+      ↓
+Signal Queue
+      ↓
+Meeting Safe Point
+      ↓
+Live Dialogue
+      ↓
+Existing Meeting Flow
+      ↓
+Report / Archive
+```
+
+실시간 탐지와 회의 이벤트 삽입을 분리하는 것이 핵심입니다.
+
+---
+
+## 21. 아직 구현되지 않은 주요 확장
 
 ### Market
-
-- Binance secondary provider
-- Provider 자동 failover
-- 더 세밀한 API rate-limit 처리
-- 시장 데이터 freshness 정책 강화
+- Provider 상태 전용 모델
+- Provider failover
+- freshness 정책 강화
+- rate-limit / reconnect 안정화
 
 ### Research
-
-- 앱 내부 자동 AI API 연동 여부 검토
+- 앱 내부 AI API 연동 검토
 - 자동 뉴스 수집
 - 뉴스 출처 검증 강화
 - 날짜 / 이벤트 검증 강화
 
 ### Meeting
-
-- 캐릭터 간 실제 끼어들기
-- 반박 / 재반박 구조
-- 특정 캐릭터의 발언 후 다른 캐릭터가 즉시 대응
-- Story Mode별 전용 연출 강화
-- 장면 전환
+- queue 기반 실시간 끼어들기
+- 자연스러운 반박 / 재반박
+- 캐릭터별 interjection
+- Story Mode 전용 장면
 - 카메라 연출
-- 회의실 내 이동 패턴 다양화
-- 발언 길이에 따른 자연스러운 애니메이션
-- 더 풍부한 감정 상태
-
-### UI
-
-- 실제 브라우저 Fullscreen API 검토
-- 모바일 / 작은 화면 최적화
-- 화면 전환 애니메이션
-- 회의실 장면 연출 강화
+- 장면 전환
+- 감정 상태 확장
 
 ### Report
-
+- 전체 transcript 저장
+- Turning Point 자동 기록
 - HTML / PDF 보고서
-- Story Mode 기반 보고서 구성
-- 전체 회의 transcript 저장
-- 회의 중 주요 Turning Point 자동 기록
+- Story 기반 보고서
 
 ### Persistence
-
-- IndexedDB 검토
-- 클라우드 Archive 검토
-- 사용자별 저장 구조
-- 데이터 export / import
+- IndexedDB
+- export / import
+- cloud archive
 
 ---
 
-## 18. 다음 개발 우선순위
+## 22. 실행
 
-현재 가장 중요한 다음 단계는 **회의가 실제로 대화처럼 느껴지게 만드는 것**입니다.
-
-현재는 Story Mode에 따라 이벤트 순서가 달라지지만, 다음 단계에서는:
-
-```
-A 발언
-  ↓
-B 반박
-  ↓
-A 재설명
-  ↓
-C 새로운 증거 제시
-  ↓
-Risk 개입
-  ↓
-Leader 정리
-```
-
-와 같은 **대화 관계 자체**를 MeetingEvent에 표현하는 방향이 필요합니다.
-
-그 다음:
-
-1. 캐릭터 끼어들기 / 반박
-2. Story Mode별 고유 장면
-3. Turning Point 연출
-4. 회의 transcript 강화
-5. Report에 실제 회의 내용 저장
-6. PDF / HTML 보고서
-7. Binance fallback
-8. 뉴스 / AI 자동화
-
-순서로 확장할 수 있습니다.
-
----
-
-## 19. 실행
+개발:
 
 ```bash
 npm install
 npm run dev
 ```
 
-프로덕션 빌드:
+빌드:
 
 ```bash
 npm run build
 ```
 
-현재 개발 환경에서는 GitHub 코드 구조와 연결 관계를 점검했으며, 이 문서 갱신 시점에 로컬 브라우저에서 실제 `npm run build`를 실행한 것은 아닙니다.
+현재 README 갱신 시점에는 GitHub 소스 기준 구조를 정리했으며, 로컬 브라우저에서 실제 `npm run build` 및 20분 장시간 실행 테스트를 수행한 것으로 간주하지 않습니다.
 
 ---
 
-## 20. 환경 변수
+## 23. 환경 변수
 
 선택적으로 CoinGecko Demo API Key를 사용할 수 있습니다.
 
@@ -907,19 +867,13 @@ npm run build
 VITE_COINGECKO_DEMO_API_KEY=your_key
 ```
 
-예:
-
-```bash
-cp .env.example .env.local
-```
-
-단, `VITE_` 접두사가 붙은 값은 브라우저 번들에 노출될 수 있으므로 **비밀 키를 저장하면 안 됩니다.**
+`VITE_` 접두사가 붙은 값은 브라우저 번들에 노출될 수 있으므로 비밀 키를 저장하면 안 됩니다.
 
 ---
 
-## 21. 권장 AI 출력 구조
+## 24. 권장 External AI 출력 구조
 
-외부 AI에서 다음 형태의 JSON을 반환하도록 Daily Prompt가 요구합니다.
+Daily Prompt는 다음과 같은 구조의 JSON을 요구합니다.
 
 ```json
 {
@@ -956,61 +910,63 @@ cp .env.example .env.local
 }
 ```
 
-실제 사용 시 `coins`에는 다음 5개 ID가 정확히 한 번씩 포함되어야 합니다.
-
-```
-BTC
-ETH
-BNB
-XRP
-SOL
-```
+실제 결과에는 BTC / ETH / BNB / XRP / SOL이 각각 정확히 한 번씩 포함되어야 합니다.
 
 ---
 
-## 22. 설계 철학
-
-이 프로젝트는 다음 원칙을 유지합니다.
+## 25. 설계 철학
 
 ### 1. Data First
-
 시장 데이터와 AI 해석을 분리합니다.
 
 ### 2. Normalize First
-
 AI 결과는 바로 UI에 사용하지 않고 `CryptoMarketBrief`로 정규화합니다.
 
 ### 3. Event Driven Meeting
-
-회의는 텍스트를 직접 화면에 뿌리는 것이 아니라 `MeetingEvent[]`로 표현합니다.
+회의는 텍스트를 직접 화면에 출력하는 것이 아니라 `MeetingEvent[]`로 표현합니다.
 
 ### 4. Story Before Animation
-
 애니메이션보다 먼저 회의의 논리와 이야기 구조를 만듭니다.
 
 ### 5. Evidence Before Drama
-
-시청자에게 재미있는 회의를 만들되, 근거 없는 사건이나 데이터를 만들어내지 않습니다.
+재미있는 회의를 만들되 근거 없는 데이터나 사건을 만들지 않습니다.
 
 ### 6. External AI First
-
-현재는 외부 AI를 사용자가 직접 선택할 수 있도록 API 공급자와 앱을 분리합니다.
+현재는 외부 AI를 사용자가 선택할 수 있도록 앱과 AI 공급자를 분리합니다.
 
 ### 7. Token Conscious
+반복되는 시장 데이터와 이전 context를 압축해 불필요한 AI 입력을 줄입니다.
 
-매일 반복되는 시장 데이터와 이전 context를 압축해 불필요한 AI 입력을 줄입니다.
+### 8. Live Detection ≠ Live Insertion
+시장 움직임을 탐지하는 것과 회의에 발언을 삽입하는 것을 분리합니다.
 
 ---
 
-## 23. 프로젝트 상태
+## 26. 프로젝트 상태
 
-**현재 단계: Story-driven 2D Crypto AI Meeting Prototype**
+**현재 단계: Real-time / Story-driven 2D Crypto AI Meeting Prototype**
 
-핵심 데이터 파이프라인과 2D 회의 재생 구조는 연결되어 있습니다.
+현재:
 
-현재 가장 큰 개발 과제는 **정적인 순차 발표형 회의에서 실제 토론형 / 방송형 회의로 발전시키는 것**입니다.
+- 5개 핵심 코인 데이터
+- CoinGecko 초기 snapshot
+- Binance WebSocket live stream
+- Daily external AI research
+- ONE CANVAS copy/paste workflow
+- JSON / Markdown / Text parser
+- CryptoMarketBrief normalization
+- 9개 Story Mode
+- 20분 Meeting Engine
+- 6인 2D Office
+- Live Market Speech
+- Meeting Report
+- Archive
 
-이후 개발에서는 새로운 기능을 추가할 때에도 다음 구조를 유지합니다.
+까지 연결되어 있습니다.
+
+다음 핵심 단계는 **실시간 탐지와 회의 Safe Point 삽입을 완전히 분리하고 장시간 브라우저 실행에서 안정성을 검증하는 것**입니다.
+
+전체 구조는 앞으로도 다음 흐름을 유지합니다.
 
 ```
 Market Data
@@ -1034,6 +990,6 @@ Report / Archive
 
 이 프로젝트는 암호화폐 시장 데이터와 리서치 결과를 시각화하고 시나리오를 검토하기 위한 소프트웨어입니다.
 
-시장 데이터는 외부 API 상태에 따라 지연되거나 실패할 수 있으며, AI가 생성한 뉴스 / 해석 / 시나리오는 별도의 검증이 필요합니다.
+시장 데이터는 외부 API 및 WebSocket 상태에 따라 지연되거나 실패할 수 있으며, AI가 생성한 뉴스 / 해석 / 시나리오는 별도의 검증이 필요합니다.
 
-이 프로젝트의 회의 내용은 투자 자문 또는 매매 지시가 아닙니다.
+회의의 Bull / Bear 내용은 조건부 시나리오이며 투자 자문 또는 매매 지시가 아닙니다.
