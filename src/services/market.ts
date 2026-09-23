@@ -1,5 +1,6 @@
 import { COIN_IDS, type CoinMarket, type MarketSnapshot } from "../types";
-import { COIN_META, MOCK_MARKET } from "../data/mock";
+import { COIN_META } from "../data/coins";
+import { MOCK_MARKET } from "../data/demo";
 import { readMarketCache, saveMarketCache } from "./storage";
 
 export interface MarketResult {
