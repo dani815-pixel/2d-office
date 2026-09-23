@@ -364,15 +364,20 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
   font: 8px var(--mono);
 }
 .agent-speech-bubble span {
-  display: -webkit-box;
-  overflow: hidden;
+  display: block;
+  max-height: 150px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 3px;
   color: #1b2820;
   font-size: 11px;
   line-height: 1.5;
   word-break: keep-all;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
 }
+.agent-speech-bubble span::-webkit-scrollbar { width: 4px; }
+.agent-speech-bubble span::-webkit-scrollbar-thumb { background: #829783; border: 0; }
+.agent-speech-bubble span::-webkit-scrollbar-track { background: transparent; }
 @keyframes speech-in {
   from { opacity: 0; transform: translate(-50%, 5px); }
   to { opacity: 1; transform: translate(-50%, 0); }
