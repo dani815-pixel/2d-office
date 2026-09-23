@@ -20,6 +20,10 @@ interface ProviderCoin {
 
 let inFlight: Promise<MarketResult> | null = null;
 let sessionSnapshot: MarketSnapshot | null = null;
+let streamSocket: WebSocket | null = null;
+let streamRetry: number | null = null;
+let streamListeners = new Set<(snapshot: MarketSnapshot) => void>();
+let streamErrorListeners = new Set<(message: string) => void>();
 
 async function fetchFromCoinGecko(): Promise<MarketSnapshot> {
   const params = new URLSearchParams({
@@ -63,6 +67,85 @@ async function fetchFromCoinGecko(): Promise<MarketSnapshot> {
   } finally {
     window.clearTimeout(timeout);
   }
+}
+
+interface BinanceTicker {
+  s: string;
+  c: string;
+  P: string;
+  q: string;
+  h: string;
+  l: string;
+}
+
+const BINANCE_SYMBOLS = COIN_IDS.map((id) => `${COIN_META[id].providerId === "binancecoin" ? "BNB" : id}USDT`.toLowerCase());
+
+function applyBinanceTicker(ticker: BinanceTicker) {
+  if (!sessionSnapshot || sessionSnapshot.status === "MOCK") return;
+  const id = COIN_IDS.find((coinId) => BINANCE_SYMBOLS.includes(ticker.s.toLowerCase().replace("usdt", "usdt")));
+  if (!id) return;
+  const price = Number(ticker.c);
+  const change24h = Number(ticker.P);
+  const volume24h = Number(ticker.q);
+  const high24h = Number(ticker.h);
+  const low24h = Number(ticker.l);
+  if (![price, change24h, volume24h, high24h, low24h].every(Number.isFinite)) return;
+
+  sessionSnapshot = {
+    ...sessionSnapshot,
+    timestamp: new Date().toISOString(),
+    status: "LIVE",
+    coins: sessionSnapshot.coins.map((coin) => coin.id === id
+      ? { ...coin, price, change24h, volume24h, high24h, low24h }
+      : coin),
+  };
+  streamListeners.forEach((listener) => listener(sessionSnapshot!));
+}
+
+function connectBinanceStream() {
+  if (streamSocket || typeof WebSocket === "undefined") return;
+  const streams = BINANCE_SYMBOLS.map((symbol) => `${symbol}@ticker`).join("/");
+  streamSocket = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+  streamSocket.onmessage = (event) => {
+    try {
+      const payload = JSON.parse(event.data) as { data?: BinanceTicker };
+      if (payload.data?.s) applyBinanceTicker(payload.data);
+    } catch {
+      streamErrorListeners.forEach((listener) => listener("Binance 실시간 데이터 형식을 읽을 수 없습니다."));
+    }
+  };
+  streamSocket.onerror = () => {
+    streamErrorListeners.forEach((listener) => listener("Binance WebSocket 연결 오류"));
+  };
+  streamSocket.onclose = () => {
+    streamSocket = null;
+    if (streamListeners.size === 0) return;
+    if (streamRetry !== null) window.clearTimeout(streamRetry);
+    streamRetry = window.setTimeout(() => {
+      streamRetry = null;
+      connectBinanceStream();
+    }, 3000);
+  };
+}
+
+export function subscribeMarketStream(
+  onSnapshot: (snapshot: MarketSnapshot) => void,
+  onError?: (message: string) => void,
+) {
+  streamListeners.add(onSnapshot);
+  if (onError) streamErrorListeners.add(onError);
+  connectBinanceStream();
+
+  return () => {
+    streamListeners.delete(onSnapshot);
+    if (onError) streamErrorListeners.delete(onError);
+    if (streamListeners.size === 0) {
+      if (streamRetry !== null) window.clearTimeout(streamRetry);
+      streamRetry = null;
+      streamSocket?.close();
+      streamSocket = null;
+    }
+  };
 }
 
 export function getMarketSnapshot(force = false): Promise<MarketResult> {
