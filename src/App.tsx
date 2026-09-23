@@ -128,7 +128,8 @@ export default function App() {
           if (previous.meeting.status !== "RUNNING") return { ...previous, market: snapshot };
           let nextMeeting = previous.meeting;
           const current = nextMeeting.events[nextMeeting.index];
-          if (current?.type !== "END") {
+          const canInterrupt = current?.type === "PAUSE" || current?.type === "LISTEN" || current?.type === "SCREEN";
+          if (canInterrupt) {
             liveMeetingRef.current.observe(snapshot, (signal) => {
               const events = [...nextMeeting.events];
               events.splice(Math.min(nextMeeting.index + 1, events.length), 0, {
