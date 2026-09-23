@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { COIN_IDS, type CharacterStatus, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingState, type RoleId } from "../types";
 import { COIN_META } from "../data/coins";
 import { TEAM } from "../data/team";
-import { changeText, priceUSD } from "../utils/format";
+import { changeText, priceUSD, timeText } from "../utils/format";
 
 const DESK_POSITIONS: Record<RoleId, [number, number]> = {
   leader: [13, 51], market: [32, 51], onchain: [13, 73],
@@ -111,7 +111,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
               </div></div>
             )}
           </div>
-          <div className="monitor-bottom"><span>DATA: {market.status}</span><span>● ● ●</span></div>
+          <div className="monitor-bottom"><span>DATA: {market.status} / SYNC {timeText(market.timestamp)}</span><span>● ● ●</span></div>
         </div>
 
         {TEAM.map((agent, index) => {
