@@ -118,13 +118,17 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
           const moved = !!active && (meeting.status === "FINISHED" || meeting.events.slice(0, meeting.index + 1).some((event) => event.type === "MOVE" && event.speaker === agent.id));
           const [left, top] = moved ? TABLE_POSITIONS[agent.id] : DESK_POSITIONS[agent.id];
           const state = agentState(agent.id);
+          const dialogueTarget = current?.replyTo;
+          const isTargeted = !!dialogueTarget && dialogueTarget === agent.id && current?.speaker !== agent.id;
+          const intent = current?.intent || "STATEMENT";
           return (
-            <div key={agent.id} className={`scene-agent ${moved ? "scene-agent--meeting" : ""} ${state === "SPEAK" ? "scene-agent--speaking scene-agent--active-speaker" : ""} ${state === "WALK" ? "scene-agent--walking" : ""} ${state === "POINT" ? "scene-agent--pointing" : ""} ${state === "ALERT" ? "scene-agent--alert" : ""}`}
+            <div key={agent.id} className={`scene-agent ${moved ? "scene-agent--meeting" : ""} ${state === "SPEAK" ? "scene-agent--speaking scene-agent--active-speaker" : ""} ${isTargeted ? "scene-agent--dialogue-target" : ""} ${current?.type === "SPEAK" && intent === "CHALLENGE" && current.speaker === agent.id ? "scene-agent--challenging" : ""} ${current?.type === "SPEAK" && intent === "QUESTION" && current.speaker === agent.id ? "scene-agent--questioning" : ""} ${state === "WALK" ? "scene-agent--walking" : ""} ${state === "POINT" ? "scene-agent--pointing" : ""} ${state === "ALERT" ? "scene-agent--alert" : ""}`}
               style={{ left: `${left}%`, top: `${top}%`, "--agent-color": agent.color } as CSSProperties} title={`${agent.name} / ${agent.role} / ${state}`}>
+              {isTargeted && <span className="agent-interjection">RESPONSE</span>}
               {state === "SPEAK" && <span className="agent-voice"><i /><i /><i /></span>}
               {state === "SPEAK" && current?.type === "SPEAK" && current.speaker === agent.id && current.text && (
-                <div className={`agent-speech-bubble agent-speech-bubble--${left < 23 ? "left" : left > 77 ? "right" : "center"}`} role="status" aria-live="polite">
-                  <strong>{agent.name} <small>{agent.short}</small></strong>
+                <div className={`agent-speech-bubble agent-speech-bubble--${left < 23 ? "left" : left > 77 ? "right" : "center"} agent-speech-bubble--${intent.toLowerCase()}`} role="status" aria-live="polite">
+                  <strong>{agent.name} <small>{agent.short}</small><em>{intent}</em></strong>
                   <span>{current.text}</span>
                 </div>
               )}
