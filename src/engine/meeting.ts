@@ -28,21 +28,41 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     pause(3200);
   };
   const pause = (duration = 2200) => events.push({ type: "PAUSE", duration });
+  const splitSpeech = (text: string, maxLength = 92): string[] => {
+    const clean = text.trim();
+    if (clean.length <= maxLength) return [clean];
+    const sentences = clean.split(/(?<=[.!?。！？])\s*/).filter(Boolean);
+    const chunks: string[] = [];
+    let current = "";
+    for (const sentence of sentences) {
+      if (!current) current = sentence;
+      else if ((current + " " + sentence).length <= maxLength) current += " " + sentence;
+      else { chunks.push(current); current = sentence; }
+    }
+    if (current) chunks.push(current);
+    if (chunks.length === 1) {
+      chunks.length = 0;
+      for (let i = 0; i < clean.length; i += maxLength) chunks.push(clean.slice(i, i + maxLength));
+    }
+    return chunks;
+  };
+
   const say = (
     speaker: RoleId,
     text: string,
     intent: MeetingEvent["intent"] = "STATEMENT",
     replyTo?: RoleId,
   ) => {
-    if (!text.trim()) return;
-    events.push({
-      type: "SPEAK",
-      speaker,
-      text,
-      intent,
-      replyTo,
-      duration: Math.min(14000, Math.max(7000, 4200 + text.length * 38)),
-    });
+    for (const chunk of splitSpeech(text)) {
+      events.push({
+        type: "SPEAK",
+        speaker,
+        text: chunk,
+        intent,
+        replyTo,
+        duration: Math.min(14000, Math.max(5000, 3200 + chunk.length * 34)),
+      });
+    }
   };
   const voice = (role: RoleId, kind: "challenge" | "question" | "summary" | "evidence") => {
     const lines: Record<RoleId, Record<string, string>> = {
