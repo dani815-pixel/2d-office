@@ -145,6 +145,14 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [app.meeting, speed, finishMeeting]);
   useEffect(() => {
+    if (!meetingFullscreen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMeetingFullscreen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [meetingFullscreen]);
+  useEffect(() => {
     if (view === "MEETING" && app.meeting.status !== "READY") {
       const scroller = transcriptEnd.current?.parentElement;
       scroller?.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" });
