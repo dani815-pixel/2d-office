@@ -685,9 +685,12 @@ src/
 
 ### Phase 10 — Live Meeting Signal
 - 30초 가격 변화 window
-- 방향 확인
-- cooldown
-- 최대 trigger 제한
+- 3회 연속 방향 확인
+- 약 0.7% 이상 움직임 조건
+- 120초 cooldown
+- 최대 5개 trigger
+- pending signal queue
+- safe point 주입
 - Live SPEAK / REPLY
 - LIVE MARKET 시각 표시
 
@@ -703,6 +706,7 @@ src/
 - Canvas / Document 단일 출력 요구
 - URL / citation / markdown link 차단 요구
 - plain source name 요구
+- parser URL / citation sanitize
 - copy-once / paste-direct workflow
 
 ---
@@ -849,13 +853,71 @@ npm install
 npm run dev
 ```
 
-빌드:
+기본 흐름은 `OFFICE → MARKET → DAILY PROMPT → AI IMPORT → MEETING → REPORT → ARCHIVE` 순서로 확인합니다.
+
+AI 없이 테스트하려면 `AI IMPORT`에서 **데모 결과 채우기 → 분석 결과 가져오기 → 회의 준비**를 사용합니다.
+
+회의에서는 `START MEETING → 1x/2x → PAUSE/RESUME → NEXT EVENT → 전체화면 → ESC → 회의 종료 → 보고서 → Archive`를 확인합니다.
+
+### Parser 테스트
+
+다음 입력을 각각 확인합니다.
+
+1. 정상 JSON
+2. JSON code fence
+3. Markdown
+4. Plain text
+5. URL이 포함된 news/source
+6. `[Reuters](https://...)` 형태의 Markdown link
+7. `【citation】` 형태의 citation marker
+8. 일부 코인이 누락된 결과
+9. 잘못된 JSON
+
+URL / Markdown link / citation marker가 들어와도 정규화된 Brief에 그대로 남지 않는지 확인합니다.
+
+### 실시간 Market / Meeting 테스트
+
+- BTC / ETH / BNB / XRP / SOL 가격 갱신
+- 24H change / volume / high / low 갱신
+- Binance WS source 표시
+- 가격 pulse
+- 회의 중 live signal 탐지
+- safe point에서 Live SPEAK / REPLY 삽입
+- `LIVE MARKET` 표시
+- WebSocket 오류 반복 여부
+- 전체회의 흐름 유지
+
+가능하면 10~20분 이상 실행해 reconnect, duplicate socket, timer/listener 문제를 확인합니다.
+
+### Production build
 
 ```bash
 npm run build
+npm run preview
 ```
 
-현재 README 갱신 시점에는 GitHub 소스 기준 구조를 정리했으며, 로컬 브라우저에서 실제 `npm run build` 및 20분 장시간 실행 테스트를 수행한 것으로 간주하지 않습니다.
+Vite는 production build에 `vite build`를 사용하고, 기본 build 결과는 `dist`에 생성됩니다. `vite preview`는 로컬에서 production build를 확인할 때 사용합니다. citeturn0search0turn0search1
+
+### 테스트 기록
+
+| 항목 | 결과 |
+|---|---|
+| `npm install` | PASS / FAIL |
+| `npm run build` | PASS / FAIL |
+| Market REST | PASS / FAIL |
+| Binance WebSocket | PASS / FAIL |
+| Prompt copy | PASS / FAIL |
+| AI Import JSON | PASS / FAIL |
+| AI Import Markdown | PASS / FAIL |
+| Parser sanitize | PASS / FAIL |
+| Meeting playback | PASS / FAIL |
+| Live signal | PASS / FAIL |
+| Report | PASS / FAIL |
+| Archive | PASS / FAIL |
+| Refresh persistence | PASS / FAIL |
+| Fullscreen / ESC | PASS / FAIL |
+
+**중요:** 현재까지 실제 로컬 브라우저 장시간 테스트와 production build를 완료한 것으로 간주하지 않습니다. 위 항목은 로컬 환경에서 직접 검증해야 합니다.
 
 ---
 
@@ -964,7 +1026,7 @@ AI 결과는 바로 UI에 사용하지 않고 `CryptoMarketBrief`로 정규화�
 
 까지 연결되어 있습니다.
 
-다음 핵심 단계는 **실시간 탐지와 회의 Safe Point 삽입을 완전히 분리하고 장시간 브라우저 실행에서 안정성을 검증하는 것**입니다.
+다음 핵심 단계는 **로컬 브라우저에서 build → market stream → parser → meeting → live signal → report → archive 전체 흐름을 실제로 검증하고 발견된 런타임 문제를 순차적으로 수정하는 것**입니다.
 
 전체 구조는 앞으로도 다음 흐름을 유지합니다.
 
