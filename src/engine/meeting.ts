@@ -1,4 +1,4 @@
-import { COIN_IDS, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingEvent, type RoleId } from "../types";
+import { COIN_IDS, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingEvent, type MeetingMemory, type RoleId } from "../types";
 
 
 const analystFor: Record<CoinId, RoleId> = {
@@ -8,7 +8,7 @@ const analystFor: Record<CoinId, RoleId> = {
 const TARGET_MEETING_MS = 20 * 60 * 1000;
 const ROLES: RoleId[] = ["leader", "market", "onchain", "altcoin", "risk", "trader"];
 
-export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnapshot): MeetingEvent[] {
+export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnapshot, previousMemory?: MeetingMemory): MeetingEvent[] {
   const events: MeetingEvent[] = [];
   const story = brief.story;
   const mode = story?.mode || "CROSSROADS";
@@ -149,6 +149,28 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     }
     if (coin.risks?.[1]) say("risk", "추가 리스크는 " + coin.risks[1], "EVIDENCE", analyst);
   };
+  const previousOpen = previousMemory?.openFollowUps ?? [];
+  const previousResolved = previousMemory?.resolvedFollowUps ?? [];
+  const continuityIntro = () => {
+    if (!previousMemory) return;
+    say("leader", "지난 회의에서 남겨둔 질문부터 보겠습니다. " + previousMemory.question, "SUMMARY");
+    if (previousOpen.length) {
+      const item = previousOpen[0];
+      say("leader", "아직 열려 있는 건 이겁니다. " + item.text, "QUESTION");
+      const coin = item.coin ? coinBrief(item.coin) : undefined;
+      if (coin?.verification?.[0]) {
+        say("leader", "오늘은 " + coin.verification[0] + "을 확인해서 이 질문을 좁혀보죠.", "QUESTION");
+      } else {
+        say("leader", "오늘 확인되는 데이터가 있는지부터 보겠습니다.", "QUESTION");
+      }
+    } else if (previousResolved.length) {
+      say("leader", "지난 회의에서 확인하기로 한 항목은 오늘 자료에서 답이 나온 부분부터 정리하죠.", "SUMMARY");
+    } else {
+      say("leader", "지난 회의의 핵심을 기준으로 오늘 달라진 점부터 보겠습니다.", "SUMMARY");
+    }
+    pause(1800);
+  };
+
   const moveToTable = () => {
     events.push({ type: "MOVE", target: "TABLE", duration: 3200 });
     events.push({ type: "LISTEN", duration: 2500 });
@@ -191,6 +213,7 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
 
   moveToTable();
   screen("OVERVIEW");
+  continuityIntro();
   say("leader", story?.openingHook || "오늘 시장에서 가장 중요한 질문부터 정리하겠습니다.");
   say("market", brief.marketSummary || "시장 전반 요약이 제공되지 않았습니다.");
   say("leader", story?.centralQuestion || "오늘의 가격 움직임이 어떤 조건에서 의미를 갖는지 확인하겠습니다.");
@@ -261,6 +284,10 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
   pause();
 
   screen("CONCLUSION");
+  if (previousOpen.length) {
+    const next = previousOpen[0];
+    say("leader", "오늘 확인하지 못한 부분은 다음 회의로 넘기겠습니다: " + next.text, "SUMMARY");
+  }
   say("leader", "오늘의 관찰 목록은 " + (story?.watchItems?.length ? story.watchItems.join(", ") : watchlist.join(", ")) + "입니다.");
   if (brief.viewerTakeaways?.length) say("leader", "메모할 핵심은 " + brief.viewerTakeaways.join(" / ") + "입니다.", "SUMMARY");
   say("trader", story?.endingQuestion || "다음 확인 시점까지 어떤 신호가 실제로 나타나는지 보겠습니다.");
