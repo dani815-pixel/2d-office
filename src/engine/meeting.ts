@@ -6,7 +6,6 @@ const analystFor: Record<CoinId, RoleId> = {
 };
 
 const TARGET_MEETING_MS = 20 * 60 * 1000;
-const ROLES: RoleId[] = ["leader", "market", "onchain", "altcoin", "risk", "trader"];
 
 export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnapshot, previousMemory?: MeetingMemory): MeetingEvent[] {
   const events: MeetingEvent[] = [];
