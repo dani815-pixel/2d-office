@@ -74,11 +74,23 @@ Do not assign each character to one coin. Give the meeting room reasons to disag
 Do not invent data for any role.
 
 NEWS/SOURCES:
-Use recent, verifiable information only. For each news item use "title | source | short summary". Cite up to ${PROMPT_BUDGET.maxSources} reliable sources. If browsing/verification is unavailable, leave news/sources empty and explicitly state that recent verification was unavailable. Never invent sources, dates, events, quotes, prices, or on-chain facts.
+Use recent, verifiable information only. For each news item use "title | source | short summary".
+IMPORTANT OUTPUT SAFETY:
+- Do NOT output URLs, Markdown links, footnotes, citation markers, reference IDs, or inline web citations such as [text](https://...) or 【...】.
+- For source fields, use plain text only, e.g. "Reuters" or "CoinDesk". Never append a URL.
+- If browsing/verification is unavailable, leave news/sources empty and explicitly state that recent verification was unavailable.
+- Never invent sources, dates, events, quotes, prices, or on-chain facts.
 
 OUTPUT:
-Return JSON only, no code fences or commentary:
-{"date":"YYYY-MM-DD","marketSummary":"max 2 sentences","story":{"mode":"DIVERGENCE","title":"...","openingHook":"...","centralQuestion":"...","debateTopics":["..."],"turningPoint":"...","surprise":"...","endingQuestion":"...","watchItems":["..."],"changes":["..."]},"coins":[{"id":"BTC","summary":"max 2 sentences","technical":["..."],"news":["title | source | short summary"],"bullScenario":"one sentence","bearScenario":"one sentence","risks":["..."]}],"globalFactors":["..."],"events":["..."],"risks":["..."],"correlations":["..."],"sources":["..."]}
+Return EXACTLY ONE JSON code block and nothing else. Do not write any explanation before or after it.
+The user will copy the entire response and paste it directly into the app.
+Inside the JSON, use only valid JSON: double quotes for strings, no trailing commas, no comments.
+Do not place Markdown, citations, URLs, or unescaped line breaks inside JSON strings.
+If your interface automatically adds web citations, do not include them in the output; use only the plain source name.
+Format:
+```json
+{"date":"YYYY-MM-DD","marketSummary":"max 2 sentences","story":{"mode":"DIVERGENCE","title":"...","openingHook":"...","centralQuestion":"...","debateTopics":["..."],"turningPoint":"...","surprise":"...","endingQuestion":"...","watchItems":["..."],"changes":["..."]},"coins":[{"id":"BTC","summary":"max 2 sentences","technical":["..."],"news":["title | source | short summary"],"bullScenario":"one sentence","bearScenario":"one sentence","risks":["..."]}],"globalFactors":["..."],"events":["..."],"risks":["..."],"correlations":["..."],"sources":["Reuters","CoinDesk"]}
+```
 Include BTC, ETH, BNB, XRP, SOL exactly once. Keep every array concise. Do not repeat input data or instructions. The story must be grounded in evidence and should create a different meeting narrative when the evidence genuinely differs.`;
 
   return prompt.slice(0, PROMPT_BUDGET.maxChars);
