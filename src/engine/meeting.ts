@@ -64,6 +64,14 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
       });
     }
   };
+  const characterLead: Record<RoleId, string> = {
+    leader: "좋습니다. 핵심만 짚어보죠.",
+    market: "숫자를 놓고 보면 조금 다르게 보입니다.",
+    onchain: "맥락을 하나 더 붙여서 볼 필요가 있습니다.",
+    altcoin: "저는 알트 흐름을 같이 봐야 한다고 봐요.",
+    risk: "잠깐, 반대 조건도 확인해보죠.",
+    trader: "차트에서는 이 부분이 먼저 보여요.",
+  };
   const voice = (role: RoleId, kind: "challenge" | "question" | "summary" | "evidence") => {
     const lines: Record<RoleId, Record<string, string>> = {
       leader: { challenge: "잠시 정리하죠. 이 주장의 핵심 조건부터 보겠습니다.", question: "그렇다면 무엇을 확인해야 판단을 바꿀 수 있을까요?", summary: "좋습니다. 핵심 조건을 회의 기록에 남기겠습니다.", evidence: "이 부분은 확인된 사실과 해석을 분리해서 보겠습니다." },
@@ -90,14 +98,15 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     say(proposer, cleanTopic, "STATEMENT");
     pause(1400);
     react(challenger);
-    say(challenger, "그 부분은 동의하지만, " + topicShort + "만으로 결론을 내리기는 이릅니다.", "CHALLENGE", proposer);
+    const challengerLead = characterLead[challenger];
+    say(challenger, challengerLead + " " + topicShort + "만으로 결론을 내리기는 이릅니다.", "CHALLENGE", proposer);
     react(response, "ALERT");
-    say(response, "맞습니다. 그렇다면 제가 확인하고 싶은 건 이겁니다. " + voice(response, "question"), "QUESTION", challenger);
+    say(response, "맞습니다. 그럼 이걸 확인해보죠. " + voice(response, "question"), "QUESTION", challenger);
     pause(1200);
     react(challenger);
     say(challenger, "그 조건이 확인되면 방금 주장의 신뢰도가 올라갈 수 있습니다. 반대로 확인되지 않으면 해석을 낮춰야 합니다.", "REPLY", response);
     react("risk", "ALERT");
-    say("risk", "저는 한 가지를 더 보겠습니다. " + topicShort + "이 반대로 움직일 가능성도 열어두죠.", "CHALLENGE", challenger);
+    say("risk", "한 가지 더 보죠. " + topicShort + "이 반대로 움직일 가능성도 열어두겠습니다.", "CHALLENGE", challenger);
     react("leader");
     say("leader", "좋습니다. 지금까지 나온 의견을 나누면, 확인된 사실은 하나이고 해석은 두 갈래입니다.", "SUMMARY", "risk");
     say("leader", "다음으로는 이 논쟁을 판단할 실제 데이터가 있는지 확인하겠습니다.", "QUESTION", "risk");
