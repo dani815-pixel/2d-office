@@ -166,6 +166,10 @@ export function parseResearch(raw: string): ParseResult {
       bullScenario: stringValue(coin.bullScenario ?? coin.bull_scenario, 240),
       bearScenario: stringValue(coin.bearScenario ?? coin.bear_scenario, 240),
       risks: listValue(coin.risks),
+      interpretation: stringValue(coin.interpretation, 320),
+      counterView: stringValue(coin.counterView ?? coin.counter_view, 320),
+      verification: listValue(coin.verification, 3),
+      takeaways: listValue(coin.takeaways, 3),
     });
   }
   if (![...recognized.values()].some((coin) => coin.summary || coin.technical.length)) {
@@ -206,6 +210,7 @@ export function parseResearch(raw: string): ParseResult {
     events,
     risks,
     correlations: listValue(data.correlations, 8),
+    viewerTakeaways: listValue(data.viewerTakeaways ?? data.viewer_takeaways, 5),
     sources: listValue(data.sources, 8).map((source) => cleanSourceText(source, 240)).filter(Boolean),
     story,
   };
