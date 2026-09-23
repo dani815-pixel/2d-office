@@ -115,28 +115,6 @@ function stopStreamFlush() {
   streamBuffer.clear();
 }
 
-function applyBinanceTickerLegacy(ticker: BinanceTicker) {
-  if (!sessionSnapshot || sessionSnapshot.status === "MOCK") return;
-  const id = COIN_IDS.find((coinId) => BINANCE_SYMBOLS.includes(ticker.s.toLowerCase().replace("usdt", "usdt")));
-  if (!id) return;
-  const price = Number(ticker.c);
-  const change24h = Number(ticker.P);
-  const volume24h = Number(ticker.q);
-  const high24h = Number(ticker.h);
-  const low24h = Number(ticker.l);
-  if (![price, change24h, volume24h, high24h, low24h].every(Number.isFinite)) return;
-
-  sessionSnapshot = {
-    ...sessionSnapshot,
-    timestamp: new Date().toISOString(),
-    status: "LIVE",
-    coins: sessionSnapshot.coins.map((coin) => coin.id === id
-      ? { ...coin, price, change24h, volume24h, high24h, low24h }
-      : coin),
-  };
-  streamListeners.forEach((listener) => listener(sessionSnapshot!));
-}
-
 function connectBinanceStream() {
   if (streamSocket || typeof WebSocket === "undefined") return;
   const streams = BINANCE_SYMBOLS.map((symbol) => `${symbol}@ticker`).join("/");
