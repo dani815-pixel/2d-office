@@ -1,5 +1,5 @@
 import { COIN_IDS, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingEvent, type RoleId } from "../types";
-import { changeText, priceUSD } from "../utils/format";
+
 
 const analystFor: Record<CoinId, RoleId> = {
   BTC: "market", ETH: "onchain", BNB: "altcoin", XRP: "altcoin", SOL: "onchain",
