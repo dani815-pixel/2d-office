@@ -674,6 +674,47 @@ Leader 정리
 - 전문성을 유지하면서 실제 회의 같은 구어체 구현
 
 ### STEP 4 — 시청자용 Highlight / Note
+
+### STEP 5 — 풍부한 시장 해석 / 검증 / 시청자 Takeaway
+
+Daily Prompt와 `CryptoMarketBrief`를 확장해 단순 뉴스 요약을 넘어 **사실 → 해석 → 반대 해석 → 검증 조건 → 시청자 메모** 흐름을 보존합니다.
+
+추가된 코인별 분석 필드:
+
+- `interpretation` — 데이터에 대한 해석
+- `counterView` — 반대 방향의 해석
+- `verification` — 해석을 확인하거나 무효화할 조건
+- `takeaways` — 시청자가 메모할 핵심
+
+시장 전체에는:
+
+- `viewerTakeaways` — 오늘의 핵심 메모 포인트 3~5개
+
+프롬프트 원칙:
+
+- 확인된 사실과 해석을 명확히 분리
+- 상관관계를 인과관계로 단정하지 않음
+- 확인된 이벤트와 예상 영향 구분
+- 각 논쟁에 반대 해석과 검증 조건 포함
+- 근거가 약하면 억지로 결론을 만들지 않음
+- 기존 `PROMPT_BUDGET.maxChars = 12000`을 유지해 입력량 증가를 제한
+
+Meeting Engine에서도 이 데이터를 사용합니다.
+
+```
+FACT
+ ↓
+INTERPRETATION
+ ↓
+COUNTER VIEW
+ ↓
+VERIFICATION
+ ↓
+VIEWER TAKEAWAY
+```
+
+이를 통해 회의가 단순히 "무슨 뉴스가 있었는가"를 말하는 것을 넘어 **왜 그렇게 해석할 수 있는지, 반대로 볼 근거는 무엇인지, 무엇을 확인해야 하는지**까지 토론하도록 확장했습니다.
+
 회의 중 중요한 내용을 시청자가 바로 메모할 수 있도록 `HIGHLIGHT` 이벤트를 추가했습니다.
 
 지원 유형:
