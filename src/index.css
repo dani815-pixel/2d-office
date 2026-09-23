@@ -556,3 +556,13 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
   35% { opacity: 1; transform: scale(1); }
   100% { opacity: .35; transform: scale(.96); }
 }
+
+.office-unit--turning-point .office-canvas { animation: turning-room-pulse .9s ease-out; }
+.office-unit--turning-point .scene-toolbar { border-color: #8f7848; }
+.office-unit--turning-point .wall-monitor { box-shadow: 0 0 0 1px #c7a76b55, 0 0 32px #c7a76b22; }
+.office-unit--turning-point .scene-agent--active-speaker .pixel-agent { filter: brightness(1.16) drop-shadow(0 0 10px var(--agent-color)) drop-shadow(0 0 22px #d7b96866); }
+.turning-point-banner { position:absolute; left:50%; top:12px; z-index:60; min-width:190px; padding:8px 16px; border:1px solid #b39455; background:#161812ef; box-shadow:0 8px 30px #02070788; transform:translateX(-50%); text-align:center; animation:turning-banner-in .25s ease-out; pointer-events:none; }
+.turning-point-banner span { display:block; color:#d9c27d; font:8px var(--mono); letter-spacing:.18em; }
+.turning-point-banner strong { display:block; margin-top:3px; color:#f1ead5; font:12px var(--mono); letter-spacing:.08em; }
+@keyframes turning-room-pulse { 0%{filter:brightness(1)} 35%{filter:brightness(1.14)} 100%{filter:brightness(1)} }
+@keyframes turning-banner-in { from{opacity:0;transform:translate(-50%,-7px)} to{opacity:1;transform:translate(-50%,0)} }
