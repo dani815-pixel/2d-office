@@ -124,7 +124,7 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
       react("risk", "ALERT");
       say("risk", "반대로 보면 " + coin.counterView, "CHALLENGE", analyst);
     }
-    if (coin.verification[0]) {
+    if (coin.verification?.[0]) {
       react("trader");
       say("trader", "그 해석을 확인하려면 " + coin.verification[0] + "부터 보겠습니다.", "QUESTION", "risk");
     }
@@ -145,7 +145,7 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
       say(analyst, "상방 조건은 " + coin.bullScenario, "REPLY", "risk");
       say("trader", "그 조건이 확인되기 전까지는 시나리오로만 기록하겠습니다.", "SUMMARY", analyst);
     }
-    if (coin.risks[1]) say("risk", "추가 리스크는 " + coin.risks[1], "EVIDENCE", analyst);
+    if (coin.risks?.[1]) say("risk", "추가 리스크는 " + coin.risks[1], "EVIDENCE", analyst);
   };
   const moveToTable = () => {
     events.push({ type: "MOVE", target: "TABLE", duration: 3200 });
