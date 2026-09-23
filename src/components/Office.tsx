@@ -119,7 +119,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
           const [left, top] = moved ? TABLE_POSITIONS[agent.id] : DESK_POSITIONS[agent.id];
           const state = agentState(agent.id);
           return (
-            <div key={agent.id} className={`scene-agent ${moved ? "scene-agent--meeting" : ""} ${state === "SPEAK" ? "scene-agent--speaking" : ""} ${state === "WALK" ? "scene-agent--walking" : ""} ${state === "POINT" ? "scene-agent--pointing" : ""} ${state === "ALERT" ? "scene-agent--alert" : ""}`}
+            <div key={agent.id} className={`scene-agent ${moved ? "scene-agent--meeting" : ""} ${state === "SPEAK" ? "scene-agent--speaking scene-agent--active-speaker" : ""} ${state === "WALK" ? "scene-agent--walking" : ""} ${state === "POINT" ? "scene-agent--pointing" : ""} ${state === "ALERT" ? "scene-agent--alert" : ""}`}
               style={{ left: `${left}%`, top: `${top}%`, "--agent-color": agent.color } as CSSProperties} title={`${agent.name} / ${agent.role} / ${state}`}>
               {state === "SPEAK" && <span className="agent-voice"><i /><i /><i /></span>}
               {state === "SPEAK" && current?.type === "SPEAK" && current.speaker === agent.id && current.text && (
