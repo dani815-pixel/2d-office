@@ -1,3 +1,18 @@
+import type { MarketSnapshot } from "../types";
+import { localISODate } from "../utils/format";
+
+export const MOCK_MARKET: MarketSnapshot = {
+  timestamp: "2025-01-01T00:00:00.000Z",
+  status: "MOCK",
+  coins: [
+    { id: "BTC", symbol: "BTC", price: 93500, change24h: 1.25, volume24h: 32000000000, marketCap: 1850000000000, high24h: 94000, low24h: 92000 },
+    { id: "ETH", symbol: "ETH", price: 3350, change24h: -0.82, volume24h: 16500000000, marketCap: 402000000000, high24h: 3400, low24h: 3280 },
+    { id: "BNB", symbol: "BNB", price: 695, change24h: 0.64, volume24h: 1900000000, marketCap: 101000000000, high24h: 705, low24h: 680 },
+    { id: "XRP", symbol: "XRP", price: 2.31, change24h: -1.18, volume24h: 4100000000, marketCap: 133000000000, high24h: 2.36, low24h: 2.25 },
+    { id: "SOL", symbol: "SOL", price: 189, change24h: 2.43, volume24h: 3800000000, marketCap: 91000000000, high24h: 193, low24h: 183 },
+  ],
+};
+
 export const DEMO_RESEARCH = JSON.stringify({
   date: localISODate(),
   marketSummary: "데모 분석입니다. 실제 시장 조사 결과가 아니며, 가격 방향보다 거래량과 거시 변수의 확인이 중요합니다.",
@@ -12,4 +27,3 @@ export const DEMO_RESEARCH = JSON.stringify({
   risks: ["데모 데이터는 투자 판단에 사용하지 마세요.", "거시 변수 및 거래량 확인 필요"],
   sources: ["Demo example only - not an external research source"],
 }, null, 2);
-;
