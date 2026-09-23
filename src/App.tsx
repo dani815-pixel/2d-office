@@ -111,15 +111,27 @@ export default function App() {
 
   const finishMeeting = useCallback(() => {
     if (!app.brief) return;
-    const snapshot = app.meeting.snapshot || app.market;
-    const { report, summary } = createReport(app.brief, snapshot);
-    const item: ArchiveItem = { meetingId: report.id, date: report.date, marketSnapshot: snapshot, brief: app.brief, meetingSummary: summary, report };
     setApp((previous) => {
       if (previous.meeting.status === "FINISHED") return previous;
-      return { ...previous, meeting: { ...previous.meeting, status: "FINISHED", index: previous.meeting.events.length - 1 }, report, archive: [item, ...previous.archive].slice(0, 20) };
+      const snapshot = previous.meeting.snapshot || previous.market;
+      const { report, summary } = createReport(app.brief!, snapshot);
+      const item: ArchiveItem = {
+        meetingId: report.id,
+        date: report.date,
+        marketSnapshot: snapshot,
+        brief: app.brief!,
+        meetingSummary: summary,
+        report,
+      };
+      return {
+        ...previous,
+        meeting: { ...previous.meeting, status: "FINISHED", index: previous.meeting.events.length - 1 },
+        report,
+        archive: [item, ...previous.archive].slice(0, 20),
+      };
     });
     setSelectedArchiveId(null);
-  }, [app.brief, app.market, app.meeting.snapshot]);
+  }, [app.brief]);
 
   useEffect(() => {
     return subscribeMarketStream(
