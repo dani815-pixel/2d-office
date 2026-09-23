@@ -99,7 +99,7 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     if (coin.risks[1]) say("risk", "추가 리스크는 " + coin.risks[1], "EVIDENCE", analyst);
   };
   const moveToTable = () => {
-    for (const speaker of ROLES) events.push({ type: "MOVE", speaker, target: "TABLE", duration: 3200 });
+    events.push({ type: "MOVE", target: "TABLE", duration: 3200 });
     events.push({ type: "LISTEN", duration: 2500 });
   };
   const coinFact = (id: CoinId) => market.coins.find((coin) => coin.id === id);
