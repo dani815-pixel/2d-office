@@ -122,6 +122,12 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
             <div key={agent.id} className={`scene-agent ${moved ? "scene-agent--meeting" : ""} ${state === "SPEAK" ? "scene-agent--speaking" : ""} ${state === "WALK" ? "scene-agent--walking" : ""} ${state === "POINT" ? "scene-agent--pointing" : ""} ${state === "ALERT" ? "scene-agent--alert" : ""}`}
               style={{ left: `${left}%`, top: `${top}%`, "--agent-color": agent.color } as CSSProperties} title={`${agent.name} / ${agent.role} / ${state}`}>
               {state === "SPEAK" && <span className="agent-voice"><i /><i /><i /></span>}
+              {state === "SPEAK" && current?.type === "SPEAK" && current.speaker === agent.id && current.text && (
+                <div className="agent-speech-bubble" role="status" aria-live="polite">
+                  <strong>{agent.name} <small>{agent.short}</small></strong>
+                  <span>{current.text}</span>
+                </div>
+              )}
               <PixelAgent color={agent.color} skin={agent.skin} variant={index} />
               <div className="agent-tag"><span className="agent-tag-dot" />{agent.short}</div>
             </div>
