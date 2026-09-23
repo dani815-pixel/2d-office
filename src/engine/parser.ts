@@ -15,11 +15,21 @@ function stringValue(value: unknown, max = 500): string {
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ").slice(0, max) : "";
 }
 
+function cleanSourceText(value: unknown, max = 240): string {
+  return stringValue(value, max)
+    .replace(/https?:\/\/\S+/gi, "")
+    .replace(/\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/【[^】]*】/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/[|•·]\s*$/, "")
+    .trim();
+}
+
 function listValue(value: unknown, max = 3): string[] {
   const items = Array.isArray(value) ? value : typeof value === "string" ? value.split(/\n|;/) : [];
   return items.map((item) => {
-    if (isObject(item)) return [item.title, item.source, item.summary, item.url].map((part) => stringValue(part, 180)).filter(Boolean).join(" | ");
-    return stringValue(item, 240).replace(/^(?:[-*]\s*|\d+[.)]\s*)/, "");
+    if (isObject(item)) return [item.title, item.source, item.summary].map((part) => cleanSourceText(part, 180)).filter(Boolean).join(" | ");
+    return cleanSourceText(item, 240).replace(/^(?:[-*]\s*|\d+[.)]\s*)/, "");
   }).filter(Boolean).slice(0, max);
 }
 
@@ -196,7 +206,7 @@ export function parseResearch(raw: string): ParseResult {
     events,
     risks,
     correlations: listValue(data.correlations, 8),
-    sources: listValue(data.sources, 8),
+    sources: listValue(data.sources, 8).map((source) => cleanSourceText(source, 240)).filter(Boolean),
     story,
   };
   return { format, brief: errors.length ? undefined : brief, errors, warnings };
