@@ -104,7 +104,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
             ) : screenTarget === "RISK" ? (
               <div className="monitor-message"><div className="monitor-caption">RISK ASSESSMENT / 07</div><strong>CHECK THE DOWNSIDE.</strong><p>{brief?.risks[0] || "확인된 리스크를 점검합니다."}</p></div>
             ) : screenTarget === "SCENARIO" || screenTarget === "CONCLUSION" ? (
-              <div className="monitor-message"><div className="monitor-caption">{screenTarget} / 07</div><strong>{screenTarget === "CONCLUSION" ? "OBSERVE. VERIFY. DECIDE." : "CONNECT THE SIGNALS."}</strong><p>{screenTarget === "CONCLUSION" ? "관찰 목록과 리스크를 보고서에 기록합니다." : brief?.correlations[0] || "시장 간 연결고리를 확인합니다."}</p></div>
+              <div className="monitor-message"><div className="monitor-caption">{screenTarget} / 07</div><strong>{screenTarget === "CONCLUSION" ? "OBSERVE. VERIFY. DECIDE." : "CONNECT THE SIGNALS."}</strong><p>{screenTarget === "CONCLUSION" ? "관찰 목록과 리스크를 보고서에 기록합니다." : brief?.correlations?.[0] || "시장 간 연결고리를 확인합니다."}</p></div>
             ) : (
               <div className="monitor-overview"><div className="monitor-caption">MARKET PULSE <span>/ 05 ASSETS</span></div><div className="monitor-list">
                 {market.coins.map((coin) => <div key={coin.id}><b>{coin.id}</b><span className={coin.change24h >= 0 ? "up" : "down"}>{changeText(coin.change24h)}</span></div>)}
