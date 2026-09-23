@@ -678,36 +678,6 @@ Leader 정리
 
 Daily Prompt와 `CryptoMarketBrief`를 확장해 단순 뉴스 요약을 넘어 **사실 → 해석 → 반대 해석 → 검증 조건 → 시청자 메모** 흐름을 보존합니다.
 
-추가된 코인별 필드:
-- `interpretation` — 데이터에 대한 해석
-- `counterView` — 반대 방향의 해석
-- `verification` — 해석을 확인하거나 무효화할 조건
-- `takeaways` — 코인별 메모 포인트
-
-시장 전체 필드:
-- `viewerTakeaways` — 오늘의 핵심 메모 포인트
-
-AI 연구 원칙:
-- 확인된 사실과 해석을 분리
-- 상관관계를 인과관계로 단정하지 않음
-- 확인된 이벤트와 예상 영향을 구분
-- 반대 해석과 검증 조건을 함께 제시
-- 근거가 약하면 억지로 결론을 만들지 않음
-- 기존 `PROMPT_BUDGET.maxChars = 12000`을 유지해 토큰 사용량을 제한
-
-Meeting Engine도 새 데이터를 사용합니다.
-
-```
-FACT → INTERPRETATION → COUNTER VIEW → VERIFICATION → VIEWER TAKEAWAY
-```
-
-따라서 회의가 뉴스 나열에서 끝나지 않고 **왜 그렇게 해석하는지, 반대로 볼 근거는 무엇인지, 무엇을 확인해야 하는지**까지 토론하도록 확장됩니다.
-
-
-### STEP 5 — 풍부한 시장 해석 / 검증 / 시청자 Takeaway
-
-Daily Prompt와 `CryptoMarketBrief`를 확장해 단순 뉴스 요약을 넘어 **사실 → 해석 → 반대 해석 → 검증 조건 → 시청자 메모** 흐름을 보존합니다.
-
 추가된 코인별 분석 필드:
 
 - `interpretation` — 데이터에 대한 해석
@@ -1069,25 +1039,55 @@ Vite는 production build에 `vite build`를 사용하고, 기본 build 결과는
 
 ### 테스트 기록
 
-| 항목 | 결과 |
-|---|---|
-| `npm install` | PASS / FAIL |
-| `npm run build` | PASS / FAIL |
-| Market REST | PASS / FAIL |
-| Binance WebSocket | PASS / FAIL |
-| Prompt copy | PASS / FAIL |
-| AI Import JSON | PASS / FAIL |
-| AI Import Markdown | PASS / FAIL |
-| Parser sanitize | PASS / FAIL |
-| Meeting playback | PASS / FAIL |
-| Live signal | PASS / FAIL |
-| Report | PASS / FAIL |
-| Archive | PASS / FAIL |
-| Refresh persistence | PASS / FAIL |
-| Fullscreen / ESC | PASS / FAIL |
+| 테스트 | 결과 | 비고 |
+|---|---|---|
+| Install | ⬜ | |
+| Dev Server | ⬜ | |
+| Market REST | ⬜ | |
+| Binance WebSocket | ⬜ | |
+| Price Pulse | ⬜ | |
+| Prompt / Clipboard | ⬜ | |
+| JSON / Markdown / Text Parser | ⬜ | |
+| Parser Sanitize | ⬜ | |
+| Meeting Playback | ⬜ | |
+| Speech Bubble / Transcript | ⬜ | |
+| Highlight / Takeaway | ⬜ | |
+| Live Signal | ⬜ | |
+| Report | ⬜ | |
+| Archive / Persistence | ⬜ | |
+| Fullscreen / ESC | ⬜ | |
+| 10~20min Long Run | ⬜ | |
+| Production Build | ⬜ | |
 
-**중요:** 현재까지 실제 로컬 브라우저 장시간 테스트와 production build를 완료한 것으로 간주하지 않습니다. 위 항목은 로컬 환경에서 직접 검증해야 합니다.
+**현재 테스트 상태는 모두 미검증(⬜)으로 기록합니다.**
 
+### 브라우저 테스트 순서
+
+1. `npm install`
+2. `npm run dev`
+3. OFFICE → MARKET에서 5개 코인 실시간 갱신 확인
+4. DAILY PROMPT에서 prompt 생성 / copy 확인
+5. AI IMPORT에서 데모 결과로 parser 확인
+6. Preview에서 interpretation / viewerTakeaways 확인
+7. MEETING에서 1x / 2x / pause / fullscreen / transcript 확인
+8. Highlight 카드와 speech bubble 확인
+9. 회의 중 Binance live signal 및 LIVE MARKET 표시 확인
+10. 회의 종료 후 Report 생성 확인
+11. Archive 저장 / 삭제 / 새로고침 확인
+12. 가능하면 10~20분 장시간 실행
+13. `npm run build` 및 `npm run preview` 확인
+
+### 테스트 중 특히 볼 문제
+
+- 회의 progress가 다시 1%에서 멈추는지
+- WebSocket이 멈춘 뒤 자동 reconnect하는지
+- reconnect 후 socket / timer / listener가 중복되지 않는지
+- live signal 삽입 후 회의 timer가 초기화되지 않는지
+- 긴 발언 / Highlight가 화면에서 잘리지 않는지
+- Report가 회의 시작 snapshot을 사용하는지
+- 새로고침 후 Archive가 유지되는지
+
+실제 테스트 결과는 이 표를 `PASS / FAIL`로 갱신하고, FAIL 항목은 재현 조건과 수정 commit을 함께 기록합니다.
 ---
 
 ## 23. 환경 변수
