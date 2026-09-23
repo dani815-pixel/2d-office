@@ -244,25 +244,43 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .meeting-layout--fullscreen {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 2147483647;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 12px;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 14px;
+  margin: 0;
+  background: #080d0d;
+  overflow: hidden;
+}
+.meeting-layout--fullscreen .meeting-stage {
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 18px;
-  background: #080d0d;
-  overflow: auto;
 }
-.meeting-layout--fullscreen .meeting-stage-head { display: flex; }
-.meeting-layout--fullscreen .meeting-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.meeting-layout--fullscreen .meeting-stage .office-unit { flex: 1; min-height: 0; }
-.meeting-layout--fullscreen .meeting-stage .office-canvas { height: min(62vh, 620px); }
+.meeting-layout--fullscreen .meeting-stage-head { display: flex; flex: 0 0 34px; }
+.meeting-layout--fullscreen .meeting-stage .office-unit {
+  flex: 1;
+  min-height: 0;
+}
+.meeting-layout--fullscreen .meeting-stage .office-canvas {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
 .meeting-layout--fullscreen .playback-bar { margin-top: 8px; }
 .meeting-layout--fullscreen .transcript-panel {
-  order: 2;
-  width: 100%;
-  height: min(30vh, 300px);
-  min-height: 190px;
-  margin-top: 8px;
+  order: initial;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  margin-top: 0;
   border-radius: 3px;
   background: #0b1111;
   border-color: #30433a;
@@ -303,11 +321,13 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
   background: #111817;
 }
 @media (max-width: 980px) {
-  .meeting-layout--fullscreen { padding: 10px; }
-  .meeting-layout--fullscreen .meeting-stage .office-canvas { height: 48vh; }
-  .meeting-layout--fullscreen .transcript-panel { height: 38vh; }
+  .meeting-layout--fullscreen {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(190px, 34vh);
+    gap: 8px;
+    padding: 8px;
+  }
 }
-
 .meeting-layout:not(.meeting-layout--fullscreen) .transcript-panel {
   border-radius: 3px;
   background: #0b1111;
