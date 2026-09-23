@@ -13,7 +13,7 @@ import { createMeetingEvents } from "./engine/meeting";
 import { createReport, reportToText } from "./engine/report";
 import { changeText, compactUSD, dateText, priceUSD, timeText } from "./utils/format";
 
-type IconName = "office" | "market" | "prompt" | "import" | "meeting" | "report" | "archive" | "refresh" | "arrow" | "copy" | "play" | "pause" | "skip" | "check" | "trash" | "clock";
+type IconName = "office" | "market" | "prompt" | "import" | "meeting" | "report" | "archive" | "refresh" | "arrow" | "copy" | "play" | "pause" | "skip" | "check" | "trash" | "clock" | "expand" | "close";
 
 function Icon({ name, size = 18, className = "" }: { name: IconName; size?: number; className?: string }) {
   const paths: Record<IconName, ReactNode> = {
@@ -33,6 +33,8 @@ function Icon({ name, size = 18, className = "" }: { name: IconName; size?: numb
     check: <path d="m4 12 5 5L20 6" />,
     trash: <><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7M10 11v6m4-6v6" /></>,
     clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    expand: <><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5" /><path d="M3 8 8 3m8 0 5 5m0 8-5 5m-8 0-5-5" /></>,
+    close: <><path d="m6 6 12 12M18 6 6 18" /></>,
   };
   return <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
@@ -69,6 +71,7 @@ export default function App() {
   const [selectedArchiveId, setSelectedArchiveId] = useState<string | null>(null);
   const [storageError, setStorageError] = useState(false);
   const [toast, setToast] = useState("");
+  const [meetingFullscreen, setMeetingFullscreen] = useState(false);
   const parseJob = useRef(0);
   const transcriptEnd = useRef<HTMLDivElement>(null);
 
@@ -232,10 +235,10 @@ export default function App() {
         </div>}
 
         {view === "MEETING" && <div className="standard-page meeting-page">
-          <PageHead eyebrow="05 / THE MEETING ROOM" title={<>Six minds. <em>One brief.</em></>} description="확정된 Market Brief로 회의를 재생합니다. 진행 중 외부 AI를 다시 호출하지 않습니다." action={<span className={`meeting-status meeting-status--${app.meeting.status.toLowerCase()}`}><i />{app.meeting.status}</span>} />
+          <PageHead eyebrow="05 / THE MEETING ROOM" title={<>Six minds. <em>One brief.</em></>} description="확정된 Market Brief로 회의를 재생합니다. 진행 중 외부 AI를 다시 호출하지 않습니다." action={<div className="meeting-head-actions"><button className="button button--outline button--small" type="button" onClick={() => setMeetingFullscreen(true)}><Icon name="expand" size={15} /> 전체화면</button><span className={`meeting-status meeting-status--${app.meeting.status.toLowerCase()}`}><i />{app.meeting.status}</span></div>} />
           {!app.brief ? <EmptyState index="05" title="회의 자료가 아직 없습니다." description="AI 조사 결과를 가져오고 미리보기를 확인한 뒤 회의를 시작할 수 있습니다." button="AI 결과 가져오기" onClick={() => go("IMPORT")} /> : <>
-            <div className="meeting-layout"><div className="meeting-stage">
-              <Office market={app.market} brief={app.brief} meeting={app.meeting} onCoinClick={openCoin} />
+            <div className={`meeting-layout ${meetingFullscreen ? "meeting-layout--fullscreen" : ""}`}><div className="meeting-stage">
+              <div className="meeting-stage-head"><span>LIVE OFFICE / MEETING ROOM</span>{meetingFullscreen && <button className="button button--small button--outline" type="button" onClick={() => setMeetingFullscreen(false)}><Icon name="close" size={14} /> 닫기</button>}</div><Office market={app.market} brief={app.brief} meeting={app.meeting} onCoinClick={openCoin} />
               <div className="playback-bar"><div className="playback-progress"><div><span>MEETING PROGRESS</span><strong>{app.meeting.status === "READY" ? "STANDING BY" : app.meeting.status === "FINISHED" ? "COMPLETE" : `${meetingProgress}%`}</strong></div><div className="progress-track"><i style={{ width: `${meetingProgress}%` }} /></div></div><div className="playback-controls">
                 {app.meeting.status === "READY" ? <button className="button button--primary" type="button" onClick={startMeeting}><Icon name="play" size={16} /> START MEETING</button>
                   : app.meeting.status === "FINISHED" ? <><button className="button button--outline" type="button" onClick={startMeeting}><Icon name="refresh" size={16} /> 다시 재생</button><button className="button button--primary" type="button" onClick={() => { setSelectedArchiveId(null); go("REPORT"); }}>보고서 보기 <Icon name="arrow" size={16} /></button></>
