@@ -1,5 +1,33 @@
-import { COIN_IDS, type ArchiveItem, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingReport } from "../types";
+import { COIN_IDS, type ArchiveItem, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingMemory, type MeetingReport } from "../types";
 import { changeText, priceUSD } from "../utils/format";
+
+export function createMeetingMemory(brief: CryptoMarketBrief, session: number): MeetingMemory {
+  const story = brief.story;
+  const resolved: MeetingMemory["resolvedFollowUps"] = [];
+  const open: MeetingMemory["openFollowUps"] = [];
+
+  for (const coin of brief.coins) {
+    for (const item of coin.verification ?? []) {
+      if (item.trim()) open.push({ text: item.trim(), coin: coin.id, status: "OPEN" });
+    }
+  }
+  for (const item of brief.viewerTakeaways ?? []) {
+    if (item.trim()) resolved.push({ text: item.trim(), status: "RESOLVED" });
+  }
+
+  return {
+    session,
+    question: story?.centralQuestion || brief.marketSummary.slice(0, 240),
+    keyFindings: [
+      brief.marketSummary,
+      ...(story?.turningPoint ? [story.turningPoint] : []),
+    ].filter(Boolean).slice(0, 3),
+    openFollowUps: open.slice(0, 8),
+    resolvedFollowUps: resolved.slice(0, 5),
+    watchItems: (story?.watchItems ?? []).slice(0, 5),
+    turningPoint: story?.turningPoint,
+  };
+}
 
 export function createReport(brief: CryptoMarketBrief, market: MarketSnapshot): { report: MeetingReport; summary: string } {
   const watchlist = [...COIN_IDS]
@@ -36,8 +64,12 @@ export function reportToText(item: ArchiveItem): string {
     if (coin.news.length) lines.push(`News: ${coin.news.join("; ")}`);
     lines.push("");
   }
-  lines.push("CROSS MARKET", report.crossMarket, "", "VIEWER TAKEAWAYS", ...(brief.viewerTakeaways?.map((item) => `- ${item}`) || []), "", "RISKS", ...brief.risks.map((risk) => `- ${risk}`));
-  lines.push("", "WATCHLIST (by absolute 24h change, not a trade signal)", report.watchlist.join(", ") || "None");
+  const memory = item.memory;
+  lines.push("CROSS MARKET", report.crossMarket, "", "VIEWER TAKEAWAYS", ...(brief.viewerTakeaways?.map((item) => `- ${item}`) || []));
+  if (memory) {
+    lines.push("", "NEXT MEETING MEMORY", `SESSION: ${memory.session}`, `QUESTION: ${memory.question}`, "OPEN FOLLOW-UPS", ...(memory.openFollowUps.map((item) => `- [${item.coin || "MARKET"}] ${item.text}`)), "RESOLVED", ...(memory.resolvedFollowUps.map((item) => `- ${item.text}`)), "WATCH ITEMS", ...(memory.watchItems.map((item) => `- ${item}`)));
+  }
+  lines.push("", "RISKS", ...brief.risks.map((risk) => `- ${risk}`), "", "WATCHLIST (by absolute 24h change, not a trade signal)", report.watchlist.join(", ") || "None");
   lines.push("", "CONCLUSION", report.conclusion, "", "MEETING SUMMARY", meetingSummary, "", "SOURCES", ...brief.sources.map((source) => `- ${source}`));
   lines.push("", "For research and scenario planning only. Not financial advice.");
   return lines.join("\n");
