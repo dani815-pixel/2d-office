@@ -26,20 +26,60 @@ export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem)
     } : {}),
   };
 
-  const prompt = `You are a cautious crypto market researcher. Research BTC, ETH, BNB, XRP and SOL for today. Respond in Korean. Separate verified facts from interpretation. Never give guaranteed returns or direct buy/sell instructions.
+  const prompt = `You are a cautious crypto market researcher and meeting-story editor. Research BTC, ETH, BNB, XRP and SOL for today. Respond in Korean. Separate verified facts from interpretation. Never give guaranteed returns or direct buy/sell instructions.
 
 INPUT (compact): ${JSON.stringify(compact)}
-d=date, t=snapshot time (UTC), st=data status, c={coin:[USD price, 24h change %, 24h volume USD millions, 24h low, 24h high]}. prev is only a short prior-meeting summary/risks/watchlist, not evidence.
-${market.status !== "LIVE" ? `IMPORTANT: st=${market.status}. These prices are ${market.status === "MOCK" ? "fixed demo examples, NOT live prices" : "not confirmed live"}. Verify current prices independently; do not present input prices as current facts.` : "Use the snapshot as the price/volume reference, not as a prediction."}
+d=date, t=snapshot time (UTC), st=data status, c={coin:[USD price, 24h change %, 24h volume USD millions, 24h low, 24h high]}. prev is only prior context, never evidence.
+${market.status !== "LIVE" ? `IMPORTANT: st=${market.status}. These prices are ${market.status === "MOCK" ? "fixed demo examples, NOT live prices" : "not confirmed live"}. Verify current prices independently; do not present input prices as current facts.` : "Use the snapshot as factual price/volume context, not a prediction."}
 
-Research tasks:
-1. Briefly assess the overall market, macro/liquidity context, and cross-coin relationships.
-2. For EACH of the five coins, use the supplied price/range as factual market context and give a short thesis, up to 3 technical observations, up to ${PROMPT_BUDGET.maxNews} relevant news items (title, source, short summary only), one bull scenario, one bear scenario, and up to 3 risks.
-3. Identify near-term factors worth watching. Cite up to ${PROMPT_BUDGET.maxSources} reliable source names or URLs. If you cannot browse or verify recent news, leave news/sources empty and say so. Never invent sources.
+RESEARCH:
+1. Assess overall market, macro/liquidity context, cross-coin relationships, and the most important change today.
+2. For EACH coin, provide: concise summary, up to 3 technical observations, up to ${PROMPT_BUDGET.maxNews} verified recent news items, one bull scenario, one bear scenario, and up to 3 risks.
+3. Find what is genuinely different or surprising today. Prefer a concrete divergence, catalyst, contradiction, rotation, liquidity change, event, or risk over generic market commentary.
+4. Build a TV-friendly meeting story from the research. The story is NOT fiction: every hook, conflict, twist, and conclusion must be grounded in the supplied data or verified research.
 
-Return JSON only, without code fences or commentary, in this exact shape:
-{"date":"YYYY-MM-DD","marketSummary":"max 2 sentences","coins":[{"id":"BTC","summary":"max 2 sentences","technical":["..."],"news":["title | source | short summary"],"bullScenario":"one sentence","bearScenario":"one sentence","risks":["..."]}],"globalFactors":["..."],"events":["..."],"risks":["..."],"correlations":["..."],"sources":["..."]}
-Include all five coin IDs exactly once. Keep arrays concise. Do not repeat the input data or these instructions.`;
+STORY ENGINE:
+Choose ONE storyMode that best fits today's evidence. Do not rotate modes mechanically.
+Allowed modes:
+- "BREAKOUT_TENSION": a move is testing an important condition.
+- "LEADERSHIP_SHIFT": leadership/relative strength is changing between assets.
+- "DIVERGENCE": coins are behaving differently despite a shared market.
+- "CATALYST_COUNTDOWN": a dated event or imminent catalyst matters.
+- "RISK_ALERT": downside uncertainty or conflicting signals dominates.
+- "ROTATION": capital/attention appears to be moving between sectors or coins.
+- "CORRELATION_BREAK": a normally related relationship is weakening or reversing.
+- "QUIET_BEFORE_MOVE": evidence is mixed and the key story is what has not resolved yet.
+- "CROSSROADS": bull and bear evidence are unusually balanced.
+Avoid sensationalism. If evidence is weak, use QUIET_BEFORE_MOVE or CROSSROADS.
+
+Create:
+- storyTitle: short Korean title, max 24 chars.
+- openingHook: one sentence that makes the meeting start with a concrete question.
+- centralQuestion: the main question the team should resolve.
+- debateTopics: 2-3 concrete points where characters can disagree based on evidence.
+- turningPoint: one factual development that changes the discussion.
+- surprise: one non-obvious but evidence-based observation; use "없음" if none.
+- endingQuestion: one unresolved question for viewers to watch after the meeting.
+- watchItems: 3-5 concrete things to monitor today.
+- changes: 2-4 meaningful changes versus the prior context; if no prior context, compare against recent verified market context when available, otherwise say "비교 자료 부족".
+
+CHARACTER ANGLES:
+Do not assign each character to one coin. Give the meeting room reasons to disagree:
+- leader: frames the central question and forces a conclusion based on evidence.
+- market: challenges claims with price/volume/market structure.
+- onchain: focuses on ecosystem/on-chain evidence when available; otherwise says data is unavailable.
+- altcoin: compares relative strength, rotation, and coin-specific catalysts.
+- risk: attacks assumptions and presents the bear case.
+- trader: asks what observable condition would confirm or invalidate a scenario.
+Do not invent data for any role.
+
+NEWS/SOURCES:
+Use recent, verifiable information only. For each news item use "title | source | short summary". Cite up to ${PROMPT_BUDGET.maxSources} reliable sources. If browsing/verification is unavailable, leave news/sources empty and explicitly state that recent verification was unavailable. Never invent sources, dates, events, quotes, prices, or on-chain facts.
+
+OUTPUT:
+Return JSON only, no code fences or commentary:
+{"date":"YYYY-MM-DD","marketSummary":"max 2 sentences","story":{"mode":"DIVERGENCE","title":"...","openingHook":"...","centralQuestion":"...","debateTopics":["..."],"turningPoint":"...","surprise":"...","endingQuestion":"...","watchItems":["..."],"changes":["..."]},"coins":[{"id":"BTC","summary":"max 2 sentences","technical":["..."],"news":["title | source | short summary"],"bullScenario":"one sentence","bearScenario":"one sentence","risks":["..."]}],"globalFactors":["..."],"events":["..."],"risks":["..."],"correlations":["..."],"sources":["..."]}
+Include BTC, ETH, BNB, XRP, SOL exactly once. Keep every array concise. Do not repeat input data or instructions. The story must be grounded in evidence and should create a different meeting narrative when the evidence genuinely differs.`;
 
   return prompt.slice(0, PROMPT_BUDGET.maxChars);
 }
