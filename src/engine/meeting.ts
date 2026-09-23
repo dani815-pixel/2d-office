@@ -44,6 +44,17 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
       duration: Math.min(14000, Math.max(7000, 4200 + text.length * 38)),
     });
   };
+  const voice = (role: RoleId, kind: "challenge" | "question" | "summary" | "evidence") => {
+    const lines: Record<RoleId, Record<string, string>> = {
+      leader: { challenge: "잠시 정리하죠. 이 주장의 핵심 조건부터 보겠습니다.", question: "그렇다면 무엇을 확인해야 판단을 바꿀 수 있을까요?", summary: "좋습니다. 핵심 조건을 회의 기록에 남기겠습니다.", evidence: "이 부분은 확인된 사실과 해석을 분리해서 보겠습니다." },
+      market: { challenge: "가격만으로는 부족합니다. 반대 데이터도 확인해야 합니다.", question: "가격과 거래량이 함께 확인되는 조건은 무엇입니까?", summary: "시장 데이터 기준으로 핵심 변수를 정리하겠습니다.", evidence: "가격 구조와 거래량에서 확인되는 근거를 보겠습니다." },
+      onchain: { challenge: "온체인이나 생태계 흐름까지 보면 다른 해석이 가능합니다.", question: "네트워크 지표에서도 같은 변화가 확인됩니까?", summary: "시장 외부 데이터와 함께 교차검증하겠습니다.", evidence: "생태계 데이터에서 확인되는 변화부터 보겠습니다." },
+      altcoin: { challenge: "알트 쪽 흐름을 보면 그 결론은 아직 이릅니다.", question: "상대 강도 차이가 실제 자금 이동으로 이어졌습니까?", summary: "자산 간 차이를 기준으로 정리하겠습니다.", evidence: "알트 상대강도와 순환 흐름을 확인하겠습니다." },
+      risk: { challenge: "반대 시나리오를 놓치면 안 됩니다. 깨지는 조건부터 보죠.", question: "이 가정이 틀렸다고 판단할 기준은 무엇입니까?", summary: "리스크 조건과 무효화 지점을 기록하겠습니다.", evidence: "하방 조건과 불확실성을 우선 확인하겠습니다." },
+      trader: { challenge: "차트에서는 아직 확정 신호로 보기 어렵습니다.", question: "실제 움직임으로 인정할 확인 신호가 있습니까?", summary: "확인 전까지는 시나리오로만 관리하겠습니다.", evidence: "가격 행동과 구조가 말하는 근거부터 보겠습니다." },
+    };
+    return lines[role][kind];
+  };
   const debate = (
     topic: string,
     proposer: RoleId,
@@ -51,10 +62,10 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     response: RoleId = proposer,
   ) => {
     say(proposer, topic, "STATEMENT");
-    say(challenger, "그 해석에 바로 동의하기는 어렵습니다. 확인해야 할 반대 근거가 있습니다.", "CHALLENGE", proposer);
-    say(response, "그렇다면 어떤 조건이 확인되면 이 판단을 바꿔야 하는지 구체적으로 보겠습니다.", "QUESTION", challenger);
-    say("risk", "반대 시나리오에서도 같은 조건이 유지되는지 확인하겠습니다.", "CHALLENGE", response);
-    say("leader", "좋습니다. 이 논점을 오늘의 확인 조건으로 기록하겠습니다.", "SUMMARY", "risk");
+    say(challenger, voice(challenger, "challenge"), "CHALLENGE", proposer);
+    say(response, voice(response, "question"), "QUESTION", challenger);
+    say("risk", voice("risk", "challenge"), "CHALLENGE", response);
+    say("leader", voice("leader", "summary"), "SUMMARY", "risk");
   };
   const evidenceDebate = (id: CoinId) => {
     const coin = coinBrief(id);
