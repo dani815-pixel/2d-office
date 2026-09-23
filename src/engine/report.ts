@@ -30,13 +30,13 @@ export function reportToText(item: ArchiveItem): string {
     const fact = market.coins.find((row) => row.id === coin.id);
     lines.push(coin.id);
     if (fact) lines.push(`FACT: ${priceUSD(fact.price)} | 24h ${changeText(fact.change24h)} | volume $${Math.round(fact.volume24h / 1_000_000)}M`);
-    lines.push(`INTERPRETATION: ${coin.summary}`, `Technical: ${coin.technical.join("; ") || "Not provided"}`);
+    lines.push(`INTERPRETATION: ${coin.interpretation || coin.summary}`, `COUNTER VIEW: ${coin.counterView || "Not provided"}`, `VERIFICATION: ${coin.verification?.join("; ") || "Not provided"}`, `TAKEAWAYS: ${coin.takeaways?.join("; ") || "Not provided"}`, `Technical: ${coin.technical.join("; ") || "Not provided"}`);
     lines.push(`Bull: ${coin.bullScenario || "Not provided"}`, `Bear: ${coin.bearScenario || "Not provided"}`);
     lines.push(`Coin risks: ${coin.risks.join("; ") || "Not provided"}`);
     if (coin.news.length) lines.push(`News: ${coin.news.join("; ")}`);
     lines.push("");
   }
-  lines.push("CROSS MARKET", report.crossMarket, "", "RISKS", ...brief.risks.map((risk) => `- ${risk}`));
+  lines.push("CROSS MARKET", report.crossMarket, "", "VIEWER TAKEAWAYS", ...(brief.viewerTakeaways?.map((item) => `- ${item}`) || []), "", "RISKS", ...brief.risks.map((risk) => `- ${risk}`));
   lines.push("", "WATCHLIST (by absolute 24h change, not a trade signal)", report.watchlist.join(", ") || "None");
   lines.push("", "CONCLUSION", report.conclusion, "", "MEETING SUMMARY", meetingSummary, "", "SOURCES", ...brief.sources.map((source) => `- ${source}`));
   lines.push("", "For research and scenario planning only. Not financial advice.");
