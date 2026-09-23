@@ -91,6 +91,7 @@ export interface MeetingEvent {
   replyTo?: RoleId;
   intent?: MeetingDialogueIntent;
   live?: boolean;
+  livePriceCoin?: CoinId;
   duration?: number;
 }
 
