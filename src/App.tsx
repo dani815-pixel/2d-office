@@ -132,8 +132,14 @@ export default function App() {
           if (canInterrupt) {
             liveMeetingRef.current.observe(snapshot, (signal) => {
               const events = [...nextMeeting.events];
+              const speaker = signal.coin === "BTC" || signal.coin === "ETH"
+                ? "market"
+                : signal.coin === "BNB" || signal.coin === "XRP"
+                  ? "altcoin"
+                  : "trader";
+              const intent = signal.direction === "DOWN" ? "CHALLENGE" : "EVIDENCE";
               events.splice(Math.min(nextMeeting.index + 1, events.length), 0, {
-                type: "SPEAK", speaker: "market", text: signal.text, intent: "EVIDENCE", duration: 8500,
+                type: "SPEAK", speaker, text: signal.text, intent, duration: 8500,
               });
               nextMeeting = { ...nextMeeting, events };
               liveMeetingRef.current.markTriggered(signal.coin);
