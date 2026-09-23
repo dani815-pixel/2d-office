@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { COIN_IDS, type CharacterStatus, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingState, type RoleId } from "../types";
 import { COIN_META } from "../data/coins";
 import { TEAM } from "../data/team";
@@ -42,6 +42,21 @@ function PixelAgent({ color, skin, variant }: { color: string; skin: string; var
 }
 
 export default function Office({ market, brief, meeting, onCoinClick }: OfficeProps) {
+  const previousPrices = useRef(new Map<CoinId, number>());
+  const [pricePulse, setPricePulse] = useState<Record<string, "up" | "down">>({});
+  useEffect(() => {
+    const next: Record<string, "up" | "down"> = {};
+    market.coins.forEach((coin) => {
+      const previous = previousPrices.current.get(coin.id);
+      if (previous !== undefined && previous !== coin.price) next[coin.id] = coin.price > previous ? "up" : "down";
+      previousPrices.current.set(coin.id, coin.price);
+    });
+    if (Object.keys(next).length) {
+      setPricePulse(next);
+      const timer = window.setTimeout(() => setPricePulse({}), 700);
+      return () => window.clearTimeout(timer);
+    }
+  }, [market.timestamp, market.coins]);
   const active = meeting && meeting.status !== "READY";
   const current = active ? meeting.events[meeting.index] : undefined;
   const screenTarget = active
@@ -103,7 +118,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
             {focusedCoin ? (
               <div className="monitor-focus">
                 <div className="monitor-caption">ASSET FOCUS <span>/ {focusedCoin.id}</span></div>
-                <div className="monitor-focus-main"><strong>{priceUSD(focusedCoin.price)}</strong><span className={focusedCoin.change24h >= 0 ? "up" : "down"}>{changeText(focusedCoin.change24h)}</span></div>
+                <div className="monitor-focus-main"><strong className={`live-price ${pricePulse[focusedCoin.id] ? `live-price--${pricePulse[focusedCoin.id]}` : ""}`}>{priceUSD(focusedCoin.price)}</strong><span className={focusedCoin.change24h >= 0 ? "up" : "down"}>{changeText(focusedCoin.change24h)}</span></div>
                 <div className="monitor-meter"><span style={{ width: `${Math.min(88, 26 + Math.abs(focusedCoin.change24h) * 9)}%`, background: COIN_META[focusedCoin.id].color }} /></div>
                 <div className="monitor-foot">24H CHANGE <span>{market.status} / USD</span></div>
               </div>
@@ -153,7 +168,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
           {market.coins.map((coin) => (
             <button key={coin.id} className="ticker-asset" onClick={() => onCoinClick?.(coin.id)} type="button" title={`${COIN_META[coin.id].name} 시장 상세 보기`}>
               <span className="ticker-symbol"><i style={{ background: COIN_META[coin.id].color }} />{coin.id}</span>
-              <strong>{priceUSD(coin.price)}</strong>
+              <strong className={`ticker-price ${pricePulse[coin.id] ? `ticker-price--${pricePulse[coin.id]}` : ""}`}>{priceUSD(coin.price)}</strong>
               <span className={`ticker-change ${coin.change24h >= 0 ? "up" : "down"}`}>{changeText(coin.change24h)}</span>
             </button>
           ))}
