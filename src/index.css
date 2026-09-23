@@ -449,3 +449,85 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
   0%, 100% { opacity: .35; transform: translateX(-50%) scaleX(.75); }
   50% { opacity: .8; transform: translateX(-50%) scaleX(1.08); }
 }
+
+
+/* Dialogue metadata reactions */
+
+.agent-speech-bubble strong em {
+  margin-left: auto;
+  padding: 2px 5px;
+  border: 1px solid #9aaa98;
+  color: #657664;
+  font: 7px var(--mono);
+  font-style: normal;
+  letter-spacing: .05em;
+}
+.agent-speech-bubble--challenge,
+.agent-speech-bubble--question {
+  border-color: #c7a76b;
+  background: #f3eee0;
+}
+.agent-speech-bubble--challenge::after,
+.agent-speech-bubble--question::after {
+  background: #f3eee0;
+  border-color: #c7a76b;
+}
+.agent-speech-bubble--challenge strong em { color: #80642b; border-color: #c7a76b; }
+.agent-speech-bubble--question strong em { color: #5e6f85; border-color: #91a6bb; }
+.agent-speech-bubble--evidence { border-color: #769b7b; }
+.agent-speech-bubble--summary { border-color: #839d68; }
+.agent-speech-bubble--reply { border-color: #7894a0; }
+.scene-agent--dialogue-target {
+  z-index: 18;
+  animation: dialogue-target-pulse .65s ease-out;
+}
+.scene-agent--dialogue-target .agent-tag {
+  border-color: #d7b968;
+  box-shadow: 0 0 14px #c7a76b66;
+}
+.scene-agent--dialogue-target .pixel-agent {
+  filter: brightness(1.12) drop-shadow(0 0 8px #c7a76b66);
+}
+.scene-agent--challenging .pixel-agent {
+  animation: challenge-push .22s ease-out 2 alternate;
+}
+.scene-agent--challenging .agent-tag {
+  color: #fff3cf;
+  border-color: #d7b968;
+  background: #3a3020;
+}
+.scene-agent--questioning .agent-speech-bubble {
+  animation: question-pop .24s ease-out;
+}
+.agent-interjection {
+  position: absolute;
+  left: 50%;
+  top: -19px;
+  transform: translateX(-50%);
+  padding: 3px 6px;
+  border: 1px solid #8e7a4e;
+  background: #211d15;
+  color: #d9c27d;
+  font: 7px var(--mono);
+  letter-spacing: .08em;
+  z-index: 25;
+  animation: interjection-in .2s ease-out;
+  pointer-events: none;
+}
+@keyframes dialogue-target-pulse {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  45% { transform: translate(-50%, -50%) scale(1.045); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes challenge-push {
+  from { transform: translate(-50%, -50%) translateX(0); }
+  to { transform: translate(-50%, -50%) translateX(-3px); }
+}
+@keyframes question-pop {
+  from { opacity: .2; transform: translate(-50%, 5px) scale(.97); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+@keyframes interjection-in {
+  from { opacity: 0; transform: translate(-50%, 5px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
