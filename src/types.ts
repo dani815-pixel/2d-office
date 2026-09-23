@@ -36,6 +36,19 @@ export interface MarketEvent {
   source?: string;
 }
 
+export interface MeetingStory {
+  mode: string;
+  title: string;
+  openingHook: string;
+  centralQuestion: string;
+  debateTopics: string[];
+  turningPoint: string;
+  surprise: string;
+  endingQuestion: string;
+  watchItems: string[];
+  changes: string[];
+}
+
 export type Source = string;
 
 export interface CryptoMarketBrief {
@@ -47,6 +60,7 @@ export interface CryptoMarketBrief {
   sources: Source[];
   globalFactors?: string[];
   correlations?: string[];
+  story?: MeetingStory;
 }
 
 export type RoleId = "leader" | "market" | "onchain" | "altcoin" | "risk" | "trader";
