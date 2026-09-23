@@ -566,3 +566,13 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .turning-point-banner strong { display:block; margin-top:3px; color:#f1ead5; font:12px var(--mono); letter-spacing:.08em; }
 @keyframes turning-room-pulse { 0%{filter:brightness(1)} 35%{filter:brightness(1.14)} 100%{filter:brightness(1)} }
 @keyframes turning-banner-in { from{opacity:0;transform:translate(-50%,-7px)} to{opacity:1;transform:translate(-50%,0)} }
+
+
+/* Live market pulse */
+.live-price, .ticker-price { transition: text-shadow .18s ease, transform .18s ease; }
+.live-price--up, .ticker-price--up { animation: live-price-up .7s ease-out; }
+.live-price--down, .ticker-price--down { animation: live-price-down .7s ease-out; }
+@keyframes live-price-up { 0% { color: #e5f5d8; text-shadow: 0 0 0 transparent; transform: translateY(2px); } 25% { color: #c5f16e; text-shadow: 0 0 14px #b9ef8d88; transform: translateY(0); } 100% { color: inherit; text-shadow: 0 0 0 transparent; } }
+@keyframes live-price-down { 0% { color: #f4d0c8; text-shadow: 0 0 0 transparent; transform: translateY(-2px); } 25% { color: #efa393; text-shadow: 0 0 14px #efa39366; transform: translateY(0); } 100% { color: inherit; text-shadow: 0 0 0 transparent; } }
+.monitor-live-indicator { display: inline-flex; align-items: center; gap: 4px; color: #a8dca0; }
+.monitor-live-indicator i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; box-shadow: 0 0 7px currentColor; animation: pulse 1s ease-in-out infinite; }
