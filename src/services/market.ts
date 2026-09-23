@@ -20,7 +20,6 @@ interface ProviderCoin {
 
 let inFlight: Promise<MarketResult> | null = null;
 let sessionSnapshot: MarketSnapshot | null = null;
-const CACHE_MAX_AGE_MS = 60_000;
 
 async function fetchFromCoinGecko(): Promise<MarketSnapshot> {
   const params = new URLSearchParams({
