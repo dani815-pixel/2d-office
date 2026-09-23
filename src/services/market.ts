@@ -14,6 +14,8 @@ interface ProviderCoin {
   price_change_percentage_24h: number | null;
   total_volume: number;
   market_cap: number | null;
+  high_24h: number | null;
+  low_24h: number | null;
 }
 
 let inFlight: Promise<MarketResult> | null = null;
@@ -42,7 +44,7 @@ async function fetchFromCoinGecko(): Promise<MarketSnapshot> {
       const row = data.find((item): item is ProviderCoin =>
         typeof item === "object" && item !== null && "id" in item && item.id === COIN_META[id].providerId,
       );
-      if (!row || !Number.isFinite(row.current_price) || !Number.isFinite(row.total_volume) || !Number.isFinite(row.price_change_percentage_24h)) {
+      if (!row || !Number.isFinite(row.current_price) || !Number.isFinite(row.total_volume) || !Number.isFinite(row.price_change_percentage_24h) || !Number.isFinite(row.high_24h) || !Number.isFinite(row.low_24h)) {
         throw new Error(`Missing market data for ${id}`);
       }
       return {
@@ -51,7 +53,9 @@ async function fetchFromCoinGecko(): Promise<MarketSnapshot> {
         price: row.current_price,
         change24h: Number(row.price_change_percentage_24h),
         volume24h: row.total_volume,
-        marketCap: Number.isFinite(row.market_cap) ? Number(row.market_cap) : undefined,
+        marketCap: Number.isFinite(row.market_cap) ? Number(row.market_cap) : 0,
+        high24h: Number(row.high_24h),
+        low24h: Number(row.low_24h),
       };
     });
 
