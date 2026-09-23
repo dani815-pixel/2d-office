@@ -73,6 +73,7 @@ export default function App() {
   const [storageError, setStorageError] = useState(false);
   const [toast, setToast] = useState("");
   const [meetingFullscreen, setMeetingFullscreen] = useState(false);
+  const meetingLayoutRef = useRef<HTMLDivElement>(null);
   const parseJob = useRef(0);
   const transcriptEnd = useRef<HTMLDivElement>(null);
   const liveMeetingRef = useRef(new LiveMeetingController());
@@ -177,13 +178,27 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [app.meeting, speed, finishMeeting]);
   useEffect(() => {
-    if (!meetingFullscreen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMeetingFullscreen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [meetingFullscreen]);
+    const element = meetingLayoutRef.current;
+    if (!element) return;
+    const onFullscreenChange = () => setMeetingFullscreen(document.fullscreenElement === element);
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, [view, app.brief]);
+
+  const toggleMeetingFullscreen = async () => {
+    const element = meetingLayoutRef.current;
+    if (!element) return;
+    try {
+      if (document.fullscreenElement === element) {
+        await document.exitFullscreen();
+      } else {
+        await element.requestFullscreen();
+      }
+    } catch {
+      setMeetingFullscreen(false);
+      setToast("브라우저에서 전체화면을 사용할 수 없습니다.");
+    }
+  };
   useEffect(() => {
     if (view === "MEETING" && app.meeting.status !== "READY") {
       const scroller = transcriptEnd.current?.parentElement;
@@ -276,10 +291,10 @@ export default function App() {
         </div>}
 
         {view === "MEETING" && <div className="standard-page meeting-page">
-          <PageHead eyebrow="05 / THE MEETING ROOM" title={<>Six minds. <em>One brief.</em></>} description="확정된 Market Brief로 회의를 재생합니다. 진행 중 외부 AI를 다시 호출하지 않습니다." action={<div className="meeting-head-actions"><button className="button button--outline button--small" type="button" onClick={() => setMeetingFullscreen(true)}><Icon name="expand" size={15} /> 전체화면</button><span className={`meeting-status meeting-status--${app.meeting.status.toLowerCase()}`}><i />{app.meeting.status}</span></div>} />
+          <PageHead eyebrow="05 / THE MEETING ROOM" title={<>Six minds. <em>One brief.</em></>} description="확정된 Market Brief로 회의를 재생합니다. 진행 중 외부 AI를 다시 호출하지 않습니다." action={<div className="meeting-head-actions"><button className="button button--outline button--small" type="button" onClick={toggleMeetingFullscreen}><Icon name="expand" size={15} /> 전체화면</button><span className={`meeting-status meeting-status--${app.meeting.status.toLowerCase()}`}><i />{app.meeting.status}</span></div>} />
           {!app.brief ? <EmptyState index="05" title="회의 자료가 아직 없습니다." description="AI 조사 결과를 가져오고 미리보기를 확인한 뒤 회의를 시작할 수 있습니다." button="AI 결과 가져오기" onClick={() => go("IMPORT")} /> : <>
-            <div className={`meeting-layout ${meetingFullscreen ? "meeting-layout--fullscreen" : ""}`}><div className="meeting-stage">
-              <div className="meeting-stage-head"><span>LIVE OFFICE / MEETING ROOM</span>{meetingFullscreen && <button className="button button--small button--outline" type="button" onClick={() => setMeetingFullscreen(false)}><Icon name="close" size={14} /> 닫기</button>}</div><Office market={app.market} brief={app.brief} meeting={app.meeting} onCoinClick={openCoin} />
+            <div ref={meetingLayoutRef} className={`meeting-layout ${meetingFullscreen ? "meeting-layout--fullscreen" : ""}`}><div className="meeting-stage">
+              <div className="meeting-stage-head"><span>LIVE OFFICE / MEETING ROOM</span>{meetingFullscreen && <button className="button button--small button--outline" type="button" onClick={toggleMeetingFullscreen}><Icon name="close" size={14} /> 닫기</button>}</div><Office market={app.market} brief={app.brief} meeting={app.meeting} onCoinClick={openCoin} />
               <div className="playback-bar"><div className="playback-progress"><div><span>MEETING PROGRESS</span><strong>{app.meeting.status === "READY" ? "STANDING BY" : app.meeting.status === "FINISHED" ? "COMPLETE" : `${meetingProgress}%`}</strong></div><div className="progress-track"><i style={{ width: `${meetingProgress}%` }} /></div></div><div className="playback-controls">
                 {app.meeting.status === "READY" ? <button className="button button--primary" type="button" onClick={startMeeting}><Icon name="play" size={16} /> START MEETING</button>
                   : app.meeting.status === "FINISHED" ? <><button className="button button--outline" type="button" onClick={startMeeting}><Icon name="refresh" size={16} /> 다시 재생</button><button className="button button--primary" type="button" onClick={() => { setSelectedArchiveId(null); go("REPORT"); }}>보고서 보기 <Icon name="arrow" size={16} /></button></>
