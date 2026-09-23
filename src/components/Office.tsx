@@ -74,7 +74,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
     if (!active) return "IDLE";
     if (meeting.status === "FINISHED") return "END";
     if (meeting.status === "PAUSED") return "THINK";
-    if (current?.type === "MOVE" && current.speaker === id) return "WALK";
+    if (current?.type === "MOVE" && current.target === "TABLE") return "WALK";
     if (current?.type === "EMOTION" && current.speaker === id) return current.target === "ALERT" ? "ALERT" : "THINK";
     if (current?.type === "SCREEN" && id === "leader") return "POINT";
     if (current?.type === "LISTEN") return id === "leader" ? "STAND" : "LISTEN";
@@ -137,7 +137,7 @@ export default function Office({ market, brief, meeting, onCoinClick }: OfficePr
         </div>
 
         {TEAM.map((agent, index) => {
-          const moved = !!active && (meeting.status === "FINISHED" || meeting.events.slice(0, meeting.index + 1).some((event) => event.type === "MOVE" && event.speaker === agent.id));
+          const moved = !!active && (meeting.status === "FINISHED" || meeting.events.slice(0, meeting.index + 1).some((event) => event.type === "MOVE" && event.target === "TABLE"));
           const [left, top] = moved ? TABLE_POSITIONS[agent.id] : DESK_POSITIONS[agent.id];
           const state = agentState(agent.id);
           const dialogueTarget = current?.replyTo;
