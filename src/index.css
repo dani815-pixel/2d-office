@@ -385,3 +385,33 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
   }
   .agent-speech-bubble span { font-size: 10px; }
 }
+
+
+.agent-speech-bubble--left {
+  left: 0;
+  transform: translateX(0);
+}
+.agent-speech-bubble--left::after {
+  left: 22px;
+}
+.agent-speech-bubble--right {
+  left: auto;
+  right: 0;
+  transform: translateX(0);
+}
+.agent-speech-bubble--right::after {
+  left: auto;
+  right: 22px;
+}
+@keyframes speech-in-left {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes speech-in-right {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.agent-speech-bubble--left,
+.agent-speech-bubble--right {
+  animation-name: speech-in-left;
+}
