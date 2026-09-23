@@ -150,7 +150,7 @@ Mock Data
 - snapshot timestamp
 - market status
 - BTC / ETH / BNB / XRP / SOL 압축 시장 데이터
-- 이전 회의의 짧은 summary / risks / watchlist
+- 이전 회의 Memory: session / 핵심 질문 / 핵심 발견 / 미해결 follow-up / 해결된 항목 / watchlist
 - 시장 전체 분석 요구
 - 코인별 분석 요구
 - 최근 뉴스 및 출처 검증 요구
@@ -172,7 +172,8 @@ BTC: [price, change24h, volumeM, low, high]
 - 최대 프롬프트 약 12,000 characters
 - 뉴스 최대 3개
 - 출처 최대 8개
-- 이전 회의 요약 최대 800 characters
+- 이전 회의 Memory는 최신 1개 session만 전달하고 항목별로 압축
+- 과거 가격은 현재 가격 근거로 재사용하지 않음
 
 ---
 
@@ -676,6 +677,33 @@ Leader 정리
 ### STEP 4 — 시청자용 Highlight / Note
 ### STEP 5 — 풍부한 시장 해석 / 검증 / 시청자 Takeaway
 
+### STEP 6 — 다회차 회의 Memory / 연속성
+
+하루에 여러 번 회의를 진행할 수 있도록 이전 회의의 핵심만 MeetingMemory로 저장하고 다음 회의의 External AI Prompt와 Meeting Engine에 전달합니다.
+
+저장 정보:
+- session — 같은 날의 회의 순번
+- question — 이전 회의의 핵심 질문
+- keyFindings — 핵심 발견
+- openFollowUps — 아직 확인하지 못한 질문
+- resolvedFollowUps — 확인이 끝난 항목
+- watchItems — 계속 관찰할 항목
+- turningPoint — 이전 회의의 전환점
+
+연속 회의 흐름:
+SESSION 01 → OPEN FOLLOW-UP → SESSION 02 → RESOLVED 또는 STILL OPEN → SESSION 03
+
+중요한 규칙:
+- 이전 회의 데이터는 역사적 문맥이며 현재 시장 사실이 아님
+- 과거 가격을 오늘 가격처럼 사용하지 않음
+- 실제로 확인된 근거가 있을 때만 이전 질문을 해결 처리
+- 확인되지 않은 항목은 다음 회의로 유지
+- 캐릭터가 회의 사이에 실제로 조사했다고 임의로 주장하지 않음
+- "그건 제가 확인해볼게요" 같은 약속은 다음 회의의 확인 항목으로 이어질 수 있음
+- 최신 이전 session만 전달해 토큰 사용량을 제한
+
+현재 구현에서는 Archive의 memory를 다음 회의에 전달하며, Meeting Engine이 미해결 항목을 회의 초반에 Alex의 질문으로 다시 꺼냅니다.
+
 Daily Prompt와 `CryptoMarketBrief`를 확장해 단순 뉴스 요약을 넘어 **사실 → 해석 → 반대 해석 → 검증 조건 → 시청자 메모** 흐름을 보존합니다.
 
 추가된 코인별 분석 필드:
@@ -1035,7 +1063,7 @@ npm run build
 npm run preview
 ```
 
-Vite는 production build에 `vite build`를 사용하고, 기본 build 결과는 `dist`에 생성됩니다. `vite preview`는 로컬에서 production build를 확인할 때 사용합니다. citeturn0search0turn0search1
+Production build는 `vite build`, 로컬 확인은 `vite preview`로 진행합니다.
 
 ### 테스트 기록
 
@@ -1063,19 +1091,54 @@ Vite는 production build에 `vite build`를 사용하고, 기본 build 결과는
 
 ### 브라우저 테스트 순서
 
-1. `npm install`
-2. `npm run dev`
-3. OFFICE → MARKET에서 5개 코인 실시간 갱신 확인
-4. DAILY PROMPT에서 prompt 생성 / copy 확인
-5. AI IMPORT에서 데모 결과로 parser 확인
-6. Preview에서 interpretation / viewerTakeaways 확인
-7. MEETING에서 1x / 2x / pause / fullscreen / transcript 확인
-8. Highlight 카드와 speech bubble 확인
-9. 회의 중 Binance live signal 및 LIVE MARKET 표시 확인
-10. 회의 종료 후 Report 생성 확인
-11. Archive 저장 / 삭제 / 새로고침 확인
-12. 가능하면 10~20분 장시간 실행
-13. `npm run build` 및 `npm run preview` 확인
+#### A. 기본 실행
+1. npm install
+2. npm run dev
+3. OFFICE → MARKET에서 BTC / ETH / BNB / XRP / SOL 갱신 확인
+4. 가격 / 24H / 거래량 / 고가 / 저가와 BINANCE WS 표시 확인
+
+#### B. Daily Prompt / AI Import
+5. DAILY PROMPT 생성
+6. Copy 버튼으로 전체 prompt 복사
+7. AI IMPORT에서 데모 결과 입력
+8. JSON / Markdown / Plain Text parser 확인
+9. Preview의 INTERPRETATION / COUNTER VIEW / VERIFICATION / VIEWER TAKEAWAYS 확인
+10. URL / citation marker가 정규화 결과에 남지 않는지 확인
+
+#### C. 1차 회의
+11. MEETING 준비
+12. START MEETING
+13. 1x / 2x 재생 확인
+14. PAUSE / RESUME / NEXT EVENT 확인
+15. 캐릭터 이동 → 발언 → 반론 → 정리 흐름 확인
+16. Speech Bubble / Transcript / Highlight 확인
+17. fullscreen / ESC 확인
+18. 회의 종료 → Report 확인
+19. Archive에 SESSION 01 memory가 저장되는지 확인
+
+#### D. 2차 회의 — 핵심 연속성 테스트
+20. 같은 데이터 또는 새 AI 결과로 다시 회의 준비
+21. External AI Prompt에 PREVIOUS MEETING MEMORY가 포함되는지 확인
+22. 이전 회의의 OPEN FOLLOW-UP이 Prompt에 전달되는지 확인
+23. START MEETING
+24. Alex가 이전 회의의 미해결 질문을 자연스럽게 다시 꺼내는지 확인
+25. 이전 회의의 과거 가격이 현재 가격으로 잘못 발언되지 않는지 확인
+26. 오늘 자료로 확인되지 않은 항목이 다음 회의 항목으로 남는지 확인
+27. Archive에서 SESSION 01 → SESSION 02가 연결되는지 확인
+
+#### E. 실시간 회의
+28. 회의 중 Binance WebSocket 가격 변화 확인
+29. live signal 발생 시 LIVE MARKET 표시 확인
+30. Live SPEAK / REPLY가 기존 회의 흐름을 깨지 않는지 확인
+31. live signal 삽입 후 progress가 1%로 초기화되지 않는지 확인
+32. 10~20분 실행하며 reconnect / duplicate socket / timer / listener 확인
+
+#### F. 종료 / 저장
+33. Report가 회의 시작 snapshot을 기준으로 생성되는지 확인
+34. Archive 저장 / 삭제 확인
+35. 브라우저 새로고침 후 Archive 유지 확인
+36. npm run build
+37. npm run preview
 
 ### 테스트 중 특히 볼 문제
 
