@@ -85,7 +85,7 @@ export type CharacterStatus =
 export type MeetingDialogueIntent = "STATEMENT" | "QUESTION" | "REPLY" | "CHALLENGE" | "AGREE" | "EVIDENCE" | "SUMMARY" | "TURNING_POINT";
 
 export interface MeetingEvent {
-  type: "MOVE" | "SPEAK" | "LISTEN" | "SCREEN" | "EMOTION" | "PAUSE" | "END";
+  type: "MOVE" | "SPEAK" | "LISTEN" | "SCREEN" | "EMOTION" | "HIGHLIGHT" | "PAUSE" | "END";
   speaker?: RoleId;
   text?: string;
   target?: string;
