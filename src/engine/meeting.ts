@@ -95,7 +95,9 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     const cleanTopic = topic.trim();
     if (!cleanTopic) return;
     const topicShort = cleanTopic.length > 70 ? cleanTopic.slice(0, 70) + "…" : cleanTopic;
-    say(proposer, cleanTopic, "STATEMENT");
+    say("leader", "첫 번째 쟁점입니다. " + cleanTopic, "QUESTION");
+    pause(900);
+    say(proposer, cleanTopic, "STATEMENT", "leader");
     pause(1400);
     react(challenger);
     const challengerLead = characterLead[challenger];
@@ -108,8 +110,8 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     react("risk", "ALERT");
     say("risk", "한 가지 더 보죠. " + topicShort + "이 반대로 움직일 가능성도 열어두겠습니다.", "CHALLENGE", challenger);
     react("leader");
-    say("leader", "좋습니다. 지금까지 나온 의견을 나누면, 확인된 사실은 하나이고 해석은 두 갈래입니다.", "SUMMARY", "risk");
-    say("leader", "다음으로는 이 논쟁을 판단할 실제 데이터가 있는지 확인하겠습니다.", "QUESTION", "risk");
+    say("leader", "좋습니다. 지금까지 나온 의견을 나누면, 확인된 사실과 해석을 분리할 수 있습니다.", "SUMMARY", "risk");
+    say("leader", "이제 제가 정리하겠습니다. 다음 순서는 이 해석을 검증할 데이터, 반대 조건, 그리고 실제 가격 행동입니다.", "QUESTION", "risk");
   };
   const evidenceDebate = (id: CoinId) => {
     const coin = coinBrief(id);
@@ -161,7 +163,18 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
   };
   const coinEvidence = (id: CoinId) => {
     const coin = coinBrief(id);
+    if (!coin) return;
+    const analyst = analystFor[id];
+    say("leader", id + "에서 무엇이 실제로 중요한지부터 보겠습니다. " + (coin.advancedSignals?.length ? "일반적인 가격 설명을 넘어 전문 지표까지 확인하죠." : "확인 가능한 근거부터 짚겠습니다."), "QUESTION");
     evidenceDebate(id);
+    if (coin.advancedSignals?.length) {
+      const signal = coin.advancedSignals[0];
+      say(analyst, "전문 지표를 하나 보면 " + signal, "EVIDENCE", "leader");
+      say("leader", "좋습니다. 그 지표가 가격 움직임과 같은 방향인지, 아니면 엇갈리는지 확인해보죠.", "QUESTION", analyst);
+      if (coin.advancedSignals[1]) say("risk", "두 번째로는 " + coin.advancedSignals[1] + "도 같이 보겠습니다.", "CHALLENGE", analyst);
+      say("trader", "그럼 차트에서 확인할 포인트는 이 지표가 실제 가격 행동으로 이어지는지입니다.", "SUMMARY", "leader");
+    }
+    say("leader", id + " 논쟁은 여기까지 정리하죠. 확인된 사실, 해석, 그리고 판단을 바꿀 조건을 기록하겠습니다.", "SUMMARY");
   };
   const allCoins = (order: CoinId[] = [...COIN_IDS]) => {
     for (const id of order) {
