@@ -24,4 +24,4 @@ export function timeText(iso: string): string {
 export function localISODate(): string {
   const now = new Date();
   return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
-}
+}\nexport function resolveMeetingLiveText(text: string, market: MarketSnapshot): string {\n  return text.replace(/\\{\\{PRICE:(BTC|ETH|BNB|XRP|SOL)\\}\\}/g, (_, id: CoinId) => {\n    const coin = market.coins.find((item) => item.id === id);\n    return coin ? priceUSD(coin.price) : "N/A";\n  }).replace(/\\{\\{CHANGE:(BTC|ETH|BNB|XRP|SOL)\\}\\}/g, (_, id: CoinId) => {\n    const coin = market.coins.find((item) => item.id === id);\n    return coin ? changeText(coin.change24h) : "N/A";\n  });\n}\n
