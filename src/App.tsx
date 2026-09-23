@@ -126,29 +126,24 @@ export default function App() {
       (snapshot) => {
         setApp((previous) => {
           if (previous.meeting.status !== "RUNNING") return { ...previous, market: snapshot };
+          liveMeetingRef.current.observe(snapshot);
           let nextMeeting = previous.meeting;
           const current = nextMeeting.events[nextMeeting.index];
-          const canInterrupt = current?.type === "PAUSE" || current?.type === "LISTEN" || current?.type === "SCREEN";
-          if (canInterrupt) {
-            liveMeetingRef.current.observe(snapshot, (signal) => {
+          const canInsert = current?.type === "PAUSE" || current?.type === "LISTEN" || current?.type === "SCREEN";
+          if (canInsert) {
+            const signal = liveMeetingRef.current.consumePending();
+            if (signal) {
               const events = [...nextMeeting.events];
-              const speaker = signal.coin === "BTC" || signal.coin === "ETH"
-                ? "market"
-                : signal.coin === "BNB" || signal.coin === "XRP"
-                  ? "altcoin"
-                  : "trader";
+              const speaker = signal.coin === "BTC" || signal.coin === "ETH" ? "market" : signal.coin === "BNB" || signal.coin === "XRP" ? "altcoin" : "trader";
               const intent = signal.direction === "DOWN" ? "CHALLENGE" : "EVIDENCE";
               const responder = speaker === "market" ? "risk" : speaker === "altcoin" ? "market" : "risk";
-              const responseText = signal.direction === "DOWN"
-                ? (responder === "risk" ? "하락 신호는 리스크 관점에서도 확인하겠습니다." : "시장 데이터와 함께 추가 확인하겠습니다.")
-                : (responder === "risk" ? "상승 흐름이 다른 지표에서도 이어지는지 확인하겠습니다." : "이 움직임이 다른 자산으로 확산되는지도 보겠습니다.");
+              const responseText = signal.direction === "DOWN" ? "하락 신호는 리스크 관점에서도 확인하겠습니다." : "상승 흐름이 다른 지표에서도 이어지는지 확인하겠습니다.";
               events.splice(Math.min(nextMeeting.index + 1, events.length), 0,
                 { type: "SPEAK", speaker, text: signal.text, intent, live: true, duration: 8500 },
                 { type: "SPEAK", speaker: responder, text: responseText, intent: "REPLY", replyTo: speaker, live: true, duration: 5000 },
               );
               nextMeeting = { ...nextMeeting, events };
-              liveMeetingRef.current.markTriggered(signal.coin);
-            });
+            }
           }
           return { ...previous, market: snapshot, meeting: nextMeeting };
         });
@@ -156,7 +151,7 @@ export default function App() {
       },
       (message) => setMarketError(message),
     );
-  }, []);
+  }, []);;
 
   useEffect(() => {
     if (app.meeting.status !== "RUNNING") return;
