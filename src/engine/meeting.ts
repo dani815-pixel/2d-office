@@ -116,6 +116,18 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     const analyst = analystFor[id];
     if (!coin) return;
     say(analyst, coin.summary || "제공된 분석이 없어 추가 확인이 필요합니다.", "STATEMENT");
+    if (coin.interpretation) {
+      react(analyst);
+      say(analyst, "제 해석은 " + coin.interpretation, "STATEMENT");
+    }
+    if (coin.counterView) {
+      react("risk", "ALERT");
+      say("risk", "반대로 보면 " + coin.counterView, "CHALLENGE", analyst);
+    }
+    if (coin.verification[0]) {
+      react("trader");
+      say("trader", "그 해석을 확인하려면 " + coin.verification[0] + "부터 보겠습니다.", "QUESTION", "risk");
+    }
     if (coin.technical[0]) {
       react("trader");
       say("trader", "방금 말씀하신 흐름에서 제가 확인하고 싶은 건 " + coin.technical[0], "EVIDENCE", analyst);
@@ -237,6 +249,7 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
 
   screen("CONCLUSION");
   say("leader", "오늘의 관찰 목록은 " + (story?.watchItems?.length ? story.watchItems.join(", ") : watchlist.join(", ")) + "입니다.");
+  if (brief.viewerTakeaways?.length) say("leader", "메모할 핵심은 " + brief.viewerTakeaways.join(" / ") + "입니다.", "SUMMARY");
   say("trader", story?.endingQuestion || "다음 확인 시점까지 어떤 신호가 실제로 나타나는지 보겠습니다.");
   say("risk", "확인되지 않은 신호만으로 결론을 확대하지 않겠습니다.");
   say("leader", "확정된 사실과 시나리오를 분리해서 기록하겠습니다.");
