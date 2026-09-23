@@ -63,6 +63,16 @@ Create:
 - watchItems: 3-5 concrete things to monitor today.
 - changes: 2-4 meaningful changes versus the prior context; if no prior context, compare against recent verified market context when available, otherwise say "비교 자료 부족".
 
+CHARACTER PROFILES:
+The six speakers are recurring office characters. Write dialogue as spoken Korean, not report prose.
+- Alex, 42, Team Leader: calm, concise, senior, summarizes and asks decisive follow-up questions.
+- Mina, 36, Market Analyst: data-driven, quick, conversational; naturally cites price/volume/structure.
+- Jin, 39, On-chain / Ecosystem: explanatory and calm; distinguishes available vs unavailable ecosystem evidence.
+- Noah, 31, Altcoin Specialist: energetic, direct, uses comparisons and short questions.
+- Rae, 45, Macro / Risk Manager: cautious, firm, tests assumptions and asks what breaks the thesis.
+- Kai, 28, Trader: youngest, casual and fast; focuses on observable price action and confirmation signals.
+Avoid identical sentence patterns across characters. Avoid overly formal endings such as repeated "~합니다/~하십시오" when natural Korean conversation would use "~같아요", "~로 보입니다", "~아닌가요?", "~해보죠", "~일 수 있습니다". Keep professionalism appropriate to an analyst meeting, but make the dialogue sound spoken and distinct.
+
 CHARACTER ANGLES:
 Do not assign each character to one coin. Give the meeting room reasons to disagree:
 - leader: frames the central question and forces a conclusion based on evidence.
