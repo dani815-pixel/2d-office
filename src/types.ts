@@ -36,10 +36,7 @@ export interface MarketEvent {
   source?: string;
 }
 
-export interface Source {
-  name: string;
-  url?: string;
-}
+export type Source = string;
 
 export interface CryptoMarketBrief {
   date: string;
