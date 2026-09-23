@@ -81,9 +81,16 @@ IMPORTANT OUTPUT SAFETY:
 - If browsing/verification is unavailable, leave news/sources empty and explicitly state that recent verification was unavailable.
 - Never invent sources, dates, events, quotes, prices, or on-chain facts.
 
-OUTPUT:
-Return EXACTLY ONE JSON code block and nothing else. Do not write any explanation before or after it.
-The user will copy the entire response and paste it directly into the app.
+OUTPUT / ONE-CANVAS:
+Create the complete final meeting research result in ONE CANVAS / ONE DOCUMENT only.
+- Do not split the result across multiple messages, canvases, documents, or sections outside the final output.
+- Do not show your research process, reasoning, notes, or explanations.
+- The user must be able to copy the entire Canvas content once and paste it directly into this app.
+- The Canvas content must contain ONLY the final JSON output described below.
+- Do not place instructions, headings, greetings, commentary, or explanations outside that JSON.
+
+Return EXACTLY ONE JSON code block inside that single Canvas and nothing else.
+The user will copy the entire Canvas content and paste it directly into the app.
 Inside the JSON, use only valid JSON: double quotes for strings, no trailing commas, no comments.
 Do not place Markdown, citations, URLs, or unescaped line breaks inside JSON strings.
 If your interface automatically adds web citations, do not include them in the output; use only the plain source name.
