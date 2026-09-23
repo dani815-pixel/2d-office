@@ -1,5 +1,6 @@
 export const COIN_IDS = ["BTC", "ETH", "BNB", "XRP", "SOL"] as const;
 export type CoinId = (typeof COIN_IDS)[number];
+
 export type MarketStatus = "LIVE" | "STALE" | "ERROR" | "MOCK";
 
 export interface CoinMarket {
@@ -8,7 +9,9 @@ export interface CoinMarket {
   price: number;
   change24h: number;
   volume24h: number;
-  marketCap?: number;
+  marketCap: number;
+  high24h: number;
+  low24h: number;
 }
 
 export interface MarketSnapshot {
@@ -27,18 +30,30 @@ export interface CoinBrief {
   risks: string[];
 }
 
+export interface MarketEvent {
+  title: string;
+  summary: string;
+  source?: string;
+}
+
+export interface Source {
+  name: string;
+  url?: string;
+}
+
 export interface CryptoMarketBrief {
   date: string;
   marketSummary: string;
   coins: CoinBrief[];
-  globalFactors: string[];
-  events: string[];
   risks: string[];
-  correlations: string[];
-  sources: string[];
+  events?: MarketEvent[];
+  sources: Source[];
+  globalFactors?: string[];
+  correlations?: string[];
 }
 
 export type RoleId = "leader" | "market" | "onchain" | "altcoin" | "risk" | "trader";
+
 export type CharacterStatus =
   | "IDLE" | "WALK" | "SIT" | "STAND" | "SPEAK"
   | "LISTEN" | "THINK" | "POINT" | "ALERT" | "END";
