@@ -314,11 +314,14 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
       say("trader", id + "는 확인 조건이 부족해서 우선 WATCH로 두겠습니다.", "SUMMARY", analyst);
     }
     say("risk", id + "는 무효화 조건을 먼저 봐야 합니다. " + (coin.risks?.[0] || coin.bearScenario || "추가 리스크 확인"), "CHALLENGE", "trader");
-    say("leader", id + "에 대한 팀 판단은 조건부 시나리오로 기록하고, 확인 전에는 가상 주문도 자동 실행하지 않습니다.", "SUMMARY");
+    if (coin.tradingApprovalCriteria) say("trader", "김태훈 팀장님, 승인 전에 " + coin.tradingApprovalCriteria + "을 확인해 주세요.", "QUESTION", "risk");
+    if (coin.tradingRejectionCriteria) say("risk", "반대로 " + coin.tradingRejectionCriteria + "이면 이번 요청은 거절하는 게 맞습니다.", "CHALLENGE", "trader");
+    say("leader", id + "은 최종 승인이나 거절을 제가 판단하겠습니다. 지금은 팀에 판단 기준만 넘기고, 자동 주문은 실행하지 않습니다.", "SUMMARY");
     pause(900);
   }
   say("trader", "좋아요. 진입보다 확인 조건과 무효화 조건을 먼저 들고 트레이딩룸으로 넘기겠습니다.", "SUMMARY", "leader");
-  say("leader", "회의 종료 후에는 각 코인 담당자가 시나리오를 검토하고, 김태훈 팀장이 승인 여부를 확인합니다.", "SUMMARY", "trader");
+  say("leader", "회의 종료 후에는 각 코인 담당자가 시나리오를 검토하고, 김태훈 팀장이 승인 또는 거절을 직접 결정합니다.", "SUMMARY", "trader");
+  say("trader", "좋습니다. 외부 분석은 판단 기준까지만 주고, 최종 결정은 트레이딩팀이 하겠습니다.", "SUMMARY", "leader");
   pause(1600);
 
   screen("RISK");
