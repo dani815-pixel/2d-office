@@ -248,6 +248,18 @@ export interface TraderMemory {
   lastReview?: TradeReview;
 }
 
+export type TradeRequestStatus = "PENDING" | "APPROVED" | "REJECTED" | "EXECUTED";
+export interface TradeRequest {
+  id: string;
+  scenarioId: string;
+  traderId: string;
+  coin: CoinId;
+  side: TradeSide;
+  requestedAt: string;
+  status: TradeRequestStatus;
+  note: string;
+}
+
 export interface TradingTeamState {
   sessionId: string;
   sessionStartedAt: string;
@@ -257,6 +269,7 @@ export interface TradingTeamState {
   trades: Trade[];
   reviews: TradeReview[];
   scenarios: TradeScenario[];
+  requests: TradeRequest[];
   profiles: TraderProfile[];
   settings: Record<string, TraderSettings>;
   memories: Record<string, TraderMemory>;
