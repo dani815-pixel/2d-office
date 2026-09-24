@@ -317,7 +317,7 @@ export default function App() {
           </>}
         </div>}
 
-        {view === "TRADING_ROOM" && <TradingRoom market={app.market} />}
+        {view === "TRADING_ROOM" && <TradingRoom market={app.market} brief={app.brief} />}
 
         {view === "REPORT" && <div className="standard-page report-page">
           <PageHead eyebrow="06 / DAILY MEETING REPORT" title={<>The daily <em>brief.</em></>} description="회의에서 나온 해석을 사실 데이터와 나란히 기록합니다. 매수 또는 매도 지시가 아닙니다." action={reportItem && <button className="button button--outline" type="button" onClick={() => copy(reportToText(reportItem), "보고서가 복사되었습니다.")}><Icon name="copy" size={16} />보고서 복사</button>} />
