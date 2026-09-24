@@ -1095,7 +1095,7 @@ Trading Room에는 전체 가상 거래 상태를 초기화하는 RESET 기능�
 - Archive
 - 전체 앱 설정
 
-현재 RESET 버튼은 코드에 연결되어 있으나 **배포 화면에서 버튼이 보이지 않는 문제가 아직 해결되지 않았습니다.**
+현재 RESET 버튼은 Trading Room 헤더 우측의 `TRADING ROOM RESET` 버튼으로 배포되어 있습니다.
 
 확인된 디버깅 과정:
 
@@ -1107,9 +1107,9 @@ Trading Room에는 전체 가상 거래 상태를 초기화하는 RESET 기능�
 6. `index.css`에서 literal `\\n` 문자열이 실제 줄바꿈이 아닌 상태로 삽입된 문제 발견
 7. stylesheet의 literal `\\n` 제거 커밋 진행
 8. GitHub Actions build / deploy 확인
-9. 실제 배포 화면에서는 여전히 버튼 미표시가 관찰됨
+9. 실제 GitHub Pages 화면에서 Trading Room 탭과 RESET 버튼 표시 확인
 
-따라서 현재 RESET 버튼 문제는 **VS Code에서 실제 브라우저 DOM / CSS computed style까지 확인하면서 수정할 안정화 과제**로 남겨둡니다.
+참고로 화면 폭이 1160px 이하이면 사이드바 메뉴의 텍스트 라벨은 숨겨지고 아이콘만 표시됩니다. Trading Room 아이콘을 선택하면 헤더의 RESET 버튼을 사용할 수 있습니다.
 
 ---
 
