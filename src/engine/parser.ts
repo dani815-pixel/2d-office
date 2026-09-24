@@ -155,9 +155,11 @@ export function parseResearch(raw: string): ParseResult {
       ? Object.entries(data.coins).map(([id, value]) => ({ ...(isObject(value) ? value : { summary: value }), id }))
       : [];
   const recognized = new Map<CoinId, CoinBrief>();
+  const duplicateCoins = new Set<CoinId>();
   for (const coin of rawCoins) {
     const id = coinId(coin.id ?? coin.symbol ?? coin.name);
-    if (!id || recognized.has(id)) continue;
+    if (!id) continue;
+    if (recognized.has(id)) { duplicateCoins.add(id); continue; }
     recognized.set(id, {
       id,
       summary: stringValue(coin.summary ?? coin.analysis, 320),
@@ -177,6 +179,9 @@ export function parseResearch(raw: string): ParseResult {
       tradingMode: ["SPOT", "FUTURES", "BOTH"].includes(stringValue(coin.tradingMode ?? coin.trading_mode, 20).toUpperCase()) ? stringValue(coin.tradingMode ?? coin.trading_mode, 20).toUpperCase() as CoinBrief["tradingMode"] : "BOTH",
     });
   }
+  if (duplicateCoins.size) errors.push("중복 코인 분석이 있습니다: " + [...duplicateCoins].join(", ") + ".");
+  const missingCoins = COIN_IDS.filter((id) => !recognized.has(id));
+  if (format === "JSON" && missingCoins.length) errors.push("JSON 결과에는 필수 코인 5개가 모두 필요합니다: " + missingCoins.join(", ") + ".");
   if (![...recognized.values()].some((coin) => coin.summary || coin.technical.length)) {
     errors.push("BTC, ETH, BNB, XRP, SOL 중 하나 이상의 코인 분석이 필요합니다.");
   }
@@ -185,12 +190,18 @@ export function parseResearch(raw: string): ParseResult {
     const found = recognized.get(id);
     if (found) {
       if (!found.summary) warnings.push(`${id}: 요약이 비어 있습니다.`);
+      if ((found.tradingBias === "LONG" || found.tradingBias === "SHORT") && (!found.tradingEntryCondition || !found.tradingInvalidation)) {
+        warnings.push(`${id}: LONG/SHORT 조건이 부족해 WATCH로 정규화합니다.`);
+        return { ...found, tradingBias: "WATCH" as const, tradingEntryCondition: "", tradingInvalidation: found.tradingInvalidation || "" };
+      }
       return found;
     }
     warnings.push(`${id}: 분석이 없어 빈 항목으로 표시합니다.`);
     return { id, summary: "제공된 분석이 없습니다. 별도 확인이 필요합니다.", technical: [], news: [], bullScenario: "", bearScenario: "", risks: [], tradingBias: "WATCH", tradingMode: "BOTH" };
   });
   const risks = listValue(data.risks, 8);
+  const allowedStoryModes = ["BREAKOUT_TENSION", "LEADERSHIP_SHIFT", "DIVERGENCE", "CATALYST_COUNTDOWN", "RISK_ALERT", "ROTATION", "CORRELATION_BREAK", "QUIET_BEFORE_MOVE", "CROSSROADS"];
+  if (data.story && (!rawStory || !allowedStoryModes.includes(stringValue(rawStory.mode, 40)))) warnings.push("story.mode이 허용 목록에 없어 그대로 표시합니다.");
   const rawStory = isObject(data.story) ? data.story : undefined;
   const story = rawStory ? {
     mode: stringValue(rawStory.mode, 40),
