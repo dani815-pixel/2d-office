@@ -18,7 +18,7 @@ export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem,
       coin.id,
       [Number(coin.price.toFixed(5)), Number(coin.change24h.toFixed(2)), Math.round(coin.volume24h / 1_000_000), Number(coin.low24h.toFixed(5)), Number(coin.high24h.toFixed(5))],
     ])),
-    ...(trading ? { traders: Object.values(trading.memories).map((m) => ({ id: m.traderId, t: m.totalTrades, w: m.wins, l: m.losses, lessons: m.currentLessons.slice(0, 2), strategy: m.strategyChanges.slice(0, 2), risk: m.riskChanges.slice(0, 2) })),\n    } : {}),\n    ...(previous ? {
+    ...(trading ? { traders: Object.values(trading.memories).map((m) => ({ id: m.traderId, t: m.totalTrades, w: m.wins, l: m.losses, lessons: m.currentLessons.slice(0, 2), strategy: m.strategyChanges.slice(0, 2), risk: m.riskChanges.slice(0, 2) })) } : {}),\n    ...(previous ? {
       prev: {
         session: previous.memory?.session,
         s: previous.meetingSummary.slice(0, PROMPT_BUDGET.maxPreviousSummary),
