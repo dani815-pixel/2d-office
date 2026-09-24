@@ -39,7 +39,9 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
       const reviews = closed.map((item) => item.review);
       const memories = { ...prev.memories };
       for (const item of closed) memories[item.trade.traderId] = updateTraderMemory(memories[item.trade.traderId], item.trade, item.review);
-      return { ...prev, balance, positions: remaining, trades: [...closed.map((item) => item.trade), ...prev.trades].slice(0, 100), reviews: [...reviews, ...prev.reviews].slice(0, 100), memories };
+      const activities = { ...prev.activities };
+      for (const item of closed) activities[item.trade.traderId] = "THINK";
+      return { ...prev, balance, positions: remaining, trades: [...closed.map((item) => item.trade), ...prev.trades].slice(0, 100), reviews: [...reviews, ...prev.reviews].slice(0, 100), memories, activities };
     });
   }, [market]);
 
@@ -95,9 +97,10 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
     const result = openSimulatedPosition(state.balance, market, request.coin, settings.mode, request.side, quantity, settings.leverage, specialist.id, settings);
     if (!result.position) { setNotice(result.error || "승인 후 가상 진입에 실패했습니다."); return; }
     result.position.scenarioId = request.scenarioId;
-    setState((prev) => ({ ...prev, balance: result.balance, positions: [...prev.positions, result.position!], requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "EXECUTED" as const } : item), activities: { ...prev.activities, [request.traderId]: "RETURN" as const, "team-lead": "THINK" as const } }));
+    setState((prev) => ({ ...prev, balance: result.balance, positions: [...prev.positions, result.position!], requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "EXECUTED" as const } : item), activities: { ...prev.activities, [request.traderId]: "TRADE" as const, "team-lead": "THINK" as const } }));
     setNotice(request.coin + " " + request.side + " 승인 → 가상 진입 완료 · 리스크 " + settings.riskPercent + "%");
-    window.setTimeout(() => setState((prev) => ({ ...prev, activities: { ...prev.activities, [request.traderId]: "WATCH" as const, "team-lead": "WATCH" as const } })), 950);
+    window.setTimeout(() => setState((prev) => ({ ...prev, activities: { ...prev.activities, [request.traderId]: "RETURN" as const } })), 900);
+    window.setTimeout(() => setState((prev) => ({ ...prev, activities: { ...prev.activities, [request.traderId]: "WATCH" as const, "team-lead": "WATCH" as const } })), 1800);
   };
 
 
@@ -117,8 +120,9 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
     const exitPrice = market.coins.find((item) => item.id === position.coin)?.price;
     if (!exitPrice) return;
     const result = closeSimulatedPosition(position, exitPrice);
-    setState((prev) => { const review = createTradeReview(result.trade); const memories = { ...prev.memories, [result.trade.traderId]: updateTraderMemory(prev.memories[result.trade.traderId], result.trade, review) }; return { ...prev, balance: prev.balance + result.balanceDelta, positions: prev.positions.filter((item) => item.id !== positionId), trades: [result.trade, ...prev.trades].slice(0, 100), reviews: [review, ...prev.reviews].slice(0, 100), memories }; });
+    setState((prev) => { const review = createTradeReview(result.trade); const memories = { ...prev.memories, [result.trade.traderId]: updateTraderMemory(prev.memories[result.trade.traderId], result.trade, review) }; return { ...prev, balance: prev.balance + result.balanceDelta, positions: prev.positions.filter((item) => item.id !== positionId), trades: [result.trade, ...prev.trades].slice(0, 100), reviews: [review, ...prev.reviews].slice(0, 100), memories, activities: { ...prev.activities, [result.trade.traderId]: "THINK" as const } }; });
     setNotice(position.coin + " 포지션 청산 · PnL " + result.trade.pnl.toFixed(2) + " USD · REVIEW 기록됨");
+    window.setTimeout(() => setState((prev) => ({ ...prev, activities: { ...prev.activities, [result.trade.traderId]: "WATCH" as const } })), 1800);
   };
 
   return <div className="standard-page trading-page">
