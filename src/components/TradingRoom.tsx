@@ -72,8 +72,17 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
       setNotice(request.coin + " 요청을 팀장이 거절했습니다.");
       return;
     }
-    setState((prev) => ({ ...prev, requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "APPROVED" as const } : item), activities: { ...prev.activities, [request.traderId]: "TRADE" as const, "team-lead": "TALK" as const } }));
-    setNotice(request.coin + " " + request.side + " 요청 승인 · 담당자가 진입할 수 있습니다.");
+    const specialist = TRADING_TEAM.find((member) => member.id === request.traderId);
+    const settings = specialist ? state.settings[specialist.id] || DEFAULT_TRADER_SETTINGS[specialist.id] : null;
+    if (!specialist || !settings) return;
+    const price = market.coins.find((item) => item.id === request.coin)?.price || 0;
+    const riskBudget = state.balance * Math.max(settings.riskPercent, 0.1) / 100;
+    const quantity = price > 0 ? Math.max(riskBudget / price, 0.000001) : 0;
+    const result = openSimulatedPosition(state.balance, market, request.coin, settings.mode, request.side, quantity, settings.leverage, specialist.id, settings);
+    if (!result.position) { setNotice(result.error || "승인 후 가상 진입에 실패했습니다."); return; }
+    result.position.scenarioId = request.scenarioId;
+    setState((prev) => ({ ...prev, balance: result.balance, positions: [...prev.positions, result.position!], requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "EXECUTED" as const } : item), activities: { ...prev.activities, [request.traderId]: "WATCH" as const, "team-lead": "THINK" as const } }));
+    setNotice(request.coin + " " + request.side + " 승인 → 가상 진입 완료 · 리스크 " + settings.riskPercent + "%");
   };
 
 
