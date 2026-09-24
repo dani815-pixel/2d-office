@@ -44,6 +44,8 @@ export interface CoinBrief {
   tradingEntryCondition?: string;
   tradingInvalidation?: string;
   tradingMode?: "SPOT" | "FUTURES" | "BOTH";
+  tradingApprovalCriteria?: string;
+  tradingRejectionCriteria?: string;
 }
 
 export interface MarketEvent {
@@ -185,6 +187,8 @@ export interface TradeScenario {
   reasoning: string;
   confidence?: "LOW" | "MEDIUM" | "HIGH";
   source: "MEETING";
+  approvalCriteria?: string;
+  rejectionCriteria?: string;
 }
 
 export interface Position {
