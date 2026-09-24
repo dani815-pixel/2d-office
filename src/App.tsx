@@ -5,7 +5,7 @@ import { COIN_META } from "./data/coins";
 import { TEAM } from "./data/team";
 import { DEMO_RESEARCH, MOCK_MARKET } from "./data/demo";
 import { getMarketSnapshot, subscribeMarketStream } from "./services/market";
-import { readArchive, saveArchive } from "./services/storage";
+import { readArchive, saveArchive, resetAppData } from "./services/storage";
 import { copyText } from "./services/clipboard";
 import { buildDailyPrompt } from "./engine/prompt";
 import { readTradingState } from "./services/storage";
@@ -100,6 +100,19 @@ export default function App() {
   }, [toast]);
 
   const go = (next: View) => { setView(next); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const resetAllData = () => {
+    if (!window.confirm("앱의 모든 회의 기록·리포트·Archive·가상거래 데이터를 초기화할까요? 이 작업은 되돌릴 수 없습니다.")) return;
+    resetAppData();
+    setApp((previous) => ({ market: previous.market, meeting: { status: "READY", events: [], index: 0 }, archive: [] }));
+    setView("OFFICE");
+    setSelectedArchiveId(null);
+    setPrompt("");
+    setRawImport("");
+    setPreview(null);
+    setImportStatus("READY");
+    setToast("전체 데이터가 초기화되었습니다.");
+  };
+
   const refreshMarket = async () => {
     setMarketLoading(true);
     setMarketError("");
@@ -260,7 +273,7 @@ export default function App() {
         {(index === 0 || NAV[index - 1].group !== item.group) && <div className="nav-group">{item.group}</div>}
         <button className={`nav-link ${view === item.id ? "nav-link--active" : ""}`} onClick={() => { if (item.id === "REPORT") setSelectedArchiveId(null); go(item.id); }} type="button" aria-current={view === item.id ? "page" : undefined}><Icon name={item.icon} size={18} /><span>{item.label}</span><small>{item.number}</small></button>
       </div>)}</nav>
-      <div className="sidebar-bottom"><div className="sidebar-system"><span className="system-icon"><span /><span /><span /></span><div><strong>SYSTEM ONLINE</strong><small>Local workspace / no AI key</small></div></div><div className="sidebar-version"><span>2D CRYPTO AI OFFICE</span><span>V 1.0</span></div></div>
+      <div className="sidebar-bottom"><button className="system-reset-button" type="button" onClick={resetAllData}><Icon name="trash" size={14} /> RESET ALL DATA</button><div className="sidebar-system"><span className="system-icon"><span /><span /><span /></span><div><strong>SYSTEM ONLINE</strong><small>Local workspace / no AI key</small></div></div><div className="sidebar-version"><span>2D CRYPTO AI OFFICE</span><span>V 1.0</span></div></div>
     </aside>
     <div className="main-shell">
       <header className="topbar"><div className="breadcrumb"><span>WORKSPACE</span><b>/</b><strong>{view === "OFFICE" ? "OVERVIEW" : view}</strong></div><div className="topbar-actions"><span className="today-text"><Icon name="clock" size={15} />{dateLabel}</span><span className={`status-pill status-pill--${marketLoading ? "loading" : app.market.status.toLowerCase()}`}><i />{marketLoading ? "CONNECTING" : app.market.status}</span><button className={`top-refresh ${marketLoading ? "is-spinning" : ""}`} onClick={refreshMarket} disabled={marketLoading} title="시장 데이터 새로고침" aria-label="시장 데이터 새로고침" type="button"><Icon name="refresh" size={17} /></button></div></header>
