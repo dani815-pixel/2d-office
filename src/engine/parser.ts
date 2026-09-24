@@ -193,6 +193,8 @@ export function parseResearch(raw: string): ParseResult {
       tradingEntryCondition: stringValue(coin.tradingEntryCondition ?? coin.trading_entry_condition, 240),
       tradingInvalidation: stringValue(coin.tradingInvalidation ?? coin.trading_invalidation, 240),
       tradingMode: ["SPOT", "FUTURES", "BOTH"].includes(stringValue(coin.tradingMode ?? coin.trading_mode, 20).toUpperCase()) ? stringValue(coin.tradingMode ?? coin.trading_mode, 20).toUpperCase() as CoinBrief["tradingMode"] : "BOTH",
+      tradingApprovalCriteria: stringValue(coin.tradingApprovalCriteria ?? coin.trading_approval_criteria, 240),
+      tradingRejectionCriteria: stringValue(coin.tradingRejectionCriteria ?? coin.trading_rejection_criteria, 240),
     });
   }
   if (duplicateCoins.size) errors.push("중복 코인 분석이 있습니다: " + [...duplicateCoins].join(", ") + ".");
@@ -213,11 +215,15 @@ export function parseResearch(raw: string): ParseResult {
         const hasTradingEntry = rawCoin.tradingEntryCondition !== undefined || rawCoin.trading_entry_condition !== undefined;
         const hasTradingInvalidation = rawCoin.tradingInvalidation !== undefined || rawCoin.trading_invalidation !== undefined;
         const hasTradingMode = rawCoin.tradingMode !== undefined || rawCoin.trading_mode !== undefined;
+        const hasApprovalCriteria = rawCoin.tradingApprovalCriteria !== undefined || rawCoin.trading_approval_criteria !== undefined;
+        const hasRejectionCriteria = rawCoin.tradingRejectionCriteria !== undefined || rawCoin.trading_rejection_criteria !== undefined;
         if (!hasAdvancedSignals) warnings.push(`${id}: advancedSignals가 없어 빈 배열로 정규화합니다.`);
         if (!hasTradingBias) warnings.push(`${id}: tradingBias가 없어 WATCH로 정규화합니다.`);
         if (!hasTradingEntry) warnings.push(`${id}: tradingEntryCondition이 없어 빈 값으로 정규화합니다.`);
         if (!hasTradingInvalidation) warnings.push(`${id}: tradingInvalidation이 없어 빈 값으로 정규화합니다.`);
         if (!hasTradingMode) warnings.push(`${id}: tradingMode이 없어 BOTH로 정규화합니다.`);
+        if (!hasApprovalCriteria) warnings.push(`${id}: tradingApprovalCriteria가 없어 빈 값으로 정규화합니다.`);
+        if (!hasRejectionCriteria) warnings.push(`${id}: tradingRejectionCriteria가 없어 빈 값으로 정규화합니다.`);
       }
       if ((found.tradingBias === "LONG" || found.tradingBias === "SHORT") && (!found.tradingEntryCondition || !found.tradingInvalidation)) {
         warnings.push(`${id}: LONG/SHORT 조건이 부족해 WATCH로 정규화합니다.`);
@@ -231,7 +237,7 @@ export function parseResearch(raw: string): ParseResult {
       return { ...found, advancedSignals: normalizedSignals.advancedSignals, verification: normalizedSignals.verification };
     }
     warnings.push(`${id}: 분석이 없어 빈 항목으로 표시합니다.`);
-    return { id, summary: "제공된 분석이 없습니다. 별도 확인이 필요합니다.", technical: [], news: [], bullScenario: "", bearScenario: "", risks: [], tradingBias: "WATCH", tradingMode: "BOTH" };
+    return { id, summary: "제공된 분석이 없습니다. 별도 확인이 필요합니다.", technical: [], news: [], bullScenario: "", bearScenario: "", risks: [], tradingBias: "WATCH", tradingMode: "BOTH", tradingApprovalCriteria: "", tradingRejectionCriteria: "" };
   });
   const risks = listValue(data.risks, 8);
   const rawStory = isObject(data.story) ? data.story : undefined;
