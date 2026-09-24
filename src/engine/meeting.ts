@@ -1,4 +1,4 @@
-import { COIN_IDS, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingEvent, type MeetingMemory, type RoleId } from "../types";
+import { COIN_IDS, type CoinId, type CryptoMarketBrief, type MarketSnapshot, type MeetingEvent, type MeetingMemory, type RoleId, type TradingTeamState } from "../types";
 
 
 const analystFor: Record<CoinId, RoleId> = {
@@ -7,7 +7,7 @@ const analystFor: Record<CoinId, RoleId> = {
 
 const TARGET_MEETING_MS = 20 * 60 * 1000;
 
-export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnapshot, previousMemory?: MeetingMemory): MeetingEvent[] {
+export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnapshot, previousMemory?: MeetingMemory, trading?: TradingTeamState): MeetingEvent[] {
   const events: MeetingEvent[] = [];
   const story = brief.story;
   const mode = story?.mode || "CROSSROADS";
@@ -150,6 +150,28 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
   };
   const previousOpen = previousMemory?.openFollowUps ?? [];
   const previousResolved = previousMemory?.resolvedFollowUps ?? [];
+  const completedTrades = trading?.trades
+    ? [...trading.trades].sort((a, b) => new Date(b.closedAt).getTime() - new Date(a.closedAt).getTime()).slice(0, 3)
+    : [];
+  const traderName = (id: string) => trading?.profiles.find((member) => member.id === id)?.name || id;
+  const tradingReview = () => {
+    if (!completedTrades.length) return;
+    screen("TRADING_REVIEW");
+    say("leader", "지난 거래부터 짚고 가죠. 결과를 현재 시장 판단과 섞지 말고, 확인된 사실부터 보겠습니다.", "QUESTION");
+    for (const trade of completedTrades) {
+      const review = trading?.reviews.find((item) => item.tradeId === trade.id);
+      const name = traderName(trade.traderId);
+      say("trader", name + " 담당 거래입니다. " + trade.coin + " " + trade.side + ", 진입 " + trade.entryPrice.toFixed(2) + ", 청산 " + trade.exitPrice.toFixed(2) + ", PnL " + trade.pnl.toFixed(2) + " USD, " + trade.closeReason + "로 종료됐습니다.", "EVIDENCE", "leader");
+      if (review?.facts?.[0]) say("trader", "기록상 사실은 " + review.facts[0] + "입니다.", "EVIDENCE", "leader");
+      if (review?.interpretation?.[0]) say("risk", "해석은 " + review.interpretation[0] + "이지만, 결과만으로 원인을 확정하지는 않겠습니다.", "CHALLENGE", "trader");
+      if (review?.possibleCauses?.[0]) say("risk", review.possibleCauses[0], "QUESTION", "trader");
+      if (review?.lessons?.[0]) say("trader", "이번 복기에서 남은 교훈은 " + review.lessons[0], "SUMMARY", "risk");
+      if (review?.improvement) say("leader", "좋습니다. 다음 시나리오에서는 " + review.improvement + "을 확인 조건으로 다시 검증하죠.", "SUMMARY", "trader");
+      pause(900);
+    }
+    say("leader", "복기 결과는 과거 거래에 대한 학습 자료로만 남기고, 오늘 시장 방향은 오늘 확인되는 데이터로 다시 판단하겠습니다.", "SUMMARY");
+    pause(1400);
+  };
   const continuityIntro = () => {
     if (!previousMemory) return;
     say("leader", "지난 회의에서 남겨둔 질문부터 보겠습니다. " + previousMemory.question, "SUMMARY");
@@ -273,6 +295,8 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     if (story?.turningPoint) turningPoint(story.turningPoint, "market");
     if (story?.surprise && story.surprise !== "없음") say("onchain", "의외의 관찰은 " + story.surprise, "EVIDENCE", "market");
   }
+
+  tradingReview();
 
   screen("TRADING_DESK");
   say("leader", "이제 회의에서 나온 해석을 가상 트레이딩 시나리오로 바꿔보죠. 지금은 주문이 아니라 조건을 정리합니다.", "QUESTION");
