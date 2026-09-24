@@ -270,4 +270,4 @@ export interface AppState {
   archive: ArchiveItem[];
 }
 
-export type View = "OFFICE" | "MARKET" | "PROMPT" | "IMPORT" | "MEETING" | "REPORT" | "ARCHIVE";
+export type View = "OFFICE" | "MARKET" | "PROMPT" | "IMPORT" | "MEETING" | "TRADING_ROOM" | "REPORT" | "ARCHIVE";
