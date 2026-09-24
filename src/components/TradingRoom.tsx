@@ -134,7 +134,7 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
   };
 
   return <div className="standard-page trading-page">
-    <div className="page-head"><div><div className="eyebrow"><span className="eyebrow-line" />06 / TRADING DESK</div><h1>Trading <em>room.</em></h1><p>회의 가설을 검토하고 로컬 가상 포지션을 운용합니다.</p></div><div className="page-head-action"><button className="button button--ghost" type="button" onClick={resetTradingRoom}>초기화</button></div></div>
+    <div className="page-head trading-page-head"><div><div className="eyebrow"><span className="eyebrow-line" />06 / TRADING DESK</div><h1>Trading <em>room.</em></h1><p>회의 가설을 검토하고 로컬 가상 포지션을 운용합니다.</p></div><div className="trading-page-head__actions"><span>LOCAL STATE</span><button className="button button--outline trading-reset-button" type="button" onClick={resetTradingRoom}>TRADING ROOM RESET</button></div></div>
     <div className="trading-banner"><div><strong>SIMULATION ONLY / LOCAL</strong><small>NO EXCHANGE API · NO REAL ORDERS</small></div><strong>BALANCE · {priceUSD(state.balance)}</strong></div>
 
     <section className="trading-panel"><div className="trading-panel-head">LIVE MARKET / BINANCE WS</div><div className="trading-coins">{market.coins.map((item) => <div className={"trading-coin trading-coin--" + (item.change24h >= 0 ? "up" : "down")} key={item.id}><strong>{COIN_META[item.id].name} / {item.id}</strong><b>{priceUSD(item.price)}</b><span>{changeText(item.change24h)} · LIVE</span></div>)}</div></section>
