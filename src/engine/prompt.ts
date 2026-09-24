@@ -1,6 +1,8 @@
 import type { ArchiveItem, MarketSnapshot, TradingTeamState } from "../types";
 import { localISODate } from "../utils/format";
 
+export const PROMPT_VERSION = "2.0";
+
 export const PROMPT_BUDGET = {
   maxChars: 12000,
   maxNews: 3,
@@ -55,16 +57,18 @@ export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem,
     } : {}),
   };
 
-  const prompt = `You are a cautious crypto market researcher and meeting-story editor. Research BTC, ETH, BNB, XRP and SOL for today. Respond in Korean. Separate verified facts from interpretation. Never give guaranteed returns or direct buy/sell instructions.
+  const prompt = `PROMPT VERSION: ${PROMPT_VERSION}
+You are a cautious crypto market researcher and meeting-story editor. Research BTC, ETH, BNB, XRP and SOL for today. Respond in Korean. Separate verified facts from interpretation. Never give guaranteed returns or direct buy/sell instructions.
 
 INPUT (compact): ${JSON.stringify(compact)}
 d=date, t=snapshot time (UTC), st=data status, c={coin:[USD price, 24h change %, 24h volume USD millions, 24h low, 24h high]}. traders is compressed local trading memory, not current market evidence. reviews contains only completed trades, not open positions. Use past trades only for review and risk discipline; never treat a win/loss as proof of a strategy. prev is historical meeting memory, never current evidence. If prev.open exists, treat each item as a follow-up question from the previous session. Only close a follow-up when today’s verified research actually answers it.
 ${market.status !== "LIVE" ? `IMPORTANT: st=${market.status}. These prices are ${market.status === "MOCK" ? "fixed demo examples, NOT live prices" : "not confirmed live"}. Verify current prices independently; do not present input prices as current facts.` : "Use the snapshot as factual price/volume context, not a prediction."}
 
 RESEARCH:
-1. Assess overall market, macro/liquidity context, cross-coin relationships, and the most important change today.\n1b. If traders are present, identify only practical strategy/risk adjustments supported by their recorded lessons. Never promise that an adjustment will improve returns.
+1. Assess overall market, macro/liquidity context, cross-coin relationships, and the most important change today.\n1b. If traders are present, identify only practical strategy/risk adjustments supported by their recorded lessons. Never promise that an adjustment will improve returns. Treat trader history as learning data, not current market evidence.
 2. For EACH coin, provide: concise summary, up to 3 technical observations, up to ${PROMPT_BUDGET.maxNews} verified recent news items, one bull scenario, one bear scenario, up to 3 risks, a concise interpretation, a counter-view, 2-3 verification checks, and up to 3 viewer takeaways. Also provide 2-4 advancedSignals when verified, using non-obvious professional indicators such as funding rates, open interest, futures basis, liquidations, ETF flows, exchange netflows, stablecoin flows, active addresses, realized price, or token-specific liquidity/holder behavior. Only include metrics actually verified today; never invent them.
-3. For each coin, assign tradingBias only from the evidence: LONG when the research supports a conditional bullish scenario, SHORT when it supports a conditional bearish scenario, WATCH when evidence is mixed or insufficient. This is a scenario label, not a direct trading instruction. Provide concrete tradingEntryCondition and tradingInvalidation only when supported by evidence; otherwise leave them empty.\n3b. Find what is genuinely different or surprising today. Prefer a concrete divergence, catalyst, contradiction, rotation, liquidity change, event, or risk over generic market commentary.
+3. For each coin, assign tradingBias only from the evidence. Follow this exact order: market fact → interpretation → counter-view → verification → entry condition → invalidation → bias. LONG when the research supports a conditional bullish scenario, SHORT when it supports a conditional bearish scenario, WATCH when evidence is mixed or insufficient. This is a scenario label, not a direct trading instruction. Provide concrete tradingEntryCondition and tradingInvalidation only when supported by evidence; otherwise leave them empty.\n3b. If evidence is mixed or insufficient, use WATCH. LONG/SHORT requires a concrete verification condition and invalidation condition.
+3c. Find what is genuinely different or surprising today. Prefer a concrete divergence, catalyst, contradiction, rotation, liquidity change, event, or risk over generic market commentary.
 4. Separate every important claim into FACT, INTERPRETATION, and UNCERTAINTY. Do not turn correlation into causation. Distinguish a verified event from its possible market impact.\n5. Build a TV-friendly meeting story from the research. The story is NOT fiction: every hook, conflict, twist, and conclusion must be grounded in the supplied data or verified research.
 
 CONTINUITY / MULTI-SESSION RULES:
@@ -125,6 +129,12 @@ If trader memory is present, Kai should explicitly test whether a previous tradi
 
 NEWS/SOURCES:
 Use recent, verifiable information only. For each news item use "title | source | short summary".
+OUTPUT VALIDATION:
+- BTC, ETH, BNB, XRP, SOL must appear exactly once.
+- tradingBias: LONG|SHORT|WATCH only. tradingMode: SPOT|FUTURES|BOTH only.
+- If LONG/SHORT has no supported entry condition or invalidation, output WATCH.
+- Keep arrays concise and never add unsupported fields.
+
 IMPORTANT OUTPUT SAFETY:
 - Do NOT output URLs, Markdown links, footnotes, citation markers, reference IDs, or inline web citations such as [text](https://...) or 【...】.
 - For source fields, use plain text only, e.g. "Reuters" or "CoinDesk". Never append a URL.
@@ -150,5 +160,12 @@ Format:
 \`\`\`
 Include BTC, ETH, BNB, XRP, SOL exactly once. Keep every array concise. Do not repeat input data or instructions. The story must be grounded in evidence and should create a different meeting narrative when the evidence genuinely differs.`;
 
+  if (prompt.length <= PROMPT_BUDGET.maxChars) return prompt;
+  const outputMarker = "OUTPUT / ONE-CANVAS:";
+  const outputIndex = prompt.indexOf(outputMarker);
+  if (outputIndex > 0) {
+    const headBudget = Math.max(0, PROMPT_BUDGET.maxChars - (prompt.length - outputIndex) - 2);
+    return prompt.slice(0, headBudget) + "\n\n" + prompt.slice(outputIndex);
+  }
   return prompt.slice(0, PROMPT_BUDGET.maxChars);
 }
