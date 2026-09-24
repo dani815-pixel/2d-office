@@ -65,6 +65,15 @@ export function readTradingState(): TradingTeamState | null {
   }
 }
 
+export function resetAppData(): void {
+  try {
+    localStorage.removeItem(ARCHIVE_KEY);
+    localStorage.removeItem(TRADING_KEY);
+  } catch {
+    // A disabled storage area should not block in-memory reset.
+  }
+}
+
 export function saveTradingState(state: TradingTeamState): boolean {
   try {
     localStorage.setItem(TRADING_KEY, JSON.stringify(state));
