@@ -41,6 +41,9 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
       for (const item of closed) memories[item.trade.traderId] = updateTraderMemory(memories[item.trade.traderId], item.trade, item.review);
       const activities = { ...prev.activities };
       for (const item of closed) activities[item.trade.traderId] = "THINK";
+      for (const item of closed) {
+        window.setTimeout(() => setState((current) => ({ ...current, activities: { ...current.activities, [item.trade.traderId]: "WATCH" as const } })), 1800);
+      }
       return { ...prev, balance, positions: remaining, trades: [...closed.map((item) => item.trade), ...prev.trades].slice(0, 100), reviews: [...reviews, ...prev.reviews].slice(0, 100), memories, activities };
     });
   }, [market]);
@@ -94,13 +97,30 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
     const price = market.coins.find((item) => item.id === request.coin)?.price || 0;
     const riskBudget = state.balance * Math.max(settings.riskPercent, 0.1) / 100;
     const quantity = price > 0 ? Math.max(riskBudget / price, 0.000001) : 0;
-    const result = openSimulatedPosition(state.balance, market, request.coin, settings.mode, request.side, quantity, settings.leverage, specialist.id, settings);
-    if (!result.position) { setNotice(result.error || "승인 후 가상 진입에 실패했습니다."); return; }
-    result.position.scenarioId = request.scenarioId;
-    setState((prev) => ({ ...prev, balance: result.balance, positions: [...prev.positions, result.position!], requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "EXECUTED" as const } : item), activities: { ...prev.activities, [request.traderId]: "TRADE" as const, "team-lead": "THINK" as const } }));
-    setNotice(request.coin + " " + request.side + " 승인 → 가상 진입 완료 · 리스크 " + settings.riskPercent + "%");
-    window.setTimeout(() => setState((prev) => ({ ...prev, activities: { ...prev.activities, [request.traderId]: "RETURN" as const } })), 900);
-    window.setTimeout(() => setState((prev) => ({ ...prev, activities: { ...prev.activities, [request.traderId]: "WATCH" as const, "team-lead": "WATCH" as const } })), 1800);
+    setState((prev) => ({
+      ...prev,
+      requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "APPROVED" as const } : item),
+      activities: { ...prev.activities, [request.traderId]: "TRADE" as const, "team-lead": "THINK" as const },
+    }));
+    setNotice(request.coin + " " + request.side + " 승인 · 담당자가 주문을 준비합니다.");
+    window.setTimeout(() => {
+      const priceNow = market.coins.find((item) => item.id === request.coin)?.price || 0;
+      const liveResult = openSimulatedPosition(state.balance, market, request.coin, settings.mode, request.side, quantity, settings.leverage, specialist.id, settings);
+      if (!liveResult.position || !priceNow) {
+        setNotice(liveResult.error || "승인 후 가상 진입에 실패했습니다.");
+        return;
+      }
+      liveResult.position.scenarioId = request.scenarioId;
+      setState((prev) => ({
+        ...prev,
+        balance: liveResult.balance,
+        positions: [...prev.positions, liveResult.position!],
+        requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "EXECUTED" as const } : item),
+        activities: { ...prev.activities, [request.traderId]: "RETURN" as const, "team-lead": "WATCH" as const },
+      }));
+      setNotice(request.coin + " " + request.side + " 가상 진입 완료 · 리스크 " + settings.riskPercent + "%");
+      window.setTimeout(() => setState((prev) => ({ ...prev, activities: { ...prev.activities, [request.traderId]: "WATCH" as const } })), 1100);
+    }, 700);
   };
 
 
@@ -187,8 +207,11 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
         <div className="position-list">{state.requests.length === 0 ? <small>REQUESTS / NONE</small> : state.requests.slice(0, 8).map((request) => <article className="position-card" key={request.id}>
           <div><strong>{request.coin} {request.side}</strong><span>{TRADING_TEAM.find((m) => m.id === request.traderId)?.name || request.traderId} · {request.status}</span></div>
           <small>APPROVE IF · {request.note}</small>{request.status === "PENDING" && <small>REJECT IF · {state.scenarios.find((scenario) => scenario.id === request.scenarioId)?.rejectionCriteria || "무효화/확인 조건 불충족"}</small>}
-          {request.status === "PENDING" && trader.role === "TEAM_LEAD" && <div className="trading-setting-actions"><button type="button" className="button button--primary" onClick={() => decideRequest(request.id, true)}>승인</button><button type="button" className="button button--outline" onClick={() => decideRequest(request.id, false)}>거절</button></div>}
-          {request.status === "APPROVED" && <small>TEAM LEAD APPROVED · 담당자 진입 대기</small>}
+          {request.status === "PENDING" && trader.role === "TEAM_LEAD" && <div className="trading-decision-box"><strong>김태훈 팀장 결정</strong><small>외부 AI는 기준만 제시합니다. 최종 선택은 팀장이 합니다.</small><div className="trading-setting-actions"><button type="button" className="button button--primary" onClick={() => decideRequest(request.id, true)}>승인</button><button type="button" className="button button--outline" onClick={() => decideRequest(request.id, false)}>거절</button></div></div>}
+          {request.status === "PENDING" && trader.role !== "TEAM_LEAD" && <small>TEAM LEAD / DECISION WAITING</small>}
+          {request.status === "APPROVED" && <small>TEAM LEAD APPROVED · 담당자 주문 준비 중</small>}
+          {request.status === "EXECUTED" && <small>TEAM LEAD APPROVED · VIRTUAL ORDER EXECUTED</small>}
+          {request.status === "REJECTED" && <small>TEAM LEAD REJECTED · 담당자 재검토</small>}
         </article>)}</div>
       </section>
 
