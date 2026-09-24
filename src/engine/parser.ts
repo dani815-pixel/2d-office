@@ -194,6 +194,10 @@ export function parseResearch(raw: string): ParseResult {
         warnings.push(`${id}: LONG/SHORT 조건이 부족해 WATCH로 정규화합니다.`);
         return { ...found, tradingBias: "WATCH" as const, tradingEntryCondition: "", tradingInvalidation: found.tradingInvalidation || "" };
       }
+      if (found.tradingMode === "SPOT" && found.tradingBias === "SHORT") {
+        warnings.push(id + ": SPOT에서는 SHORT를 사용할 수 없어 WATCH로 정규화합니다.");
+        return { ...found, tradingBias: "WATCH" as const, tradingEntryCondition: "", tradingInvalidation: "" };
+      }
       return found;
     }
     warnings.push(`${id}: 분석이 없어 빈 항목으로 표시합니다.`);
@@ -202,9 +206,9 @@ export function parseResearch(raw: string): ParseResult {
   const risks = listValue(data.risks, 8);
   const rawStory = isObject(data.story) ? data.story : undefined;
   const allowedStoryModes = ["BREAKOUT_TENSION", "LEADERSHIP_SHIFT", "DIVERGENCE", "CATALYST_COUNTDOWN", "RISK_ALERT", "ROTATION", "CORRELATION_BREAK", "QUIET_BEFORE_MOVE", "CROSSROADS"];
-  if (rawStory && !allowedStoryModes.includes(stringValue(rawStory.mode, 40))) warnings.push("story.mode이 허용 목록에 없어 그대로 표시합니다.");
+  if (rawStory && !allowedStoryModes.includes(stringValue(rawStory.mode, 40))) warnings.push("story.mode이 허용 목록에 없어 QUIET_BEFORE_MOVE로 정규화합니다.");
   const story = rawStory ? {
-    mode: stringValue(rawStory.mode, 40),
+    mode: allowedStoryModes.includes(stringValue(rawStory.mode, 40)) ? stringValue(rawStory.mode, 40) : "QUIET_BEFORE_MOVE",
     title: stringValue(rawStory.title, 80),
     openingHook: stringValue(rawStory.openingHook, 240),
     centralQuestion: stringValue(rawStory.centralQuestion, 240),
@@ -217,7 +221,16 @@ export function parseResearch(raw: string): ParseResult {
   } : undefined;
   if (!risks.length) warnings.push("시장 전체 리스크가 제공되지 않았습니다.");
 
-  const events = listValue(data.events, 8).map((event) => ({ title: event, summary: event }));
+  const events = (Array.isArray(data.events) ? data.events : []).slice(0, 8).map((event) => {
+    if (isObject(event)) {
+      return {
+        title: cleanSourceText(event.title, 160),
+        summary: cleanSourceText(event.summary, 320),
+        source: cleanSourceText(event.source, 160) || undefined,
+      };
+    }
+    return { title: cleanSourceText(event, 160), summary: cleanSourceText(event, 320) };
+  }).filter((event) => event.title || event.summary);
   const brief: CryptoMarketBrief = {
     date: validDate ? date : today,
     marketSummary,
