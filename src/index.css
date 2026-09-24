@@ -692,3 +692,5 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .trading-actor--return{top:210px}
 .trading-actor--return .trading-actor-body{animation:trader-return .25s ease-in-out 2 alternate;border-color:#8ca8bd}
 @keyframes trader-return{from{transform:translateX(-2px)}to{transform:translateX(2px)}}
+
+.trading-decision-box{margin-top:9px;padding:9px;border:1px solid #6b6042;background:#171812;display:grid;gap:5px}.trading-decision-box strong{color:#d9c27d;font:9px var(--mono);letter-spacing:.08em}.trading-decision-box small{color:#8f9889!important;line-height:1.45}.trading-decision-box .trading-setting-actions{margin-top:5px}
