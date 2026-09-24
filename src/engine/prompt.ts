@@ -55,7 +55,8 @@ export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem,
       coin.id,
       [Number(coin.price.toFixed(5)), Number(coin.change24h.toFixed(2)), Math.round(coin.volume24h / 1_000_000), Number(coin.low24h.toFixed(5)), Number(coin.high24h.toFixed(5))],
     ])),
-    ...(trading && Object.keys(trading.memories).length ? { traders: Object.values(trading.memories).map((m) => ({ id: m.traderId, t: m.totalTrades, w: m.wins, l: m.losses, lessons: m.currentLessons.slice(0, 2), strategy: m.strategyChanges.slice(0, 2), risk: m.riskChanges.slice(0, 2) })) } : {}),\n    ...(recentTradeReviews?.length ? { reviews: recentTradeReviews } : {}),
+    ...(trading && Object.keys(trading.memories).length ? { traders: Object.values(trading.memories).map((m) => ({ id: m.traderId, t: m.totalTrades, w: m.wins, l: m.losses, lessons: m.currentLessons.slice(0, 2), strategy: m.strategyChanges.slice(0, 2), risk: m.riskChanges.slice(0, 2) })) } : {}),
+    ...(recentTradeReviews?.length ? { reviews: recentTradeReviews } : {}),
     ...(previous ? {
       prev: {
         session: previous.memory?.session,
@@ -77,12 +78,15 @@ d=date, t=snapshot time (UTC), st=data status, c={coin:[USD price, 24h change %,
 ${market.status !== "LIVE" ? `IMPORTANT: st=${market.status}. These prices are ${market.status === "MOCK" ? "fixed demo examples, NOT live prices" : "not confirmed live"}. Verify current prices independently; do not present input prices as current facts.` : "Use the snapshot as factual price/volume context, not a prediction."}
 
 RESEARCH:
-1. Assess overall market, macro/liquidity context, cross-coin relationships, and the most important change today.\n1b. If traders are present, identify only practical strategy/risk adjustments supported by their recorded lessons. Never promise that an adjustment will improve returns. Treat trader history as learning data, not current market evidence.
+1. Assess overall market, macro/liquidity context, cross-coin relationships, and the most important change today.
+1b. If traders are present, identify only practical strategy/risk adjustments supported by their recorded lessons. Never promise that an adjustment will improve returns. Treat trader history as learning data, not current market evidence.
 2. For EACH coin, provide: concise summary, up to 3 technical observations, up to ${PROMPT_BUDGET.maxNews} verified recent news items, one bull scenario, one bear scenario, up to 3 risks, a concise interpretation, a counter-view, 2-3 verification checks, and up to 3 viewer takeaways. Also provide 2-4 advancedSignals when verified, using non-obvious professional indicators such as funding rates, open interest, futures basis, liquidations, ETF flows, exchange netflows, stablecoin flows, active addresses, realized price, or token-specific liquidity/holder behavior. Only include metrics actually verified today; never invent them.
-3. For each coin, assign tradingBias only from the evidence. Follow this exact order: market fact → interpretation → counter-view → verification → entry condition → invalidation → bias. LONG when the research supports a conditional bullish scenario, SHORT when it supports a conditional bearish scenario, WATCH when evidence is mixed or insufficient. This is a scenario label, not a direct trading instruction. Provide concrete tradingEntryCondition and tradingInvalidation only when supported by evidence; otherwise leave them empty.\n3b. If evidence is mixed or insufficient, use WATCH. LONG/SHORT requires a concrete verification condition and invalidation condition.
+3. For each coin, assign tradingBias only from the evidence. Follow this exact order: market fact → interpretation → counter-view → verification → entry condition → invalidation → bias. LONG when the research supports a conditional bullish scenario, SHORT when it supports a conditional bearish scenario, WATCH when evidence is mixed or insufficient. This is a scenario label, not a direct trading instruction. Provide concrete tradingEntryCondition and tradingInvalidation only when supported by evidence; otherwise leave them empty.
+3b. If evidence is mixed or insufficient, use WATCH. LONG/SHORT requires a concrete verification condition and invalidation condition.
 3c. For every coin with a LONG or SHORT scenario, also define the team-lead decision script: tradingApprovalCriteria = the evidence/conditions 김태훈 must verify before approving a simulated request; tradingRejectionCriteria = the conditions that should make 김태훈 reject the request. Do NOT decide approval/rejection in the research result. The result supplies decision criteria; the Trading Room team lead makes the final decision.
 3d. Find what is genuinely different or surprising today. Prefer a concrete divergence, catalyst, contradiction, rotation, liquidity change, event, or risk over generic market commentary.
-4. Separate every important claim into FACT, INTERPRETATION, and UNCERTAINTY. Do not turn correlation into causation. Distinguish a verified event from its possible market impact.\n5. Build a TV-friendly meeting story from the research. The story is NOT fiction: every hook, conflict, twist, and conclusion must be grounded in the supplied data or verified research.
+4. Separate every important claim into FACT, INTERPRETATION, and UNCERTAINTY. Do not turn correlation into causation. Distinguish a verified event from its possible market impact.
+5. Build a TV-friendly meeting story from the research. The story is NOT fiction: every hook, conflict, twist, and conclusion must be grounded in the supplied data or verified research.
 
 CONTINUITY / MULTI-SESSION RULES:
 - This workspace can hold multiple meetings in the same day. The latest previous session is the immediate predecessor.
@@ -90,7 +94,8 @@ CONTINUITY / MULTI-SESSION RULES:
 - If a previous follow-up is now verified, mark it as resolved in the research narrative and explain what evidence resolved it.
 - If it remains unverified, keep it open for the next meeting.
 - Never claim a character personally checked something between meetings unless today’s verified research supports that result. Do not fabricate off-screen actions.
-- Previous prices are historical context only. Current price facts come from today’s market input and must not be copied from prev.\n- If a previous follow-up is marked VERIFY_REQUIRED, preserve it as a historical question but do not repeat its price level as a current fact. Re-verify it against today’s data before resolving it.
+- Previous prices are historical context only. Current price facts come from today’s market input and must not be copied from prev.
+- If a previous follow-up is marked VERIFY_REQUIRED, preserve it as a historical question but do not repeat its price level as a current fact. Re-verify it against today’s data before resolving it.
 - Use natural continuity phrases only when supported by prev, such as "지난번에 확인하기로 했던 부분부터 볼게요.", "그건 아직 확인이 안 됐습니다.", or "좋아요. 이건 확인된 걸로 정리하죠."
 - A promise such as "그건 제가 확인해볼게요" belongs to the NEXT meeting as a follow-up, not as a claim of already-completed work in the current meeting.
 - The leader Alex should own the transition between sessions: open unresolved items, decide what gets verified today, and explicitly leave remaining questions for the next session.
@@ -118,7 +123,8 @@ Create:
 - surprise: one non-obvious but evidence-based observation; use "없음" if none.
 - endingQuestion: one unresolved question for viewers to watch after the meeting.
 - watchItems: 3-5 concrete things to monitor today.
-- changes: 2-4 meaningful changes versus the prior context, including which previous follow-ups were resolved or remain open; if no prior context, compare against recent verified market context when available, otherwise say "비교 자료 부족".\n- viewerTakeaways: 3-5 short memo-worthy points across the market.
+- changes: 2-4 meaningful changes versus the prior context, including which previous follow-ups were resolved or remain open; if no prior context, compare against recent verified market context when available, otherwise say "비교 자료 부족".
+- viewerTakeaways: 3-5 short memo-worthy points across the market.
 
 CHARACTER PROFILES:
 The six speakers are recurring office characters. Write dialogue as spoken Korean, not report prose.
@@ -182,7 +188,9 @@ Include BTC, ETH, BNB, XRP, SOL exactly once. Keep every array concise. Do not r
   const outputIndex = prompt.indexOf(outputMarker);
   if (outputIndex > 0) {
     const headBudget = Math.max(0, PROMPT_BUDGET.maxChars - (prompt.length - outputIndex) - 2);
-    return prompt.slice(0, headBudget) + "\n\n" + prompt.slice(outputIndex);
+    return prompt.slice(0, headBudget) + "
+
+" + prompt.slice(outputIndex);
   }
   return prompt.slice(0, PROMPT_BUDGET.maxChars);
 }
