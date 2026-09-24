@@ -188,9 +188,7 @@ Include BTC, ETH, BNB, XRP, SOL exactly once. Keep every array concise. Do not r
   const outputIndex = prompt.indexOf(outputMarker);
   if (outputIndex > 0) {
     const headBudget = Math.max(0, PROMPT_BUDGET.maxChars - (prompt.length - outputIndex) - 2);
-    return prompt.slice(0, headBudget) + "
-
-" + prompt.slice(outputIndex);
+    return prompt.slice(0, headBudget) + "\n\n" + prompt.slice(outputIndex);
   }
   return prompt.slice(0, PROMPT_BUDGET.maxChars);
 }
