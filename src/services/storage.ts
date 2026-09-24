@@ -59,7 +59,7 @@ export function readTradingState(): TradingTeamState | null {
   try {
     const value = JSON.parse(localStorage.getItem(TRADING_KEY) || "null") as TradingTeamState | null;
     if (!value || typeof value.sessionId !== "string" || !Number.isFinite(value.balance) || !Array.isArray(value.positions) || !Array.isArray(value.trades)) return null;
-    return value;
+    return { ...value, requests: Array.isArray(value.requests) ? value.requests : [], profiles: Array.isArray(value.profiles) ? value.profiles : [], settings: value.settings || {}, memories: value.memories || {}, activities: value.activities || {}, scenarios: Array.isArray(value.scenarios) ? value.scenarios : [], reviews: Array.isArray(value.reviews) ? value.reviews : [] };
   } catch {
     return null;
   }
