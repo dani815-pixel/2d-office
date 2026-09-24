@@ -684,3 +684,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .trading-actor--coffee,.trading-actor--outside,.trading-actor--restroom{filter:saturate(.65)}
 @keyframes trader-walk{from{transform:translateX(-2px)}to{transform:translateX(2px)}}
 @media(max-width:700px){.trading-floor-scene{height:280px}.trading-actor{width:58px}.trading-actor strong{font-size:8px}.trading-actor small{font-size:6px}.trading-actor--btc.trading-actor--walk,.trading-actor--btc.trading-actor--talk,.trading-actor--btc.trading-actor--think{left:calc(50% - 150px)}.trading-actor--eth.trading-actor--walk,.trading-actor--eth.trading-actor--talk,.trading-actor--eth.trading-actor--think{left:calc(50% - 105px)}.trading-actor--bnb.trading-actor--walk,.trading-actor--bnb.trading-actor--talk,.trading-actor--bnb.trading-actor--think{left:calc(50% - 55px)}.trading-actor--xrp.trading-actor--walk,.trading-actor--xrp.trading-actor--talk,.trading-actor--xrp.trading-actor--think{left:calc(50% + 5px)}.trading-actor--sol.trading-actor--walk,.trading-actor--sol.trading-actor--talk,.trading-actor--sol.trading-actor--think{left:calc(50% + 55px)}}
+
+.trading-actor--return{top:210px}
+.trading-actor--return .trading-actor-body{animation:trader-return .25s ease-in-out 2 alternate;border-color:#8ca8bd}
+@keyframes trader-return{from{transform:translateX(-2px)}to{transform:translateX(2px)}}
