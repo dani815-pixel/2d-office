@@ -65,6 +65,8 @@ export function createMeetingScenarios(brief: import("../types").CryptoMarketBri
     takeProfit: undefined,
     invalidation: coin.tradingInvalidation || coin.bearScenario || coin.risks?.[0] || "무효화 조건 추가 확인",
     reasoning: coin.interpretation || coin.summary,
+    approvalCriteria: coin.tradingApprovalCriteria,
+    rejectionCriteria: coin.tradingRejectionCriteria,
     confidence: coin.verification?.length ? "MEDIUM" : "LOW",
     source: "MEETING",
   }));
