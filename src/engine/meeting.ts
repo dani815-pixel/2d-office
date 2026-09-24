@@ -274,6 +274,29 @@ export function createMeetingEvents(brief: CryptoMarketBrief, market: MarketSnap
     if (story?.surprise && story.surprise !== "없음") say("onchain", "의외의 관찰은 " + story.surprise, "EVIDENCE", "market");
   }
 
+  screen("TRADING_DESK");
+  say("leader", "이제 회의에서 나온 해석을 가상 트레이딩 시나리오로 바꿔보죠. 지금은 주문이 아니라 조건을 정리합니다.", "QUESTION");
+  const tradingCoins = [...COIN_IDS]
+    .sort((a, b) => Math.abs(coinFact(b)?.change24h || 0) - Math.abs(coinFact(a)?.change24h || 0))
+    .slice(0, 3);
+  for (const id of tradingCoins) {
+    const coin = coinBrief(id);
+    if (!coin) continue;
+    const analyst = analystFor[id];
+    say(analyst, id + "는 상방 조건을 " + (coin.bullScenario || "추가 확인") + "로 보고, 반대 조건은 " + (coin.bearScenario || "추가 확인") + "입니다.", "EVIDENCE", "leader");
+    if (coin.verification?.[0]) {
+      say("trader", id + " 가상 시나리오는 " + coin.verification[0] + "이 확인될 때만 검토하겠습니다.", "QUESTION", analyst);
+    } else {
+      say("trader", id + "는 확인 조건이 부족해서 우선 WATCH로 두겠습니다.", "SUMMARY", analyst);
+    }
+    say("risk", id + "는 무효화 조건을 먼저 봐야 합니다. " + (coin.risks?.[0] || coin.bearScenario || "추가 리스크 확인"), "CHALLENGE", "trader");
+    say("leader", id + "에 대한 팀 판단은 조건부 시나리오로 기록하고, 확인 전에는 가상 주문도 자동 실행하지 않습니다.", "SUMMARY");
+    pause(900);
+  }
+  say("trader", "좋아요. 진입보다 확인 조건과 무효화 조건을 먼저 들고 트레이딩룸으로 넘기겠습니다.", "SUMMARY", "leader");
+  say("leader", "회의 종료 후에는 각 코인 담당자가 시나리오를 검토하고, 김태훈 팀장이 승인 여부를 확인합니다.", "SUMMARY", "trader");
+  pause(1600);
+
   screen("RISK");
   events.push({ type: "EMOTION", speaker: "risk", target: "ALERT", duration: 1800 });
   say("risk", brief.risks[0] || "시장 리스크가 명시되지 않았습니다. 불확실성을 우선 고려하겠습니다.");
