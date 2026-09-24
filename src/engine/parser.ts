@@ -171,6 +171,10 @@ export function parseResearch(raw: string): ParseResult {
       verification: listValue(coin.verification, 3),
       takeaways: listValue(coin.takeaways, 3),
       advancedSignals: listValue(coin.advancedSignals ?? coin.advanced_signals, 4),
+      tradingBias: ["LONG", "SHORT", "WATCH"].includes(stringValue(coin.tradingBias ?? coin.trading_bias, 20).toUpperCase()) ? stringValue(coin.tradingBias ?? coin.trading_bias, 20).toUpperCase() as CoinBrief["tradingBias"] : "WATCH",
+      tradingEntryCondition: stringValue(coin.tradingEntryCondition ?? coin.trading_entry_condition, 240),
+      tradingInvalidation: stringValue(coin.tradingInvalidation ?? coin.trading_invalidation, 240),
+      tradingMode: ["SPOT", "FUTURES", "BOTH"].includes(stringValue(coin.tradingMode ?? coin.trading_mode, 20).toUpperCase()) ? stringValue(coin.tradingMode ?? coin.trading_mode, 20).toUpperCase() as CoinBrief["tradingMode"] : "BOTH",
     });
   }
   if (![...recognized.values()].some((coin) => coin.summary || coin.technical.length)) {
@@ -184,7 +188,7 @@ export function parseResearch(raw: string): ParseResult {
       return found;
     }
     warnings.push(`${id}: 분석이 없어 빈 항목으로 표시합니다.`);
-    return { id, summary: "제공된 분석이 없습니다. 별도 확인이 필요합니다.", technical: [], news: [], bullScenario: "", bearScenario: "", risks: [] };
+    return { id, summary: "제공된 분석이 없습니다. 별도 확인이 필요합니다.", technical: [], news: [], bullScenario: "", bearScenario: "", risks: [], tradingBias: "WATCH", tradingMode: "BOTH" };
   });
   const risks = listValue(data.risks, 8);
   const rawStory = isObject(data.story) ? data.story : undefined;
