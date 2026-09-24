@@ -190,6 +190,19 @@ export function parseResearch(raw: string): ParseResult {
     const found = recognized.get(id);
     if (found) {
       if (!found.summary) warnings.push(`${id}: 요약이 비어 있습니다.`);
+      const rawCoin = rawCoins.find((item) => coinId(item.id ?? item.symbol ?? item.name) === id);
+      if (format === "JSON" && rawCoin) {
+        const hasAdvancedSignals = Array.isArray(rawCoin.advancedSignals ?? rawCoin.advanced_signals);
+        const hasTradingBias = rawCoin.tradingBias !== undefined || rawCoin.trading_bias !== undefined;
+        const hasTradingEntry = rawCoin.tradingEntryCondition !== undefined || rawCoin.trading_entry_condition !== undefined;
+        const hasTradingInvalidation = rawCoin.tradingInvalidation !== undefined || rawCoin.trading_invalidation !== undefined;
+        const hasTradingMode = rawCoin.tradingMode !== undefined || rawCoin.trading_mode !== undefined;
+        if (!hasAdvancedSignals) warnings.push(`${id}: advancedSignals가 없어 빈 배열로 정규화합니다.`);
+        if (!hasTradingBias) warnings.push(`${id}: tradingBias가 없어 WATCH로 정규화합니다.`);
+        if (!hasTradingEntry) warnings.push(`${id}: tradingEntryCondition이 없어 빈 값으로 정규화합니다.`);
+        if (!hasTradingInvalidation) warnings.push(`${id}: tradingInvalidation이 없어 빈 값으로 정규화합니다.`);
+        if (!hasTradingMode) warnings.push(`${id}: tradingMode이 없어 BOTH로 정규화합니다.`);
+      }
       if ((found.tradingBias === "LONG" || found.tradingBias === "SHORT") && (!found.tradingEntryCondition || !found.tradingInvalidation)) {
         warnings.push(`${id}: LONG/SHORT 조건이 부족해 WATCH로 정규화합니다.`);
         return { ...found, tradingBias: "WATCH" as const, tradingEntryCondition: "", tradingInvalidation: found.tradingInvalidation || "" };
