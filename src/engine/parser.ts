@@ -33,6 +33,22 @@ function listValue(value: unknown, max = 3): string[] {
   }).filter(Boolean).slice(0, max);
 }
 
+function isWeakAdvancedSignal(value: string): boolean {
+  return /(?:확인\s*필요|확인해야|추가\s*확인|미확인|여부\s*확인|재확인|방어\s*여부|돌파\s*여부|저점|고점|단기\s*(?:범위|지지|저항)|가격\s*범위)/i.test(value);
+}
+
+function normalizeAdvancedSignals(values: string[], verification: string[], coin: string, warnings: string[]): { advancedSignals: string[]; verification: string[] } {
+  const strong = values.filter((value) => !isWeakAdvancedSignal(value));
+  const moved = values.filter((value) => isWeakAdvancedSignal(value));
+  if (moved.length) {
+    warnings.push(coin + ": advancedSignals에 확인/가격 조건이 포함되어 verification으로 이동했습니다.");
+  }
+  return {
+    advancedSignals: strong.slice(0, 4),
+    verification: [...verification, ...moved].slice(0, 3),
+  };
+}
+
 function coinId(value: unknown): CoinId | undefined {
   const upper = stringValue(value, 60).toUpperCase();
   const match = COIN_IDS.find((id) => upper === id || upper.includes(`(${id})`) || upper.startsWith(`${id} (`) || upper.startsWith(`${id} - `) || upper.startsWith(`${id}: `));
@@ -211,7 +227,8 @@ export function parseResearch(raw: string): ParseResult {
         warnings.push(id + ": SPOT에서는 SHORT를 사용할 수 없어 WATCH로 정규화합니다.");
         return { ...found, tradingBias: "WATCH" as const, tradingEntryCondition: "", tradingInvalidation: "" };
       }
-      return found;
+      const normalizedSignals = normalizeAdvancedSignals(found.advancedSignals || [], found.verification || [], id, warnings);
+      return { ...found, advancedSignals: normalizedSignals.advancedSignals, verification: normalizedSignals.verification };
     }
     warnings.push(`${id}: 분석이 없어 빈 항목으로 표시합니다.`);
     return { id, summary: "제공된 분석이 없습니다. 별도 확인이 필요합니다.", technical: [], news: [], bullScenario: "", bearScenario: "", risks: [], tradingBias: "WATCH", tradingMode: "BOTH" };
