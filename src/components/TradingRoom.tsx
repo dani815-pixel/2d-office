@@ -63,6 +63,19 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
       return { ...prev, scenarios, requests: [...prev.requests, ...requests.filter((item) => !existing.has(item.scenarioId))], activities: nextActivities };
     });
   }, [meetingStatus, brief, meetingId]);
+  const pendingRequests = state.requests.filter((item) => item.status === "PENDING");
+  useEffect(() => {
+    if (!pendingRequests.length) return;
+    const timers = pendingRequests.map((request) => {
+      const delay = 900 + (TRADING_TEAM.findIndex((member) => member.id === request.traderId) * 180);
+      return window.setTimeout(() => setState((prev) => {
+        if (!prev.requests.some((item) => item.id === request.id && item.status === "PENDING")) return prev;
+        return { ...prev, activities: { ...prev.activities, [request.traderId]: "TALK" as const, "team-lead": "THINK" as const } };
+      }), delay);
+    });
+    return () => timers.forEach(window.clearTimeout);
+  }, [pendingRequests.map((item) => item.id + item.status).join("|")]);
+
   const myPositions = state.positions.filter((item) => item.traderId === trader.id);
   const decideRequest = (requestId: string, approve: boolean) => {
     const request = state.requests.find((item) => item.id === requestId);
@@ -111,6 +124,31 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
     <div className="trading-banner"><div><strong>SIMULATION ONLY / LOCAL</strong><small>NO EXCHANGE API · NO REAL ORDERS</small></div><strong>BALANCE · {priceUSD(state.balance)}</strong></div>
 
     <section className="trading-panel"><div className="trading-panel-head">LIVE MARKET / BINANCE WS</div><div className="trading-coins">{market.coins.map((item) => <div className={"trading-coin trading-coin--" + (item.change24h >= 0 ? "up" : "down")} key={item.id}><strong>{COIN_META[item.id].name} / {item.id}</strong><b>{priceUSD(item.price)}</b><span>{changeText(item.change24h)} · LIVE</span></div>)}</div></section>
+
+    <section className="trading-floor">
+      <div className="trading-panel-head">TRADING FLOOR / 2D LIVE OFFICE</div>
+      <div className="trading-floor-scene">
+        <div className="trading-floor-label trading-floor-label--lead">TEAM LEAD / 김태훈</div>
+        <div className="trading-lead-avatar">T</div>
+        <div className="trading-floor-desk trading-floor-desk--lead" />
+        {TRADING_TEAM.filter((member) => member.role === "SPECIALIST").map((member) => {
+          const activity = state.activities[member.id] || "WORK";
+          const pending = state.requests.some((request) => request.traderId === member.id && request.status === "PENDING");
+          return <div className={"trading-actor trading-actor--" + member.coin.toLowerCase() + " trading-actor--" + activity.toLowerCase()} key={member.id}>
+            <div className="trading-actor-shadow" />
+            <div className="trading-actor-body"><span>{member.name.slice(1, 2)}</span></div>
+            <strong>{member.name}</strong>
+            <small>{pending ? "REQUEST / " + activityLabels[activity] : activityLabels[activity]}</small>
+          </div>;
+        })}
+        <div className="trading-floor-zone trading-floor-zone--meeting">TEAM LEAD</div>
+        <div className="trading-floor-zone trading-floor-zone--btc">BTC DESK</div>
+        <div className="trading-floor-zone trading-floor-zone--eth">ETH DESK</div>
+        <div className="trading-floor-zone trading-floor-zone--bnb">BNB DESK</div>
+        <div className="trading-floor-zone trading-floor-zone--xrp">XRP DESK</div>
+        <div className="trading-floor-zone trading-floor-zone--sol">SOL DESK</div>
+      </div>
+    </section>
 
     <div className="trading-grid">
       <section className="trading-panel"><div className="trading-panel-head">TRADING TEAM / 06</div><div className="trader-list">{TRADING_TEAM.map((item) => <button key={item.id} type="button" className={"trader-card " + (selected === item.id ? "trader-card--active" : "")} onClick={() => setSelected(item.id)}><strong><i />{item.name}</strong><small>{item.role === "TEAM_LEAD" ? "TEAM LEAD" : item.coin + " SPECIALIST"} · {activityLabels[state.activities[item.id] || "WORK"]}</small></button>)}</div></section>
