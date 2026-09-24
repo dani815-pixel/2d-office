@@ -232,7 +232,10 @@ export default function App() {
   const confirmImport = () => {
     if (!preview?.brief) return;
     setApp((previous) => ({ ...previous, brief: preview.brief, meeting: { status: "READY", events: [], index: 0 }, report: undefined }));
-    setSelectedArchiveId(null); setToast("Market Brief가 확정되었습니다. 회의를 시작할 수 있습니다."); go("MEETING");
+    setRawImport("");
+    setPreview(null);
+    setImportStatus("READY");
+    setSelectedArchiveId(null); setToast("Market Brief가 확정되었습니다. 새 AI 결과를 받을 준비가 되었습니다."); go("MEETING");
   };
 
   const openCoin = (id: CoinId) => { setSelectedCoin(id); go("MARKET"); };
