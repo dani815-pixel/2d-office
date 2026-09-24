@@ -53,6 +53,23 @@ export function closeSimulatedPosition(position: Position, exitPrice: number, re
   return { balanceDelta: (position.margin || 0) + pnl, trade: { id: "trade-" + Date.now() + "-" + position.coin, coin: position.coin, mode: position.mode, side: position.side, quantity: position.quantity, leverage: position.leverage, entryPrice: position.entryPrice, exitPrice, pnl, roi: position.margin ? (pnl / position.margin) * 100 : 0, openedAt: position.openedAt, closedAt: new Date().toISOString(), closeReason: reason, traderId: position.traderId, scenarioId: position.scenarioId } };
 }
 
+export function createMeetingScenarios(brief: import("../types").CryptoMarketBrief, meetingId?: string): import("../types").TradeScenario[] {
+  return brief.coins.map((coin) => ({
+    id: "scenario-" + (meetingId || brief.date) + "-" + coin.id,
+    meetingId,
+    coin: coin.id,
+    bias: coin.bullScenario && coin.bearScenario ? "WATCH" : coin.bullScenario ? "LONG" : coin.bearScenario ? "SHORT" : "WATCH",
+    marketMode: "BOTH",
+    entryCondition: coin.verification?.[0] || coin.technical?.[0] || "확인 조건 부족",
+    stopLoss: undefined,
+    takeProfit: undefined,
+    invalidation: coin.bearScenario || coin.risks?.[0] || "무효화 조건 추가 확인",
+    reasoning: coin.interpretation || coin.summary,
+    confidence: coin.verification?.length ? "MEDIUM" : "LOW",
+    source: "MEETING",
+  }));
+}
+
 export function checkExit(position: Position, price: number): Trade["closeReason"] | null {
   if (position.side === "LONG") {
     if (position.stopLoss !== undefined && price <= position.stopLoss) return "STOP_LOSS";
