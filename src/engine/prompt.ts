@@ -10,6 +10,29 @@ export const PROMPT_BUDGET = {
 } as const;
 
 export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem, trading?: TradingTeamState): string {
+  const recentTradeReviews = trading?.trades?.length
+    ? [...trading.trades]
+        .sort((a, b) => new Date(b.closedAt).getTime() - new Date(a.closedAt).getTime())
+        .slice(0, 3)
+        .map((trade) => {
+          const review = trading.reviews.find((item) => item.tradeId === trade.id);
+          return {
+            trader: trade.traderId,
+            coin: trade.coin,
+            side: trade.side,
+            result: review?.result,
+            pnl: Number(trade.pnl.toFixed(2)),
+            entry: Number(trade.entryPrice.toFixed(5)),
+            exit: Number(trade.exitPrice.toFixed(5)),
+            close: trade.closeReason,
+            facts: review?.facts?.slice(0, 4),
+            interpretation: review?.interpretation?.slice(0, 2),
+            causes: review?.possibleCauses?.slice(0, 2),
+            lesson: review?.lessons?.slice(0, 2),
+            improvement: review?.improvement,
+          };
+        })
+    : [];
   const compact = {
     d: localISODate(),
     t: market.timestamp,
@@ -18,7 +41,7 @@ export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem,
       coin.id,
       [Number(coin.price.toFixed(5)), Number(coin.change24h.toFixed(2)), Math.round(coin.volume24h / 1_000_000), Number(coin.low24h.toFixed(5)), Number(coin.high24h.toFixed(5))],
     ])),
-    ...(trading ? { traders: Object.values(trading.memories).map((m) => ({ id: m.traderId, t: m.totalTrades, w: m.wins, l: m.losses, lessons: m.currentLessons.slice(0, 2), strategy: m.strategyChanges.slice(0, 2), risk: m.riskChanges.slice(0, 2) })) } : {}),
+    ...(trading && Object.keys(trading.memories).length ? { traders: Object.values(trading.memories).map((m) => ({ id: m.traderId, t: m.totalTrades, w: m.wins, l: m.losses, lessons: m.currentLessons.slice(0, 2), strategy: m.strategyChanges.slice(0, 2), risk: m.riskChanges.slice(0, 2) })) } : {}),\n    ...(recentTradeReviews?.length ? { reviews: recentTradeReviews } : {}),
     ...(previous ? {
       prev: {
         session: previous.memory?.session,
@@ -35,7 +58,7 @@ export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem,
   const prompt = `You are a cautious crypto market researcher and meeting-story editor. Research BTC, ETH, BNB, XRP and SOL for today. Respond in Korean. Separate verified facts from interpretation. Never give guaranteed returns or direct buy/sell instructions.
 
 INPUT (compact): ${JSON.stringify(compact)}
-d=date, t=snapshot time (UTC), st=data status, c={coin:[USD price, 24h change %, 24h volume USD millions, 24h low, 24h high]}. traders is compressed local trading memory, not current market evidence. Use it only to improve future scenario discussion and risk discipline. Do not treat past wins/losses as proof of a strategy. prev is historical meeting memory, never current evidence. If prev.open exists, treat each item as a follow-up question from the previous session. Only close a follow-up when today’s verified research actually answers it.
+d=date, t=snapshot time (UTC), st=data status, c={coin:[USD price, 24h change %, 24h volume USD millions, 24h low, 24h high]}. traders is compressed local trading memory, not current market evidence. reviews contains only completed trades, not open positions. Use past trades only for review and risk discipline; never treat a win/loss as proof of a strategy. prev is historical meeting memory, never current evidence. If prev.open exists, treat each item as a follow-up question from the previous session. Only close a follow-up when today’s verified research actually answers it.
 ${market.status !== "LIVE" ? `IMPORTANT: st=${market.status}. These prices are ${market.status === "MOCK" ? "fixed demo examples, NOT live prices" : "not confirmed live"}. Verify current prices independently; do not present input prices as current facts.` : "Use the snapshot as factual price/volume context, not a prediction."}
 
 RESEARCH:
