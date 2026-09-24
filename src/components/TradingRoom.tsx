@@ -15,6 +15,7 @@ export default function TradingRoom({ market, brief }: { market: MarketSnapshot;
   const [quantity, setQuantity] = useState("0.01");
   const [state, setState] = useState<TradingTeamState>(() => readTradingState() || emptyState());
   const [notice, setNotice] = useState("");
+  const activityLabels: Record<import("../types").TraderActivity, string> = { WORK: "업무 중", ANALYZE: "차트 분석", WATCH: "시장 관찰", TRADE: "거래 확인", TALK: "팀 대화", THINK: "복기 중", WALK: "이동 중", COFFEE: "커피 브레이크", BREAK: "잠시 휴식", RESTROOM: "화장실", OUTSIDE: "바깥 공기", RETURN: "복귀 중" };
 
   const trader = TRADING_TEAM.find((item) => item.id === selected) || TRADING_TEAM[0];
   const current = state.settings[trader.id] || DEFAULT_TRADER_SETTINGS[trader.id];
@@ -74,7 +75,7 @@ export default function TradingRoom({ market, brief }: { market: MarketSnapshot;
     <section className="trading-panel"><div className="trading-panel-head">LIVE MARKET / BINANCE WS</div><div className="trading-coins">{market.coins.map((item) => <div className={"trading-coin trading-coin--" + (item.change24h >= 0 ? "up" : "down")} key={item.id}><strong>{COIN_META[item.id].name} / {item.id}</strong><b>{priceUSD(item.price)}</b><span>{changeText(item.change24h)} · LIVE</span></div>)}</div></section>
 
     <div className="trading-grid">
-      <section className="trading-panel"><div className="trading-panel-head">TRADING TEAM / 06</div><div className="trader-list">{TRADING_TEAM.map((item) => <button key={item.id} type="button" className={"trader-card " + (selected === item.id ? "trader-card--active" : "")} onClick={() => setSelected(item.id)}><strong><i />{item.name}</strong><small>{item.role === "TEAM_LEAD" ? "TEAM LEAD" : item.coin + " SPECIALIST"}</small></button>)}</div></section>
+      <section className="trading-panel"><div className="trading-panel-head">TRADING TEAM / 06</div><div className="trader-list">{TRADING_TEAM.map((item) => <button key={item.id} type="button" className={"trader-card " + (selected === item.id ? "trader-card--active" : "")} onClick={() => setSelected(item.id)}><strong><i />{item.name}</strong><small>{item.role === "TEAM_LEAD" ? "TEAM LEAD" : item.coin + " SPECIALIST"} · {activityLabels[state.activities[item.id] || "WORK"]}</small></button>)}</div></section>
 
       <section className="trading-panel"><div className="trading-panel-head">TRADER SETTINGS / LOCAL</div><div className="trading-settings"><h3>{trader.name}</h3>
         <label className="setting-control"><span>MODE</span><select value={current.mode} onChange={(e) => update({ mode: e.target.value as TradingMode })}><option value="SPOT">SPOT</option><option value="FUTURES">FUTURES</option></select></label>
@@ -101,7 +102,7 @@ export default function TradingRoom({ market, brief }: { market: MarketSnapshot;
         </div>
       </section>
 
-      <section className="trading-panel"><div className="trading-panel-head">CURRENT MEETING SCENARIO</div>{!brief ? <div className="trading-empty">회의 결과가 아직 없습니다.</div> : <div className="scenario-list">{scenarioRows.map(({ coin: item, bias }) => <article className="scenario-card" key={item.id}><div><strong>{item.id}</strong><span>{bias} / MEETING</span></div><p>{item.interpretation || item.summary}</p><small>{item.bullScenario ? "BULL: " + item.bullScenario : ""}</small><small>{item.bearScenario ? "BEAR: " + item.bearScenario : ""}</small><em>ENTRY / TP / SL: 회의에서 명시된 경우에만 사용</em></article>)}</div>}</section>
+      <section className="trading-panel"><div className="trading-panel-head">OFFICE ACTIVITY / LIVE</div><div className="trader-activity-grid">{TRADING_TEAM.map((member) => <div className={"trader-activity trader-activity--" + (state.activities[member.id] || "WORK").toLowerCase()} key={member.id}><i /><strong>{member.name}</strong><span>{activityLabels[state.activities[member.id] || "WORK"]}</span></div>)}</div></section>\n\n      <section className="trading-panel"><div className="trading-panel-head">CURRENT MEETING SCENARIO</div>{!brief ? <div className="trading-empty">회의 결과가 아직 없습니다.</div> : <div className="scenario-list">{scenarioRows.map(({ coin: item, bias }) => <article className="scenario-card" key={item.id}><div><strong>{item.id}</strong><span>{bias} / MEETING</span></div><p>{item.interpretation || item.summary}</p><small>{item.bullScenario ? "BULL: " + item.bullScenario : ""}</small><small>{item.bearScenario ? "BEAR: " + item.bearScenario : ""}</small><em>ENTRY / TP / SL: 회의에서 명시된 경우에만 사용</em></article>)}</div>}</section>
     </div>
   </div>;
 }
