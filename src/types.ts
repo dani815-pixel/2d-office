@@ -40,6 +40,10 @@ export interface CoinBrief {
   verification?: string[];
   takeaways?: string[];
   advancedSignals?: string[];
+  tradingBias?: "LONG" | "SHORT" | "WATCH";
+  tradingEntryCondition?: string;
+  tradingInvalidation?: string;
+  tradingMode?: "SPOT" | "FUTURES" | "BOTH";
 }
 
 export interface MarketEvent {
