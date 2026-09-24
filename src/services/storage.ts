@@ -1,7 +1,8 @@
-import { COIN_IDS, type ArchiveItem, type MarketSnapshot } from "../types";
+import { COIN_IDS, type ArchiveItem, type MarketSnapshot, type TradingTeamState } from "../types";
 
 const MARKET_KEY = "crypto-ai-office.market.v1";
 const ARCHIVE_KEY = "crypto-ai-office.archive.v1";
+const TRADING_KEY = "crypto-ai-office.trading.v1";
 
 export function readMarketCache(): MarketSnapshot | null {
   try {
@@ -50,6 +51,25 @@ export function saveArchive(items: ArchiveItem[]): boolean {
     return true;
   } catch {
     // Reports remain available in memory for this session.
+    return false;
+  }
+}
+
+export function readTradingState(): TradingTeamState | null {
+  try {
+    const value = JSON.parse(localStorage.getItem(TRADING_KEY) || "null") as TradingTeamState | null;
+    if (!value || typeof value.sessionId !== "string" || !Number.isFinite(value.balance) || !Array.isArray(value.positions) || !Array.isArray(value.trades)) return null;
+    return value;
+  } catch {
+    return null;
+  }
+}
+
+export function saveTradingState(state: TradingTeamState): boolean {
+  try {
+    localStorage.setItem(TRADING_KEY, JSON.stringify(state));
+    return true;
+  } catch {
     return false;
   }
 }
