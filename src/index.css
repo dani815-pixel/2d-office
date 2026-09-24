@@ -151,7 +151,11 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .page-head h1 { margin: 14px 0 10px; font-size: clamp(38px, 4vw, 59px); line-height: 1.03; letter-spacing: -.065em; font-weight: 600; color: #f0f3ea; }
 .page-head h1 em { color: var(--accent); font-style: normal; }
 .page-head p { margin: 0; color: #91a19c; font-size: 13px; line-height: 1.65; word-break: keep-all; }
-.page-head-action { flex: none; padding-bottom: 3px; }\n.trading-page-head__actions { display: flex; align-items: center; gap: 10px; flex: none; padding-bottom: 3px; }\n.trading-page-head__actions > span { color: #65766b; font: 8px var(--mono); letter-spacing: .12em; }\n.trading-reset-button { min-height: 38px; border-color: #59685f; color: #c7d2c8; font: 9px var(--mono); letter-spacing: .08em; }\n.trading-reset-button:hover { border-color: #c5f16e; color: #c5f16e; background: #152119; }
+.page-head-action { flex: none; padding-bottom: 3px; }
+.trading-page-head__actions { display: flex; align-items: center; gap: 10px; flex: none; padding-bottom: 3px; }
+.trading-page-head__actions > span { color: #65766b; font: 8px var(--mono); letter-spacing: .12em; }
+.trading-reset-button { min-height: 38px; border-color: #59685f; color: #c7d2c8; font: 9px var(--mono); letter-spacing: .08em; }
+.trading-reset-button:hover { border-color: #c5f16e; color: #c5f16e; background: #152119; }
 .section-rule { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 16px; padding: 12px 1px; border-top: 1px solid #34413d; border-bottom: 1px solid #34413d; color: #b8d2b4; font: 10px var(--mono); letter-spacing: .04em; }
 .section-rule > span { display: inline-flex; align-items: center; gap: 9px; }.section-rule > span:last-child { color: #81908d; }.section-rule-muted { color: #627a70; }
 .market-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
