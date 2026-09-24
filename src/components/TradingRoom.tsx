@@ -4,7 +4,7 @@ import { COIN_META } from "../data/coins";
 import { DEFAULT_TRADER_SETTINGS, TRADING_TEAM } from "../data/tradingTeam";
 import { readTradingState, saveTradingState } from "../services/storage";
 import { changeText, priceUSD } from "../utils/format";
-import { closeSimulatedPosition, INITIAL_TRADING_BALANCE, openSimulatedPosition, updatePositions } from "../engine/trading";
+import { checkExit, closeSimulatedPosition, createTradeReview, INITIAL_TRADING_BALANCE, openSimulatedPosition, updatePositions, updateTraderMemory } from "../engine/trading";
 
 const cloneSettings = () => Object.fromEntries(Object.entries(DEFAULT_TRADER_SETTINGS).map(([id, value]) => [id, { ...value, confirmation: [...value.confirmation] }])) as Record<string, TraderSettings>;
 const emptyState = (): TradingTeamState => ({ sessionId: "TRADING-LOCAL", sessionStartedAt: new Date().toISOString(), startingBalance: INITIAL_TRADING_BALANCE, balance: INITIAL_TRADING_BALANCE, positions: [], trades: [], reviews: [], scenarios: [], profiles: TRADING_TEAM, settings: cloneSettings(), memories: {}, activities: {} });
@@ -21,7 +21,25 @@ export default function TradingRoom({ market, brief }: { market: MarketSnapshot;
   const coin = trader.coin === "TEAM" ? "BTC" : trader.coin;
 
   useEffect(() => {
-    setState((prev) => ({ ...prev, positions: updatePositions(prev.positions, market) }));
+    setState((prev) => {
+      const updated = updatePositions(prev.positions, market);
+      const closed: { trade: ReturnType<typeof closeSimulatedPosition>["trade"]; review: ReturnType<typeof createTradeReview> }[] = [];
+      const remaining = [];
+      let balance = prev.balance;
+      for (const position of updated) {
+        const price = position.currentPrice;
+        const reason = checkExit(position, price);
+        if (!reason) { remaining.push(position); continue; }
+        const result = closeSimulatedPosition(position, price, reason);
+        balance += result.balanceDelta;
+        closed.push({ trade: result.trade, review: createTradeReview(result.trade) });
+      }
+      if (!closed.length) return { ...prev, positions: updated };
+      const reviews = closed.map((item) => item.review);
+      const memories = { ...prev.memories };
+      for (const item of closed) memories[item.trade.traderId] = updateTraderMemory(memories[item.trade.traderId], item.trade, item.review);
+      return { ...prev, balance, positions: remaining, trades: [...closed.map((item) => item.trade), ...prev.trades].slice(0, 100), reviews: [...reviews, ...prev.reviews].slice(0, 100), memories };
+    });
   }, [market]);
 
   useEffect(() => { saveTradingState(state); }, [state]);
@@ -46,7 +64,7 @@ export default function TradingRoom({ market, brief }: { market: MarketSnapshot;
     if (!exitPrice) return;
     const result = closeSimulatedPosition(position, exitPrice);
     setState((prev) => ({ ...prev, balance: prev.balance + result.balanceDelta, positions: prev.positions.filter((item) => item.id !== positionId), trades: [result.trade, ...prev.trades].slice(0, 100) }));
-    setNotice(position.coin + " 포지션 청산 · PnL " + result.trade.pnl.toFixed(2) + " USD");
+    setNotice(position.coin + " 포지션 청산 · PnL " + result.trade.pnl.toFixed(2) + " USD · REVIEW 기록됨");
   };
 
   return <div className="standard-page trading-page">
@@ -79,6 +97,7 @@ export default function TradingRoom({ market, brief }: { market: MarketSnapshot;
           {notice && <p className="trading-notice">{notice}</p>}
           <div className="position-list">{myPositions.length === 0 ? <small>OPEN POSITIONS / NONE</small> : myPositions.map((position) => <article className="position-card" key={position.id}><div><strong>{position.coin} {position.side}</strong><span>{position.mode} · {position.leverage}x</span></div><b className={position.unrealizedPnl >= 0 ? "up" : "down"}>{position.unrealizedPnl.toFixed(2)} USD</b><small>ENTRY {priceUSD(position.entryPrice)} · NOW {priceUSD(position.currentPrice)} · ROI {position.roi.toFixed(2)}%</small><button type="button" className="button button--text" onClick={() => closeTrade(position.id)}>현재가 청산</button></article>)}</div>
           <div className="trade-summary"><span>OPEN {state.positions.length}</span><span>CLOSED {state.trades.length}</span><span>REALIZED {state.trades.reduce((sum, item) => sum + item.pnl, 0).toFixed(2)} USD</span></div>
+          {state.memories[trader.id] && <div className="trader-memory"><strong>TRADER MEMORY</strong><span>TRADES {state.memories[trader.id].totalTrades} · W {state.memories[trader.id].wins} · L {state.memories[trader.id].losses}</span><small>{state.memories[trader.id].currentLessons[0] || "아직 누적 교훈이 없습니다."}</small></div>}
         </div>
       </section>
 
