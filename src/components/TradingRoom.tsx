@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import type { MarketSnapshot, TraderSettings, TradingMode, CryptoMarketBrief, TradingTeamState, TradeSide } from "../types";
+import type { MarketSnapshot, TraderSettings, TradingMode, CryptoMarketBrief, TradingTeamState, TradeSide, MeetingState } from "../types";
 import { COIN_META } from "../data/coins";
 import { DEFAULT_TRADER_SETTINGS, TRADING_TEAM } from "../data/tradingTeam";
 import { readTradingState, saveTradingState } from "../services/storage";
 import { changeText, priceUSD } from "../utils/format";
-import { checkExit, closeSimulatedPosition, createTradeReview, INITIAL_TRADING_BALANCE, openSimulatedPosition, updatePositions, updateTraderMemory } from "../engine/trading";
+import { checkExit, closeSimulatedPosition, createMeetingScenarios, createTradeReview, INITIAL_TRADING_BALANCE, openSimulatedPosition, updatePositions, updateTraderMemory } from "../engine/trading";
 
 const cloneSettings = () => Object.fromEntries(Object.entries(DEFAULT_TRADER_SETTINGS).map(([id, value]) => [id, { ...value, confirmation: [...value.confirmation] }])) as Record<string, TraderSettings>;
 const emptyState = (): TradingTeamState => ({ sessionId: "TRADING-LOCAL", sessionStartedAt: new Date().toISOString(), startingBalance: INITIAL_TRADING_BALANCE, balance: INITIAL_TRADING_BALANCE, positions: [], trades: [], reviews: [], scenarios: [], profiles: TRADING_TEAM, settings: cloneSettings(), memories: {}, activities: {} });
 
-export default function TradingRoom({ market, brief }: { market: MarketSnapshot; brief?: CryptoMarketBrief }) {
+export default function TradingRoom({ market, brief, meetingStatus, meetingId }: { market: MarketSnapshot; brief?: CryptoMarketBrief; meetingStatus: MeetingState["status"]; meetingId?: string }) {
   const [selected, setSelected] = useState("team-lead");
   const [tradeSide, setTradeSide] = useState<TradeSide>("LONG");
   const [quantity, setQuantity] = useState("0.01");
@@ -45,7 +45,19 @@ export default function TradingRoom({ market, brief }: { market: MarketSnapshot;
 
   useEffect(() => { saveTradingState(state); }, [state]);
 
-  const scenarioRows = useMemo(() => brief?.coins.map((item) => ({ coin: item, bias: item.bullScenario && item.bearScenario ? "WATCH" : item.bullScenario ? "LONG" : item.bearScenario ? "SHORT" : "WATCH" })) || [], [brief]);
+  const scenarioRows = useMemo(() => brief ? createMeetingScenarios(brief, meetingId) : [], [brief, meetingId]);
+  useEffect(() => {
+    if (meetingStatus !== "FINISHED" || !brief) return;
+    const scenarios = createMeetingScenarios(brief, meetingId);
+    setState((prev) => {
+      const nextActivities = { ...prev.activities, "team-lead": "WATCH" as const };
+      for (const scenario of scenarios) {
+        const specialist = TRADING_TEAM.find((member) => member.coin === scenario.coin);
+        if (specialist) nextActivities[specialist.id] = "ANALYZE";
+      }
+      return { ...prev, scenarios, activities: nextActivities };
+    });
+  }, [meetingStatus, brief, meetingId]);
   const myPositions = state.positions.filter((item) => item.traderId === trader.id);
 
   const update = (patch: Partial<TraderSettings>) => setState((prev) => ({ ...prev, settings: { ...prev.settings, [trader.id]: { ...current, ...patch } } }));
@@ -64,7 +76,7 @@ export default function TradingRoom({ market, brief }: { market: MarketSnapshot;
     const exitPrice = market.coins.find((item) => item.id === position.coin)?.price;
     if (!exitPrice) return;
     const result = closeSimulatedPosition(position, exitPrice);
-    setState((prev) => ({ ...prev, balance: prev.balance + result.balanceDelta, positions: prev.positions.filter((item) => item.id !== positionId), trades: [result.trade, ...prev.trades].slice(0, 100) }));
+    setState((prev) => { const review = createTradeReview(result.trade); const memories = { ...prev.memories, [result.trade.traderId]: updateTraderMemory(prev.memories[result.trade.traderId], result.trade, review) }; return { ...prev, balance: prev.balance + result.balanceDelta, positions: prev.positions.filter((item) => item.id !== positionId), trades: [result.trade, ...prev.trades].slice(0, 100), reviews: [review, ...prev.reviews].slice(0, 100), memories }; });
     setNotice(position.coin + " 포지션 청산 · PnL " + result.trade.pnl.toFixed(2) + " USD · REVIEW 기록됨");
   };
 
@@ -102,7 +114,7 @@ export default function TradingRoom({ market, brief }: { market: MarketSnapshot;
         </div>
       </section>
 
-      <section className="trading-panel"><div className="trading-panel-head">OFFICE ACTIVITY / LIVE</div><div className="trader-activity-grid">{TRADING_TEAM.map((member) => <div className={"trader-activity trader-activity--" + (state.activities[member.id] || "WORK").toLowerCase()} key={member.id}><i /><strong>{member.name}</strong><span>{activityLabels[state.activities[member.id] || "WORK"]}</span></div>)}</div></section>\n\n      <section className="trading-panel"><div className="trading-panel-head">CURRENT MEETING SCENARIO</div>{!brief ? <div className="trading-empty">회의 결과가 아직 없습니다.</div> : <div className="scenario-list">{scenarioRows.map(({ coin: item, bias }) => <article className="scenario-card" key={item.id}><div><strong>{item.id}</strong><span>{bias} / MEETING</span></div><p>{item.interpretation || item.summary}</p><small>{item.bullScenario ? "BULL: " + item.bullScenario : ""}</small><small>{item.bearScenario ? "BEAR: " + item.bearScenario : ""}</small><em>ENTRY / TP / SL: 회의에서 명시된 경우에만 사용</em></article>)}</div>}</section>
+      <section className="trading-panel"><div className="trading-panel-head">OFFICE ACTIVITY / LIVE</div><div className="trader-activity-grid">{TRADING_TEAM.map((member) => <div className={"trader-activity trader-activity--" + (state.activities[member.id] || "WORK").toLowerCase()} key={member.id}><i /><strong>{member.name}</strong><span>{activityLabels[state.activities[member.id] || "WORK"]}</span></div>)}</div></section>\n\n      <section className="trading-panel"><div className="trading-panel-head">CURRENT MEETING SCENARIO</div>{!brief ? <div className="trading-empty">회의 결과가 아직 없습니다.</div> : meetingStatus !== "FINISHED" ? <div className="trading-empty">회의 진행 중 · 트레이딩 시나리오는 회의 종료 후 팀에 전달됩니다.</div> : <div className="scenario-list">{scenarioRows.map((scenario) => <article className="scenario-card" key={scenario.id}><div><strong>{scenario.coin}</strong><span>{scenario.bias} / MEETING</span></div><p>{scenario.reasoning}</p><small>CONFIRM: {scenario.entryCondition}</small><small>INVALIDATE: {scenario.invalidation}</small><em>ENTRY / TP / SL은 회의에서 명시된 경우에만 사용 · 자동 주문 없음</em></article>)}</div>}</section>
     </div>
   </div>;
 }
