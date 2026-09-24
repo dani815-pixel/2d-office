@@ -59,7 +59,7 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
       }
       const requests = scenarios.filter((scenario) => scenario.bias === "LONG" || scenario.bias === "SHORT").map((scenario) => {
         const specialist = TRADING_TEAM.find((member) => member.coin === scenario.coin);
-        return specialist ? { id: "request-" + scenario.id, scenarioId: scenario.id, traderId: specialist.id, coin: scenario.coin, side: scenario.bias as TradeSide, requestedAt: new Date().toISOString(), status: "PENDING" as const, note: scenario.entryCondition || "회의 확인 조건 검토" } : null;
+        return specialist ? { id: "request-" + scenario.id, scenarioId: scenario.id, traderId: specialist.id, coin: scenario.coin, side: scenario.bias as TradeSide, requestedAt: new Date().toISOString(), status: "PENDING" as const, note: scenario.approvalCriteria || scenario.entryCondition || "팀장 확인 조건 검토" } : null;
       }).filter(Boolean) as TradeRequest[];
       const existing = new Set(prev.requests.map((item) => item.scenarioId));
       return { ...prev, scenarios, requests: [...prev.requests, ...requests.filter((item) => !existing.has(item.scenarioId))], activities: nextActivities };
@@ -187,13 +187,13 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
       <section className="trading-panel"><div className="trading-panel-head">TEAM DECISION / REQUESTS</div>
         <div className="position-list">{state.requests.length === 0 ? <small>REQUESTS / NONE</small> : state.requests.slice(0, 8).map((request) => <article className="position-card" key={request.id}>
           <div><strong>{request.coin} {request.side}</strong><span>{TRADING_TEAM.find((m) => m.id === request.traderId)?.name || request.traderId} · {request.status}</span></div>
-          <small>CONFIRM · {request.note}</small>
+          <small>APPROVE IF · {request.note}</small>{request.status === "PENDING" && <small>REJECT IF · {state.scenarios.find((scenario) => scenario.id === request.scenarioId)?.rejectionCriteria || "무효화/확인 조건 불충족"}</small>}
           {request.status === "PENDING" && trader.role === "TEAM_LEAD" && <div className="trading-setting-actions"><button type="button" className="button button--primary" onClick={() => decideRequest(request.id, true)}>승인</button><button type="button" className="button button--outline" onClick={() => decideRequest(request.id, false)}>거절</button></div>}
           {request.status === "APPROVED" && <small>TEAM LEAD APPROVED · 담당자 진입 대기</small>}
         </article>)}</div>
       </section>
 
-      <section className="trading-panel"><div className="trading-panel-head">OFFICE ACTIVITY / LIVE</div><div className="trader-activity-grid">{TRADING_TEAM.map((member) => <div className={"trader-activity trader-activity--" + (state.activities[member.id] || "WORK").toLowerCase()} key={member.id}><i /><strong>{member.name}</strong><span>{activityLabels[state.activities[member.id] || "WORK"]}</span></div>)}</div></section>\n\n      <section className="trading-panel"><div className="trading-panel-head">CURRENT MEETING SCENARIO</div>{!brief ? <div className="trading-empty">회의 결과가 아직 없습니다.</div> : meetingStatus !== "FINISHED" ? <div className="trading-empty">회의 진행 중 · 트레이딩 시나리오는 회의 종료 후 팀에 전달됩니다.</div> : <div className="scenario-list">{scenarioRows.map((scenario) => <article className="scenario-card" key={scenario.id}><div><strong>{scenario.coin}</strong><span>{scenario.bias} / MEETING</span></div><p>{scenario.reasoning}</p><small>CONFIRM: {scenario.entryCondition}</small><small>INVALIDATE: {scenario.invalidation}</small><em>ENTRY / TP / SL은 회의에서 명시된 경우에만 사용 · 자동 주문 없음</em></article>)}</div>}</section>
+      <section className="trading-panel"><div className="trading-panel-head">OFFICE ACTIVITY / LIVE</div><div className="trader-activity-grid">{TRADING_TEAM.map((member) => <div className={"trader-activity trader-activity--" + (state.activities[member.id] || "WORK").toLowerCase()} key={member.id}><i /><strong>{member.name}</strong><span>{activityLabels[state.activities[member.id] || "WORK"]}</span></div>)}</div></section>\n\n      <section className="trading-panel"><div className="trading-panel-head">CURRENT MEETING SCENARIO</div>{!brief ? <div className="trading-empty">회의 결과가 아직 없습니다.</div> : meetingStatus !== "FINISHED" ? <div className="trading-empty">회의 진행 중 · 트레이딩 시나리오는 회의 종료 후 팀에 전달됩니다.</div> : <div className="scenario-list">{scenarioRows.map((scenario) => <article className="scenario-card" key={scenario.id}><div><strong>{scenario.coin}</strong><span>{scenario.bias} / MEETING</span></div><p>{scenario.reasoning}</p><small>ENTRY: {scenario.entryCondition}</small><small>INVALIDATE: {scenario.invalidation}</small><small>APPROVE: {scenario.approvalCriteria || "팀장 확인 기준 없음"}</small><small>REJECT: {scenario.rejectionCriteria || "팀장 거절 기준 없음"}</small><em>ENTRY / TP / SL은 회의에서 명시된 경우에만 사용 · 자동 주문 없음</em></article>)}</div>}</section>
     </div>
   </div>;
 }
