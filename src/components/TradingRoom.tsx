@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { MarketSnapshot, TraderSettings, TradingMode, CryptoMarketBrief, TradingTeamState, TradeSide, MeetingState } from "../types";
+import type { MarketSnapshot, TraderSettings, TradingMode, CryptoMarketBrief, TradingTeamState, TradeSide, MeetingState, TradeRequest } from "../types";
 import { COIN_META } from "../data/coins";
 import { DEFAULT_TRADER_SETTINGS, TRADING_TEAM } from "../data/tradingTeam";
 import { readTradingState, saveTradingState } from "../services/storage";
@@ -7,7 +7,7 @@ import { changeText, priceUSD } from "../utils/format";
 import { checkExit, closeSimulatedPosition, createMeetingScenarios, createTradeReview, INITIAL_TRADING_BALANCE, openSimulatedPosition, updatePositions, updateTraderMemory } from "../engine/trading";
 
 const cloneSettings = () => Object.fromEntries(Object.entries(DEFAULT_TRADER_SETTINGS).map(([id, value]) => [id, { ...value, confirmation: [...value.confirmation] }])) as Record<string, TraderSettings>;
-const emptyState = (): TradingTeamState => ({ sessionId: "TRADING-LOCAL", sessionStartedAt: new Date().toISOString(), startingBalance: INITIAL_TRADING_BALANCE, balance: INITIAL_TRADING_BALANCE, positions: [], trades: [], reviews: [], scenarios: [], profiles: TRADING_TEAM, settings: cloneSettings(), memories: {}, activities: {} });
+const emptyState = (): TradingTeamState => ({ sessionId: "TRADING-LOCAL", sessionStartedAt: new Date().toISOString(), startingBalance: INITIAL_TRADING_BALANCE, balance: INITIAL_TRADING_BALANCE, positions: [], trades: [], reviews: [], scenarios: [], requests: [], profiles: TRADING_TEAM, settings: cloneSettings(), memories: {}, activities: {} });
 
 export default function TradingRoom({ market, brief, meetingStatus, meetingId }: { market: MarketSnapshot; brief?: CryptoMarketBrief; meetingStatus: MeetingState["status"]; meetingId?: string }) {
   const [selected, setSelected] = useState("team-lead");
@@ -55,10 +55,27 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
         const specialist = TRADING_TEAM.find((member) => member.coin === scenario.coin);
         if (specialist) nextActivities[specialist.id] = "ANALYZE";
       }
-      return { ...prev, scenarios, activities: nextActivities };
+      const requests = scenarios.filter((scenario) => scenario.bias === "LONG" || scenario.bias === "SHORT").map((scenario) => {
+        const specialist = TRADING_TEAM.find((member) => member.coin === scenario.coin);
+        return specialist ? { id: "request-" + scenario.id, scenarioId: scenario.id, traderId: specialist.id, coin: scenario.coin, side: scenario.bias as TradeSide, requestedAt: new Date().toISOString(), status: "PENDING" as const, note: scenario.entryCondition || "회의 확인 조건 검토" } : null;
+      }).filter(Boolean) as TradeRequest[];
+      const existing = new Set(prev.requests.map((item) => item.scenarioId));
+      return { ...prev, scenarios, requests: [...prev.requests, ...requests.filter((item) => !existing.has(item.scenarioId))], activities: nextActivities };
     });
   }, [meetingStatus, brief, meetingId]);
   const myPositions = state.positions.filter((item) => item.traderId === trader.id);
+  const decideRequest = (requestId: string, approve: boolean) => {
+    const request = state.requests.find((item) => item.id === requestId);
+    if (!request || request.status !== "PENDING") return;
+    if (!approve) {
+      setState((prev) => ({ ...prev, requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "REJECTED" as const } : item), activities: { ...prev.activities, [request.traderId]: "RETURN" as const, "team-lead": "THINK" as const } }));
+      setNotice(request.coin + " 요청을 팀장이 거절했습니다.");
+      return;
+    }
+    setState((prev) => ({ ...prev, requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "APPROVED" as const } : item), activities: { ...prev.activities, [request.traderId]: "TRADE" as const, "team-lead": "TALK" as const } }));
+    setNotice(request.coin + " " + request.side + " 요청 승인 · 담당자가 진입할 수 있습니다.");
+  };
+
 
   const update = (patch: Partial<TraderSettings>) => setState((prev) => ({ ...prev, settings: { ...prev.settings, [trader.id]: { ...current, ...patch } } }));
   const reset = () => update({ ...DEFAULT_TRADER_SETTINGS[trader.id], confirmation: [...DEFAULT_TRADER_SETTINGS[trader.id].confirmation] });
@@ -112,6 +129,15 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
           <div className="trade-summary"><span>OPEN {state.positions.length}</span><span>CLOSED {state.trades.length}</span><span>REALIZED {state.trades.reduce((sum, item) => sum + item.pnl, 0).toFixed(2)} USD</span></div>
           {state.memories[trader.id] && <div className="trader-memory"><strong>TRADER MEMORY</strong><span>TRADES {state.memories[trader.id].totalTrades} · W {state.memories[trader.id].wins} · L {state.memories[trader.id].losses}</span><small>{state.memories[trader.id].currentLessons[0] || "아직 누적 교훈이 없습니다."}</small></div>}
         </div>
+      </section>
+
+      <section className="trading-panel"><div className="trading-panel-head">TEAM DECISION / REQUESTS</div>
+        <div className="position-list">{state.requests.length === 0 ? <small>REQUESTS / NONE</small> : state.requests.slice(0, 8).map((request) => <article className="position-card" key={request.id}>
+          <div><strong>{request.coin} {request.side}</strong><span>{TRADING_TEAM.find((m) => m.id === request.traderId)?.name || request.traderId} · {request.status}</span></div>
+          <small>CONFIRM · {request.note}</small>
+          {request.status === "PENDING" && trader.role === "TEAM_LEAD" && <div className="trading-setting-actions"><button type="button" className="button button--primary" onClick={() => decideRequest(request.id, true)}>승인</button><button type="button" className="button button--outline" onClick={() => decideRequest(request.id, false)}>거절</button></div>}
+          {request.status === "APPROVED" && <small>TEAM LEAD APPROVED · 담당자 진입 대기</small>}
+        </article>)}</div>
       </section>
 
       <section className="trading-panel"><div className="trading-panel-head">OFFICE ACTIVITY / LIVE</div><div className="trader-activity-grid">{TRADING_TEAM.map((member) => <div className={"trader-activity trader-activity--" + (state.activities[member.id] || "WORK").toLowerCase()} key={member.id}><i /><strong>{member.name}</strong><span>{activityLabels[state.activities[member.id] || "WORK"]}</span></div>)}</div></section>\n\n      <section className="trading-panel"><div className="trading-panel-head">CURRENT MEETING SCENARIO</div>{!brief ? <div className="trading-empty">회의 결과가 아직 없습니다.</div> : meetingStatus !== "FINISHED" ? <div className="trading-empty">회의 진행 중 · 트레이딩 시나리오는 회의 종료 후 팀에 전달됩니다.</div> : <div className="scenario-list">{scenarioRows.map((scenario) => <article className="scenario-card" key={scenario.id}><div><strong>{scenario.coin}</strong><span>{scenario.bias} / MEETING</span></div><p>{scenario.reasoning}</p><small>CONFIRM: {scenario.entryCondition}</small><small>INVALIDATE: {scenario.invalidation}</small><em>ENTRY / TP / SL은 회의에서 명시된 경우에만 사용 · 자동 주문 없음</em></article>)}</div>}</section>
