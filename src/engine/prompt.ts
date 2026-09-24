@@ -1,7 +1,7 @@
 import type { ArchiveItem, MarketSnapshot, TradingTeamState } from "../types";
 import { localISODate } from "../utils/format";
 
-export const PROMPT_VERSION = "2.0";
+export const PROMPT_VERSION = "2.1";
 
 export const PROMPT_BUDGET = {
   maxChars: 12000,
@@ -35,6 +35,18 @@ export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem,
           };
         })
     : [];
+  const currentPrices = Object.fromEntries(market.coins.map((coin) => [coin.id, coin.price]));
+  const safeFollowUps = previous?.memory?.openFollowUps?.slice(0, 8).map((item) => {
+    const match = item.text.match(/(BTC|ETH|BNB|XRP|SOL)[^0-9$₩]*\$?([0-9]+(?:\.[0-9]+)?)/i);
+    const coin = item.coin || (match?.[1]?.toUpperCase() as keyof typeof currentPrices | undefined);
+    const level = match ? Number(match[2]) : undefined;
+    const current = coin ? currentPrices[coin] : undefined;
+    const suspiciousPrice = level !== undefined && current !== undefined && (level <= current * 0.25 || level >= current * 4);
+    return suspiciousPrice
+      ? { coin: item.coin, text: item.text, status: "VERIFY_REQUIRED", reason: "historical price level is a strong outlier versus the current snapshot; never use it as current evidence" }
+      : { coin: item.coin, text: item.text, status: "OPEN" };
+  });
+
   const compact = {
     d: localISODate(),
     t: market.timestamp,
@@ -50,7 +62,7 @@ export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem,
         s: previous.meetingSummary.slice(0, PROMPT_BUDGET.maxPreviousSummary),
         q: previous.memory?.question,
         f: previous.memory?.keyFindings?.slice(0, 3),
-        open: previous.memory?.openFollowUps?.slice(0, 8).map((item) => ({ coin: item.coin, text: item.text })),
+        open: safeFollowUps,
         resolved: previous.memory?.resolvedFollowUps?.slice(0, 5).map((item) => item.text),
         w: previous.memory?.watchItems?.slice(0, 5) ?? previous.report.watchlist,
       },
@@ -77,7 +89,7 @@ CONTINUITY / MULTI-SESSION RULES:
 - If a previous follow-up is now verified, mark it as resolved in the research narrative and explain what evidence resolved it.
 - If it remains unverified, keep it open for the next meeting.
 - Never claim a character personally checked something between meetings unless today’s verified research supports that result. Do not fabricate off-screen actions.
-- Previous prices are historical context only. Current price facts come from today’s market input and must not be copied from prev.
+- Previous prices are historical context only. Current price facts come from today’s market input and must not be copied from prev.\n- If a previous follow-up is marked VERIFY_REQUIRED, preserve it as a historical question but do not repeat its price level as a current fact. Re-verify it against today’s data before resolving it.
 - Use natural continuity phrases only when supported by prev, such as "지난번에 확인하기로 했던 부분부터 볼게요.", "그건 아직 확인이 안 됐습니다.", or "좋아요. 이건 확인된 걸로 정리하죠."
 - A promise such as "그건 제가 확인해볼게요" belongs to the NEXT meeting as a follow-up, not as a claim of already-completed work in the current meeting.
 - The leader Alex should own the transition between sessions: open unresolved items, decide what gets verified today, and explicitly leave remaining questions for the next session.
@@ -131,8 +143,11 @@ NEWS/SOURCES:
 Use recent, verifiable information only. For each news item use "title | source | short summary".
 OUTPUT VALIDATION:
 - BTC, ETH, BNB, XRP, SOL must appear exactly once.
+- Every coin must include advancedSignals, tradingBias, tradingEntryCondition, tradingInvalidation, and tradingMode.
+- advancedSignals must contain only independently verified indicators. If none are verified, output [].
 - tradingBias: LONG|SHORT|WATCH only. tradingMode: SPOT|FUTURES|BOTH only.
-- If LONG/SHORT has no supported entry condition or invalidation, output WATCH.
+- LONG/SHORT requires both a supported entry condition and a supported invalidation condition. If either is missing, output WATCH and leave unsupported trading fields empty.
+- SPOT cannot use SHORT. If a bearish scenario cannot be expressed safely for SPOT, use WATCH or FUTURES only when the evidence supports it.
 - Keep arrays concise and never add unsupported fields.
 
 IMPORTANT OUTPUT SAFETY:
@@ -156,7 +171,7 @@ Do not place Markdown, citations, URLs, or unescaped line breaks inside JSON str
 If your interface automatically adds web citations, do not include them in the output; use only the plain source name.
 Format:
 \`\`\`json
-{"date":"YYYY-MM-DD","marketSummary":"max 2 sentences","viewerTakeaways":["..."],"story":{"mode":"DIVERGENCE","title":"...","openingHook":"...","centralQuestion":"...","debateTopics":["..."],"turningPoint":"...","surprise":"...","endingQuestion":"...","watchItems":["..."],"changes":["..."]},"coins":[{"id":"BTC","summary":"max 2 sentences","technical":["..."],"news":["title | source | short summary"],"bullScenario":"one sentence","bearScenario":"one sentence","risks":["..."],"interpretation":"...","counterView":"...","verification":["..."],"takeaways":["..."],"tradingBias":"LONG|SHORT|WATCH","tradingEntryCondition":"조건부 진입 확인 조건. 확실한 조건이 없으면 빈 문자열","tradingInvalidation":"시나리오 무효화 조건","tradingMode":"SPOT|FUTURES|BOTH"}],"globalFactors":["..."],"events":["..."],"risks":["..."],"correlations":["..."],"sources":["Reuters","CoinDesk"]}
+{"date":"YYYY-MM-DD","marketSummary":"max 2 sentences","viewerTakeaways":["..."],"story":{"mode":"DIVERGENCE","title":"...","openingHook":"...","centralQuestion":"...","debateTopics":["..."],"turningPoint":"...","surprise":"...","endingQuestion":"...","watchItems":["..."],"changes":["..."]},"coins":[{"id":"BTC","summary":"max 2 sentences","technical":["..."],"news":["title | source | short summary"],"bullScenario":"one sentence","bearScenario":"one sentence","risks":["..."],"interpretation":"...","counterView":"...","verification":["..."],"takeaways":["..."],"advancedSignals":["verified indicator | source/context"],"tradingBias":"LONG|SHORT|WATCH","tradingEntryCondition":"조건부 진입 확인 조건. 확실한 조건이 없으면 빈 문자열","tradingInvalidation":"시나리오 무효화 조건. 확실한 조건이 없으면 빈 문자열","tradingMode":"SPOT|FUTURES|BOTH"}],"globalFactors":["..."],"events":["..."],"risks":["..."],"correlations":["..."],"sources":["Reuters","CoinDesk"]}
 \`\`\`
 Include BTC, ETH, BNB, XRP, SOL exactly once. Keep every array concise. Do not repeat input data or instructions. The story must be grounded in evidence and should create a different meeting narrative when the evidence genuinely differs.`;
 
