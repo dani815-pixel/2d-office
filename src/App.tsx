@@ -13,8 +13,9 @@ import { createMeetingEvents } from "./engine/meeting";
 import { createMeetingMemory, createReport, reportToText } from "./engine/report";
 import { LiveMeetingController } from "./services/liveMeeting";
 import { changeText, compactUSD, dateText, priceUSD, resolveMeetingLiveText, timeText } from "./utils/format";
+import TradingRoom from "./components/TradingRoom";
 
-type IconName = "office" | "market" | "prompt" | "import" | "meeting" | "report" | "archive" | "refresh" | "arrow" | "copy" | "play" | "pause" | "skip" | "check" | "trash" | "clock" | "expand" | "close";
+type IconName = "office" | "market" | "prompt" | "import" | "meeting" | "trading" | "report" | "archive" | "refresh" | "arrow" | "copy" | "play" | "pause" | "skip" | "check" | "trash" | "clock" | "expand" | "close";
 
 function Icon({ name, size = 18, className = "" }: { name: IconName; size?: number; className?: string }) {
   const paths: Record<IconName, ReactNode> = {
@@ -23,6 +24,7 @@ function Icon({ name, size = 18, className = "" }: { name: IconName; size?: numb
     prompt: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="m7 9 3 3-3 3m6 0h4" /></>,
     import: <><path d="M12 3v12m-4-4 4 4 4-4" /><path d="M4 16v4h16v-4" /></>,
     meeting: <><path d="M8 5h8m-9 9h10M4 9h16M7 19h10" /><circle cx="4" cy="5" r="1" /><circle cx="20" cy="5" r="1" /><circle cx="4" cy="19" r="1" /><circle cx="20" cy="19" r="1" /></>,
+    trading: <><path d="M4 18h16M6 15l3-4 3 2 6-7" /><path d="M16 6h4v4" /></>,
     report: <><path d="M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M14 3v5h5M8 12h8M8 16h8" /></>,
     archive: <><rect x="3" y="4" width="18" height="5" rx="1" /><path d="M5 9v11h14V9M10 13h4" /></>,
     refresh: <><path d="M20 11a8 8 0 1 0-2.2 6.5M20 4v7h-7" /></>,
@@ -46,8 +48,9 @@ const NAV: { id: View; label: string; icon: IconName; group: string; number: str
   { id: "PROMPT", label: "Daily prompt", icon: "prompt", group: "RESEARCH FLOW", number: "03" },
   { id: "IMPORT", label: "AI import", icon: "import", group: "RESEARCH FLOW", number: "04" },
   { id: "MEETING", label: "Meeting room", icon: "meeting", group: "OUTPUT", number: "05" },
-  { id: "REPORT", label: "Report", icon: "report", group: "OUTPUT", number: "06" },
-  { id: "ARCHIVE", label: "Archive", icon: "archive", group: "OUTPUT", number: "07" },
+  { id: "TRADING_ROOM", label: "Trading room", icon: "trading", group: "OUTPUT", number: "06" },
+  { id: "REPORT", label: "Report", icon: "report", group: "OUTPUT", number: "07" },
+  { id: "ARCHIVE", label: "Archive", icon: "archive", group: "OUTPUT", number: "08" },
 ];
 
 function PageHead({ eyebrow, title, description, action }: { eyebrow: string; title: ReactNode; description: string; action?: ReactNode }) {
@@ -313,6 +316,8 @@ export default function App() {
             <div className="meeting-teamline"><span>IN THE ROOM</span>{TEAM.map((member) => <div key={member.id}><i style={{ background: member.color }} />{member.role}</div>)}</div>
           </>}
         </div>}
+
+        {view === "TRADING_ROOM" && <TradingRoom market={app.market} />}
 
         {view === "REPORT" && <div className="standard-page report-page">
           <PageHead eyebrow="06 / DAILY MEETING REPORT" title={<>The daily <em>brief.</em></>} description="회의에서 나온 해석을 사실 데이터와 나란히 기록합니다. 매수 또는 매도 지시가 아닙니다." action={reportItem && <button className="button button--outline" type="button" onClick={() => copy(reportToText(reportItem), "보고서가 복사되었습니다.")}><Icon name="copy" size={16} />보고서 복사</button>} />
