@@ -200,9 +200,9 @@ export function parseResearch(raw: string): ParseResult {
     return { id, summary: "제공된 분석이 없습니다. 별도 확인이 필요합니다.", technical: [], news: [], bullScenario: "", bearScenario: "", risks: [], tradingBias: "WATCH", tradingMode: "BOTH" };
   });
   const risks = listValue(data.risks, 8);
-  const allowedStoryModes = ["BREAKOUT_TENSION", "LEADERSHIP_SHIFT", "DIVERGENCE", "CATALYST_COUNTDOWN", "RISK_ALERT", "ROTATION", "CORRELATION_BREAK", "QUIET_BEFORE_MOVE", "CROSSROADS"];
-  if (data.story && (!rawStory || !allowedStoryModes.includes(stringValue(rawStory.mode, 40)))) warnings.push("story.mode이 허용 목록에 없어 그대로 표시합니다.");
   const rawStory = isObject(data.story) ? data.story : undefined;
+  const allowedStoryModes = ["BREAKOUT_TENSION", "LEADERSHIP_SHIFT", "DIVERGENCE", "CATALYST_COUNTDOWN", "RISK_ALERT", "ROTATION", "CORRELATION_BREAK", "QUIET_BEFORE_MOVE", "CROSSROADS"];
+  if (rawStory && !allowedStoryModes.includes(stringValue(rawStory.mode, 40))) warnings.push("story.mode이 허용 목록에 없어 그대로 표시합니다.");
   const story = rawStory ? {
     mode: stringValue(rawStory.mode, 40),
     title: stringValue(rawStory.title, 80),
