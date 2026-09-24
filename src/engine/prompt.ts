@@ -1,4 +1,4 @@
-import type { ArchiveItem, MarketSnapshot } from "../types";
+import type { ArchiveItem, MarketSnapshot, TradingTeamState } from "../types";
 import { localISODate } from "../utils/format";
 
 export const PROMPT_BUDGET = {
@@ -9,7 +9,7 @@ export const PROMPT_BUDGET = {
   maxPreviousMemory: 2200,
 } as const;
 
-export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem): string {
+export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem, trading?: TradingTeamState): string {
   const compact = {
     d: localISODate(),
     t: market.timestamp,
@@ -18,7 +18,7 @@ export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem)
       coin.id,
       [Number(coin.price.toFixed(5)), Number(coin.change24h.toFixed(2)), Math.round(coin.volume24h / 1_000_000), Number(coin.low24h.toFixed(5)), Number(coin.high24h.toFixed(5))],
     ])),
-    ...(previous ? {
+    ...(trading ? {\n      traders: Object.values(trading.memories).map((m) => ({ id: m.traderId, t: m.totalTrades, w: m.wins, l: m.losses, lessons: m.currentLessons.slice(0, 2), strategy: m.strategyChanges.slice(0, 2), risk: m.riskChanges.slice(0, 2) })),\n    } : {}),\n    ...(previous ? {
       prev: {
         session: previous.memory?.session,
         s: previous.meetingSummary.slice(0, PROMPT_BUDGET.maxPreviousSummary),
@@ -34,11 +34,11 @@ export function buildDailyPrompt(market: MarketSnapshot, previous?: ArchiveItem)
   const prompt = `You are a cautious crypto market researcher and meeting-story editor. Research BTC, ETH, BNB, XRP and SOL for today. Respond in Korean. Separate verified facts from interpretation. Never give guaranteed returns or direct buy/sell instructions.
 
 INPUT (compact): ${JSON.stringify(compact)}
-d=date, t=snapshot time (UTC), st=data status, c={coin:[USD price, 24h change %, 24h volume USD millions, 24h low, 24h high]}. prev is historical meeting memory, never current evidence. If prev.open exists, treat each item as a follow-up question from the previous session. Only close a follow-up when today’s verified research actually answers it.
+d=date, t=snapshot time (UTC), st=data status, c={coin:[USD price, 24h change %, 24h volume USD millions, 24h low, 24h high]}. traders is compressed local trading memory, not current market evidence. Use it only to improve future scenario discussion and risk discipline. Do not treat past wins/losses as proof of a strategy. prev is historical meeting memory, never current evidence. If prev.open exists, treat each item as a follow-up question from the previous session. Only close a follow-up when today’s verified research actually answers it.
 ${market.status !== "LIVE" ? `IMPORTANT: st=${market.status}. These prices are ${market.status === "MOCK" ? "fixed demo examples, NOT live prices" : "not confirmed live"}. Verify current prices independently; do not present input prices as current facts.` : "Use the snapshot as factual price/volume context, not a prediction."}
 
 RESEARCH:
-1. Assess overall market, macro/liquidity context, cross-coin relationships, and the most important change today.
+1. Assess overall market, macro/liquidity context, cross-coin relationships, and the most important change today.\n1b. If traders are present, identify only practical strategy/risk adjustments supported by their recorded lessons. Never promise that an adjustment will improve returns.
 2. For EACH coin, provide: concise summary, up to 3 technical observations, up to ${PROMPT_BUDGET.maxNews} verified recent news items, one bull scenario, one bear scenario, up to 3 risks, a concise interpretation, a counter-view, 2-3 verification checks, and up to 3 viewer takeaways. Also provide 2-4 advancedSignals when verified, using non-obvious professional indicators such as funding rates, open interest, futures basis, liquidations, ETF flows, exchange netflows, stablecoin flows, active addresses, realized price, or token-specific liquidity/holder behavior. Only include metrics actually verified today; never invent them.
 3. Find what is genuinely different or surprising today. Prefer a concrete divergence, catalyst, contradiction, rotation, liquidity change, event, or risk over generic market commentary.
 4. Separate every important claim into FACT, INTERPRETATION, and UNCERTAINTY. Do not turn correlation into causation. Distinguish a verified event from its possible market impact.\n5. Build a TV-friendly meeting story from the research. The story is NOT fiction: every hook, conflict, twist, and conclusion must be grounded in the supplied data or verified research.
@@ -97,7 +97,7 @@ Do not assign each character to one coin. Give the meeting room reasons to disag
 - altcoin: compares relative strength, rotation, and coin-specific catalysts.
 - risk: attacks assumptions and presents the bear case.
 - trader: asks what observable condition would confirm or invalidate a scenario.
-Do not invent data for any role. Each debate topic should expose at least one fact, one interpretation, and one condition that could prove the interpretation wrong.
+If trader memory is present, Kai should explicitly test whether a previous trading lesson changes the confirmation condition or risk discussion. Do not invent data for any role. Each debate topic should expose at least one fact, one interpretation, and one condition that could prove the interpretation wrong.
 
 NEWS/SOURCES:
 Use recent, verifiable information only. For each news item use "title | source | short summary".
