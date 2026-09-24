@@ -83,6 +83,7 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
     if (!approve) {
       setState((prev) => ({ ...prev, requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "REJECTED" as const } : item), activities: { ...prev.activities, [request.traderId]: "RETURN" as const, "team-lead": "THINK" as const } }));
       setNotice(request.coin + " 요청을 팀장이 거절했습니다.");
+      window.setTimeout(() => setState((prev) => ({ ...prev, activities: { ...prev.activities, [request.traderId]: "ANALYZE" as const } })), 950);
       return;
     }
     const specialist = TRADING_TEAM.find((member) => member.id === request.traderId);
@@ -94,8 +95,9 @@ export default function TradingRoom({ market, brief, meetingStatus, meetingId }:
     const result = openSimulatedPosition(state.balance, market, request.coin, settings.mode, request.side, quantity, settings.leverage, specialist.id, settings);
     if (!result.position) { setNotice(result.error || "승인 후 가상 진입에 실패했습니다."); return; }
     result.position.scenarioId = request.scenarioId;
-    setState((prev) => ({ ...prev, balance: result.balance, positions: [...prev.positions, result.position!], requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "EXECUTED" as const } : item), activities: { ...prev.activities, [request.traderId]: "WATCH" as const, "team-lead": "THINK" as const } }));
+    setState((prev) => ({ ...prev, balance: result.balance, positions: [...prev.positions, result.position!], requests: prev.requests.map((item) => item.id === requestId ? { ...item, status: "EXECUTED" as const } : item), activities: { ...prev.activities, [request.traderId]: "RETURN" as const, "team-lead": "THINK" as const } }));
     setNotice(request.coin + " " + request.side + " 승인 → 가상 진입 완료 · 리스크 " + settings.riskPercent + "%");
+    window.setTimeout(() => setState((prev) => ({ ...prev, activities: { ...prev.activities, [request.traderId]: "WATCH" as const, "team-lead": "WATCH" as const } })), 950);
   };
 
 
