@@ -1,64 +1,61 @@
 # 2D CRYPTO AI OFFICE
 
-> 실시간 암호화폐 시장 데이터 → Daily AI Research → CryptoMarketBrief → Story-driven 2D AI Meeting → Report → Archive
+> Real-time Crypto Market → External AI Research → CryptoMarketBrief → Story-driven 2D Meeting → Trading Desk → Local Virtual Trading → Review → Next Meeting
 
-**BTC · ETH · BNB · XRP · SOL** 5개 자산을 기준으로 시장을 관찰하고, 외부 AI의 조사 결과를 정규화한 뒤 2D 사무실에서 가상 분석팀이 토론하는 **React + Vite + TypeScript** 프로젝트입니다.
+**BTC · ETH · BNB · XRP · SOL** 5개 자산을 중심으로 실시간 시장 데이터와 외부 AI 리서치를 결합해, 2D 오피스 회의와 로컬 가상 트레이딩까지 연결하는 **React + Vite + TypeScript** 프로젝트입니다.
 
-현재 AI API는 앱 내부에서 직접 호출하지 않고 **External AI Research / Copy & Paste / Parse** 구조를 사용합니다.
+현재 앱 내부에서 AI API를 직접 호출하지 않고 **External AI Research → Copy/Paste → Parse** 구조를 사용합니다.
 
 ---
 
-## 1. 프로젝트 목표
+## 1. 핵심 목표
 
-단순한 암호화폐 대시보드가 아니라, 매일의 시장 데이터와 외부 AI 리서치를 **방송형 회의 콘텐츠**로 연결하는 것이 목표입니다.
-
-핵심 파이프라인:
+단순한 암호화폐 대시보드가 아니라 매일의 시장 분석을 **회의 콘텐츠 → 트레이딩 시나리오 → 가상 거래 → 복기 → 다음 회의**로 연결하는 것이 목표입니다.
 
 ```
-Real-time Crypto Data
-        ↓
+Real-time Market
+      ↓
 Daily Research Prompt
-        ↓
+      ↓
 External AI Research
-        ↓
-ONE CANVAS / Copy
-        ↓
+      ↓
+Copy / Paste
+      ↓
 AI Result Parser
-        ↓
+      ↓
 CryptoMarketBrief
-        ↓
+      ↓
 Story Engine
-        ↓
-Meeting Engine
-        ↓
-2D Crypto Office
-        ↓
-Meeting Report
-        ↓
-Archive
+      ↓
+2D AI Meeting
+      ↓
+Trading Desk
+      ↓
+Trading Room
+      ↓
+Team Lead Decision
+      ↓
+Virtual Trade
+      ↓
+Trade Review / Trader Memory
+      ↓
+Next Daily Prompt / Next Meeting
 ```
 
-핵심 원칙은 **AI 응답이 UI나 HTML을 직접 실행하지 않는 것**입니다.
+핵심 원칙:
 
-```
-AI Result
-   ↓
-Parser / Normalizer
-   ↓
-CryptoMarketBrief
-   ↓
-MeetingEngine
-   ↓
-MeetingEvent[]
-   ↓
-Office Renderer
-```
+- AI 응답이 UI나 HTML을 직접 실행하지 않음
+- AI 결과는 Parser를 거쳐 표준 모델로 정규화
+- 회의는 `MeetingEvent[]`로 생성
+- 실시간 시장값과 AI 리서치값의 책임을 분리
+- 실제 거래소 주문은 하지 않음
+- 외부 AI는 거래의 **판단 기준**만 제공하고 최종 승인/거절은 팀장이 결정
 
 ---
 
-## 2. 현재 지원 자산
+## 2. 지원 자산
 
-초기 및 핵심 지원 자산은 변경하지 않습니다.
+현재 핵심 자산은 다음 5개로 고정합니다.
 
 - BTC
 - ETH
@@ -66,46 +63,45 @@ Office Renderer
 - XRP
 - SOL
 
-캐릭터는 특정 코인에 1:1로 고정하지 않고 역할 중심으로 회의에 참여합니다.
+회의 캐릭터는 코인에 1:1 고정되지 않고 역할 중심으로 구성합니다.
 
 ---
 
-## 3. 현재 구현 상태
+## 3. Market Data
 
-### Market
-
-현재 시장 데이터는 **CoinGecko 초기 스냅샷 + Binance WebSocket 실시간 스트림** 구조입니다.
+현재 시장 데이터 구조:
 
 ```
 CoinGecko REST
     ↓
 Initial MarketSnapshot
-    ├── marketCap
-    └── initial price / volume / high / low / 24h change
+    ├─ marketCap
+    └─ initial market fields
 
 Binance WebSocket
     ↓
-1초 단위 buffer / flush
+1초 buffer / flush
     ↓
-MarketSnapshot
-    ├── price
-    ├── 24h change
-    ├── volume
-    ├── high
-    └── low
+Live MarketSnapshot
+    ├─ price
+    ├─ change24h
+    ├─ volume24h
+    ├─ high24h
+    └─ low24h
 ```
 
-지원 데이터:
+### Source of Truth
 
-- USD 가격
-- 24시간 변동률
-- 24시간 거래량
-- 시가총액
-- 24시간 고가 / 저가
-- timestamp
-- market status
+| 데이터 | 현재 소스 |
+|---|---|
+| 가격 | Binance WebSocket |
+| 24H 변화 | Binance WebSocket |
+| 24H 거래량 | Binance WebSocket |
+| 24H 고가 | Binance WebSocket |
+| 24H 저가 | Binance WebSocket |
+| Market Cap | CoinGecko 보조 데이터 |
 
-Binance 스트림 대상:
+지원 Binance stream:
 
 - BTCUSDT
 - ETHUSDT
@@ -115,118 +111,99 @@ Binance 스트림 대상:
 
 ### Fallback
 
-CoinGecko 요청 실패 시:
-
 ```
-Session Snapshot
-      ↓
+CoinGecko
+   ↓ 실패
 Cached Snapshot
-      ↓
+   ↓ 실패
 Mock Data
 ```
 
-순서로 fallback합니다.
+Market status:
 
-상태:
+- `LIVE`
+- `STALE`
+- `MOCK`
+- `ERROR`
 
-| 상태 | 의미 |
-|---|---|
-| LIVE | 현재 스냅샷이 live 데이터 기준 |
-| STALE | 이전 저장 데이터를 사용 |
-| MOCK | 고정 예시 데이터 |
-| ERROR | 오류 상태 표현용 타입 |
-
-> 현재 `LIVE`는 MarketSnapshot의 데이터 상태를 의미하며 Binance WebSocket 연결 상태와 완전히 동일한 개념은 아닙니다. WebSocket 상태 분리는 후속 안정화 대상입니다.
+현재 Market Data Status와 WebSocket Connection Status는 별도 모델로 완전히 분리되어 있지 않으며, 장시간 안정화 단계에서 분리할 예정입니다.
 
 ---
 
-## 4. Daily AI Research Prompt
+## 4. Daily AI Research
 
-`src/engine/prompt.ts`에서 매일 사용할 외부 AI 조사 프롬프트를 생성합니다.
+`src/engine/prompt.ts`가 외부 AI용 Daily Research Prompt를 생성합니다.
 
-프롬프트에는 다음이 포함됩니다.
+Prompt에는 다음이 포함됩니다.
 
 - 현재 날짜
-- snapshot timestamp
-- market status
-- BTC / ETH / BNB / XRP / SOL 압축 시장 데이터
-- 이전 회의 Memory: session / 핵심 질문 / 핵심 발견 / 미해결 follow-up / 해결된 항목 / watchlist
-- 시장 전체 분석 요구
-- 코인별 분석 요구
-- 최근 뉴스 및 출처 검증 요구
-- Story Engine 요구
-- 캐릭터별 분석 관점
-- 사실과 해석 분리
-- 직접적인 매수 / 매도 지시 금지
+- 현재 시장 snapshot
+- BTC / ETH / BNB / XRP / SOL 시장 데이터
+- 이전 회의 Memory
+- 시장 전체 분석
+- 코인별 분석
+- 최근 뉴스 및 출처
+- Story Engine
+- 사실 / 해석 / 불확실성 구분
+- 검증 조건
+- Trading Scenario 조건
+- 이전 거래 Memory
 
-### 토큰 절약
+### Token Budget
 
-입력 시장 데이터는 긴 객체 대신 compact 형태를 사용합니다.
+불필요한 입력을 줄이기 위해:
 
-```
-BTC: [price, change24h, volumeM, low, high]
-```
-
-현재 Prompt Budget:
-
-- 최대 프롬프트 약 12,000 characters
-- 뉴스 최대 3개
-- 출처 최대 8개
-- 이전 회의 Memory는 최신 1개 session만 전달하고 항목별로 압축
-- 과거 가격은 현재 가격 근거로 재사용하지 않음
+- Prompt 최대 약 12,000 characters
+- 시장 데이터 compact 표현
+- 뉴스 최대 3개 수준
+- source 수 제한
+- 이전 회의는 최신 1 session만 전달
+- trader memory도 핵심 lesson / strategy / risk 위주로 압축
 
 ---
 
-## 5. ONE CANVAS External AI Workflow
+## 5. External AI Output
 
-외부 AI 결과는 **하나의 Canvas / 하나의 Document**에 완성하도록 프롬프트에서 명시합니다.
+외부 AI는 **ONE CANVAS / ONE DOCUMENT** 형태의 최종 결과를 생성하도록 요구합니다.
 
-목표 workflow:
+권장 흐름:
 
 ```
 Daily Prompt
-    ↓
+   ↓
 External AI
-    ↓
+   ↓
 ONE CANVAS
-    ↓
-Canvas 전체 복사
-    ↓
-AI Result Import
-    ↓
+   ↓
+전체 복사
+   ↓
+AI IMPORT
+   ↓
 Parser
 ```
 
-외부 AI 출력 규칙:
+출력 원칙:
 
-- 하나의 Canvas / Document만 사용
-- 여러 메시지로 결과 분할 금지
-- 분석 과정 / reasoning 출력 금지
-- 최종 결과 외 설명 금지
-- JSON 하나만 출력
-- URL 금지
-- Markdown 링크 금지
-- footnote / citation marker 금지
-- JSON 내부의 주석 / trailing comma 금지
-- BTC / ETH / BNB / XRP / SOL 각각 정확히 한 번 포함
-
-이 구조의 목적은 **사용자가 Canvas 전체를 한 번 복사하여 앱에 바로 붙여넣을 수 있게 하는 것**입니다.
-
-> Canvas 동작 자체는 사용하는 외부 AI 서비스의 UI 지원 여부에 따라 달라질 수 있습니다. 앱은 Canvas 결과를 문자열로 받아 Parse하는 구조입니다.
+- JSON 하나
+- BTC / ETH / BNB / XRP / SOL 각각 정확히 한 번
+- reasoning 출력 금지
+- URL / Markdown link / citation marker 금지
+- JSON 내부 comment / trailing comma 금지
+- 검증되지 않은 뉴스나 수치를 임의 생성하지 않음
 
 ---
 
-## 6. AI Result Import / Parser
+## 6. AI Result Parser
 
-`src/engine/parser.ts`가 외부 AI 결과를 `CryptoMarketBrief`로 변환합니다.
+`src/engine/parser.ts`는 외부 AI 결과를 `CryptoMarketBrief`로 정규화합니다.
 
-지원 형식:
+지원:
 
 - JSON
 - JSON code fence
 - Markdown
 - Plain text
-- 간단한 `BTC: ...` 형태
+- 간단한 코인별 텍스트
 
 처리:
 
@@ -244,72 +221,92 @@ Normalization
 CryptoMarketBrief
 ```
 
-검사 항목:
+검증:
 
-- JSON 유효성
-- 최상위 object 여부
+- JSON 구조
 - 코인 ID
-- 필수 필드
+- 중복 코인
 - 누락 코인
-- 부분 추출
-- warnings / errors
+- 필수 필드
+- trading schema
+- advanced signals
+- story mode
+- events
+- URL / citation sanitize
 
-AI 원문을 Meeting Engine에 직접 전달하지 않습니다.
+Import Preview 상태:
+
+- `PARSING`
+- `VALID`
+- `WARNING`
+- `INVALID`
+
+경고가 있어도 정상적인 Brief가 생성되면 자동 보정 내용을 WARNING으로 보여줍니다.
 
 ---
 
 ## 7. CryptoMarketBrief
 
-앱 내부의 표준 AI 리서치 모델입니다.
+앱 내부 표준 분석 모델입니다.
 
-주요 구조:
+주요 시장 필드:
 
-- date
-- marketSummary
-- coins
-- risks
-- events
-- sources
-- globalFactors
-- correlations
-- story
+- `date`
+- `marketSummary`
+- `coins`
+- `risks`
+- `events`
+- `sources`
+- `globalFactors`
+- `correlations`
+- `viewerTakeaways`
+- `story`
 
-코인별:
+코인별 분석:
 
-- summary
-- technical
-- news
-- bullScenario
-- bearScenario
-- risks
+- `summary`
+- `technical`
+- `news`
+- `bullScenario`
+- `bearScenario`
+- `risks`
+- `interpretation`
+- `counterView`
+- `verification`
+- `takeaways`
+- `advancedSignals`
 
-이 모델을 기준으로 이후의 Story / Meeting / Report가 동작합니다.
+Trading 관련:
+
+- `tradingBias`
+- `tradingEntryCondition`
+- `tradingInvalidation`
+- `tradingMode`
+- `tradingApprovalCriteria`
+- `tradingRejectionCriteria`
+
+중요한 원칙:
+
+> `tradingApprovalCriteria`와 `tradingRejectionCriteria`는 **팀장의 판단 기준**이지 AI의 최종 승인/거절 결과가 아닙니다.
 
 ---
 
 ## 8. Story Engine
 
-매일 동일한 순서로 발표하지 않도록 당일 조사 결과에 맞는 회의 스토리를 선택합니다.
+현재 Story Mode:
 
-지원 모드:
+- `BREAKOUT_TENSION`
+- `LEADERSHIP_SHIFT`
+- `DIVERGENCE`
+- `CATALYST_COUNTDOWN`
+- `RISK_ALERT`
+- `ROTATION`
+- `CORRELATION_BREAK`
+- `QUIET_BEFORE_MOVE`
+- `CROSSROADS`
 
-| Mode | 중심 내용 |
-|---|---|
-| BREAKOUT_TENSION | 중요한 조건을 통과하는지 검증 |
-| LEADERSHIP_SHIFT | 시장 리더십 변화 |
-| DIVERGENCE | 자산별 행동 차이 |
-| CATALYST_COUNTDOWN | 이벤트 / 촉매 |
-| RISK_ALERT | 하방 위험 / 충돌 신호 |
-| ROTATION | 자금 / 관심 이동 |
-| CORRELATION_BREAK | 상관관계 변화 |
-| QUIET_BEFORE_MOVE | 아직 해결되지 않은 혼재 신호 |
-| CROSSROADS | Bull / Bear 근거가 팽팽한 상황 |
+Story 구조:
 
-Story는 허구의 사건을 만드는 장치가 아니라 **검증 가능한 시장 데이터와 리서치에서 회의의 논쟁 구조를 만드는 장치**입니다.
-
-Story 데이터:
-
-- mode
 - title
 - openingHook
 - centralQuestion
@@ -320,23 +317,27 @@ Story 데이터:
 - watchItems
 - changes
 
+Story는 허구의 사건을 만드는 기능이 아니라 **검증 가능한 시장 데이터와 리서치에서 논쟁 구조를 만드는 기능**입니다.
+
 ---
 
-## 9. 2D Meeting Engine
+## 9. 2D Meeting
 
-Meeting Engine:
+구조:
 
 ```
 CryptoMarketBrief
       +
-Meeting Start MarketSnapshot
+Meeting Start Snapshot
       ↓
 MeetingEngine
       ↓
 MeetingEvent[]
+      ↓
+2D Office Renderer
 ```
 
-기본 이벤트:
+이벤트:
 
 - MOVE
 - SPEAK
@@ -344,9 +345,10 @@ MeetingEvent[]
 - SCREEN
 - EMOTION
 - PAUSE
+- HIGHLIGHT
 - END
 
-발언에는 대화 의도를 표현할 수 있습니다.
+Speech intent:
 
 - STATEMENT
 - QUESTION
@@ -357,212 +359,593 @@ MeetingEvent[]
 - SUMMARY
 - TURNING_POINT
 
-또한 실시간 시장 발언은 `live: true`로 구분합니다.
+긴 발언은 여러 SPEAK 이벤트로 분리해 말풍선이 과도하게 잘리지 않도록 합니다.
 
 ---
 
-## 10. 6인 AI 회의팀
+## 10. 6인 회의팀
 
-| 캐릭터 | 역할 |
-|---|---|
-| Alex | Team Leader |
-| Mina | Market Analyst |
-| Jin | On-chain / Ecosystem |
-| Noah | Altcoin Specialist |
-| Rae | Macro / Risk Manager |
-| Kai | Trader |
+| 캐릭터 | 나이 | 역할 |
+|---|---:|---|
+| Alex | 42 | Team Leader |
+| Mina | 36 | Market Analyst |
+| Jin | 39 | On-chain / Ecosystem |
+| Noah | 31 | Altcoin Specialist |
+| Rae | 45 | Macro / Risk Manager |
+| Kai | 28 | Trader |
 
-역할 중심으로 회의를 구성하며 캐릭터와 코인을 1:1로 연결하지 않습니다.
-
-회의 중 역할:
-
-- Leader → 핵심 질문과 결론
-- Market → 가격 / 거래량 / 시장 구조
-- On-chain → 온체인 / 생태계 근거
-- Altcoin → 상대 강도 / 순환
-- Risk → 반대 근거 / 위험
-- Trader → 확인 / 무효화 조건
+캐릭터마다 personality / tone / speaking style을 가지고 있으며 Prompt와 Meeting Engine에 반영됩니다.
 
 ---
 
-## 11. 약 20분 Story-driven Meeting
+## 11. 실시간 Meeting Signal
 
-현재 Meeting Engine은 전체 이벤트 시간을 자동 정규화합니다.
+`src/services/liveMeeting.ts`가 Binance WebSocket 흐름을 관찰합니다.
 
-목표:
+현재 기준:
 
-- 1x → 약 20분
-- 2x → 약 10분
-
-Story Mode에 따라:
-
-- 분석 순서
-- 논쟁 순서
-- Risk 개입
-- Turning Point
-- 화면 전환
-- 결론
-
-이 달라질 수 있습니다.
-
----
-
-## 12. 실시간 회의 시장 신호
-
-회의 중 Binance WebSocket 데이터는 `LiveMeetingController`에서 관찰할 수 있습니다.
-
-현재 탐지 기준:
-
-- 최근 30초 window
-- 최소 약 0.7% 움직임
+- rolling window 약 30초
+- 최소 약 0.7% move
 - 3회 연속 방향 확인
-- 120초 cooldown
-- 최대 5개 live trigger
+- cooldown 약 120초
+- 최대 5개 trigger
+- pending queue 최대 3개
 
-신호 예:
+구조:
 
 ```
-BTC
-최근 30초 +0.82%
-↓
-실시간 흐름 확인
-↓
-Live SPEAK
-↓
-다른 역할의 REPLY
+Binance WebSocket
+      ↓
+Live Detector
+      ↓
+Signal Queue
+      ↓
+Meeting Safe Point
+      ↓
+Live SPEAK / REPLY
 ```
 
-Live 발언은 일반 발언과 구분되어 Office에서 **LIVE MARKET** 표시로 보여집니다.
+실시간 발언에는 `live: true`를 사용하고 Office에서 LIVE MARKET으로 구분합니다.
 
-> 현재 live signal은 회의의 안전한 이벤트 지점에서 주입하는 단계입니다. 시장 신호를 항상 먼저 수집한 뒤 안전 지점에서 queue로 주입하는 구조는 다음 안정화 단계의 핵심 과제입니다.
+회의 발언의 현재 가격은 AI 결과에 고정하지 않고:
+
+- `{{PRICE:BTC}}`
+- `{{CHANGE:BTC}}`
+
+placeholder를 사용해 발화 시점의 최신 Binance 값으로 치환합니다.
 
 ---
 
-## 13. 2D Office UI
-
-CSS / SVG 기반의 2D 픽셀풍 Office입니다.
+## 12. 2D Office UX
 
 현재 구현:
 
 - 2D 회의실
-- 6개 캐릭터
+- 6인 캐릭터
 - 책상 / 모니터
-- 코인 ticker
-- 시장 monitor
+- ticker
+- market monitor
 - 캐릭터 이동
-- 발언 상태
-- 듣기 상태
-- 생각 상태
-- Point / Screen
-- Risk Alert
-- Active Speaker Highlight
-- Speech Bubble
-- Transcript
-- 가격 변화 pulse
-- Live Market Speech 표시
-
-### Live Price Visual
-
-가격이 WebSocket으로 변경되면:
-
-- focused monitor 가격 pulse
-- ticker 가격 pulse
-- 상승 / 하락 방향별 animation
-
-을 표시합니다.
-
-시장 모니터에는:
-
-```
-DATA: LIVE / LIVE SYNC ...
-● STREAM
-```
-
-형태의 live indicator가 표시됩니다.
-
----
-
-## 14. Meeting Fullscreen / Transcript
-
-회의 화면은 앱 내부 fullscreen overlay 방식입니다.
-
-구성:
-
-- 2D Office
-- 캐릭터
-- Monitor
+- active speaker
+- speech bubble
+- terminal transcript
+- highlight card
+- price pulse
+- live market indicator
+- fullscreen
+- ESC 종료
 - 재생 속도
-- 회의 진행 상태
-- 현재 발언자
-- Speech Bubble
-- 하단 terminal-style transcript
+- PAUSE / RESUME / NEXT EVENT
 
-Transcript:
+Highlight 종류:
 
-- 자동 스크롤
-- 현재 이벤트 표시
-- 발언자 / 역할 표시
-- intent 표시
-- 전체 발언 기록
-
-ESC로 fullscreen을 종료할 수 있습니다.
+- KEY_POINT
+- EVIDENCE
+- RISK
+- WATCH
+- INSIGHT
 
 ---
 
-## 15. Meeting Snapshot과 Live Market 분리
+## 13. Meeting Timer / Fullscreen
 
-회의 시작 시점의 스냅샷은 `meeting.snapshot`으로 보관합니다.
+회의 Timer는 live market 업데이트 때문에 effect가 재시작되지 않도록 안정화되어 있습니다.
 
-```
-Meeting Start Snapshot
-        ↓
-Meeting Report
-        ↓
-회의 당시 사실 기록
+Fullscreen은 브라우저 Fullscreen API를 사용합니다.
 
-Current Live Market
-        ↓
-Office Monitor
-        ↓
-Ticker / 실시간 화면
-```
-
-따라서 회의 중 시장이 움직여도 보고서는 회의 시작 시점 데이터를 기준으로 작성할 수 있습니다.
+- `requestFullscreen()`
+- `exitFullscreen()`
+- `fullscreenchange`
+- ESC 종료
 
 ---
 
-## 16. Report / Archive
+## 14. Meeting Report / Archive
 
 회의 종료:
 
 ```
 Meeting
   ↓
-createReport()
+Report
   ↓
-MeetingReport
+Archive
   ↓
-ArchiveItem
-  ↓
-localStorage
+MeetingMemory
 ```
 
-현재:
+Archive에는 다음을 보관할 수 있습니다.
 
-- Meeting Report 생성
-- Meeting Summary 저장
-- 시장 스냅샷 저장
-- CryptoMarketBrief 저장
-- 보고서 텍스트 복사
-- Archive 최대 20개
-- 과거 회의 다시 열기
-- 기록 삭제
+- Brief
+- Meeting Report
+- Meeting Summary
+- Market Snapshot
+- Meeting Memory
+- Watch items
+- Follow-up
 
-localStorage가 실패해도 현재 세션에서 핵심 동작이 유지되도록 방어합니다.
+다회차 회의는 최신 이전 session의 Memory를 다음 Prompt와 Meeting Engine에 전달합니다.
 
 ---
 
-## 17. 프로젝트 구조
+# 15. TRADING ROOM
+
+Trading Room은 회의에서 나온 조건부 시나리오를 **실제 거래소 주문 없이** 로컬 가상 거래로 검증하는 공간입니다.
+
+화면에는:
+
+> **SIMULATION ONLY — NO REAL ORDERS**
+
+를 기준으로 동작합니다.
+
+### 전체 흐름
+
+```
+Real-time Market
+      ↓
+Daily AI Research
+      ↓
+AI Meeting
+      ↓
+Trading Desk
+      ↓
+Coin Specialist
+      ↓
+Trade Request
+      ↓
+김태훈 Team Lead
+   ├─ APPROVE
+   └─ REJECT
+      ↓
+Virtual Trade
+      ↓
+PnL
+      ↓
+TP / SL / Manual Close
+      ↓
+Trade Review
+      ↓
+Trader Memory
+      ↓
+Next Meeting
+```
+
+---
+
+## 16. Trading Team
+
+현재 트레이딩팀은 한국인 캐릭터로 구성합니다.
+
+| 이름 | 역할 | 담당 |
+|---|---|---|
+| 김태훈 | TEAM LEAD | 전체 포지션 / 팀 리스크 |
+| 김민준 | SPECIALIST | BTC |
+| 이서준 | SPECIALIST | ETH |
+| 박도윤 | SPECIALIST | BNB |
+| 최현우 | SPECIALIST | XRP |
+| 정우진 | SPECIALIST | SOL |
+
+회의의 `trader` 캐릭터는 트레이딩팀의 **김태훈 팀장**과 연결됩니다.
+
+---
+
+## 17. Trader Settings
+
+트레이더별 설정:
+
+- SPOT / FUTURES
+- strategy
+- risk percent
+- leverage
+- stop loss
+- take profit
+- confirmation
+- LONG 허용
+- SHORT 허용
+- auto simulation
+
+각 트레이더의 성격과 전략은 서로 다를 수 있으며 향후 회의 내용과 과거 거래 Memory에 따라 변경할 수 있는 구조입니다.
+
+---
+
+## 18. Meeting → Trading Scenario
+
+`createMeetingScenarios()`가 `CryptoMarketBrief`를 Trading Scenario로 변환합니다.
+
+전달되는 값:
+
+- bias
+- market mode
+- entry condition
+- invalidation
+- reasoning
+- approval criteria
+- rejection criteria
+- confidence
+- meeting ID
+
+LONG / SHORT 시나리오가 생기더라도 **자동 주문되지 않습니다.**
+
+회의 종료 후:
+
+```
+Scenario
+   ↓
+PENDING REQUEST
+   ↓
+Specialist
+   ↓
+Team Lead Decision
+```
+
+---
+
+## 19. 가장 중요한 규칙 — AI와 팀장의 역할 분리
+
+이 프로젝트의 Trading 의사결정 구조는 다음과 같습니다.
+
+### External AI
+
+AI는:
+
+- 시장을 분석
+- LONG / SHORT / WATCH 시나리오 제시
+- 진입 조건 제시
+- 무효화 조건 제시
+- 승인 기준 제시
+- 거절 기준 제시
+
+까지만 합니다.
+
+### 김태훈 Team Lead
+
+최종 결정은 김태훈 팀장이 합니다.
+
+```
+External AI
+   ↓
+APPROVE IF
+REJECT IF
+   ↓
+Specialist Request
+   ↓
+김태훈 Team Lead
+   ├─ APPROVE
+   │    ↓
+   │  Virtual Order
+   │
+   └─ REJECT
+        ↓
+      Re-review
+```
+
+즉:
+
+> **AI가 "승인"하는 것이 아닙니다. AI가 판단 기준을 제공하고, 팀장이 화면에서 승인 또는 거절을 직접 선택합니다.**
+
+현재 UI에도 이 역할을 명확히 표시합니다.
+
+---
+
+## 20. Trading Request 상태
+
+요청 상태:
+
+- `PENDING`
+- `APPROVED`
+- `REJECTED`
+- `EXECUTED`
+
+승인 연출:
+
+```
+PENDING
+  ↓
+TEAM LEAD APPROVED
+  ↓
+담당자 주문 준비
+  ↓
+VIRTUAL ORDER EXECUTED
+  ↓
+담당자 복귀
+  ↓
+WATCH
+```
+
+거절 연출:
+
+```
+PENDING
+  ↓
+TEAM LEAD REJECTED
+  ↓
+담당자 재검토
+  ↓
+WATCH
+```
+
+---
+
+## 21. Virtual Trading
+
+초기 가상 자본:
+
+**$100,000**
+
+지원:
+
+- SPOT
+- FUTURES
+- LONG
+- SHORT
+- leverage
+- margin
+- position
+- unrealized PnL
+- ROI
+- TP
+- SL
+- manual close
+
+실시간 가격은 기존 Binance WebSocket의 MarketSnapshot을 읽기만 하며 실제 거래소 주문 API는 사용하지 않습니다.
+
+### TP / SL
+
+현재 포지션 가격이 조건에 도달하면 자동 청산합니다.
+
+```
+Position
+   ↓
+Current Price
+   ↓
+checkExit()
+   ├─ TAKE_PROFIT
+   ├─ STOP_LOSS
+   └─ continue
+```
+
+---
+
+## 22. Trade Review / Trader Memory
+
+거래가 종료되면 자동으로 복기합니다.
+
+```
+Trade
+ ↓
+TradeReview
+ ↓
+TraderMemory
+ ↓
+Next Research / Meeting
+```
+
+복기 정보:
+
+- 결과
+- 진입 / 청산
+- PnL
+- 청산 이유
+- 가능한 원인
+- lesson
+- regret
+- improvement
+- confidence
+
+손실 거래에서는 특히:
+
+- 진입 확인 조건
+- 무효화 조건
+- 리스크 크기
+- 반복 실수
+- 다음 전략 변경
+
+을 검토합니다.
+
+중요한 원칙:
+
+> 거래 결과만 보고 원인을 확정하지 않습니다.
+
+---
+
+## 23. Trader Activity / 2D Trading Floor
+
+Trading Room은 정적인 주문 화면이 아니라 2D Trading Floor로 구성됩니다.
+
+현재 활동:
+
+- WORK
+- ANALYZE
+- TALK
+- THINK
+- TRADE
+- RETURN
+- WATCH
+
+향후 확장 예정:
+
+- COFFEE
+- OUTSIDE
+- RESTROOM
+- WALK
+- BREAK
+
+활동 상태에 따라 트레이더의 위치와 애니메이션이 변경됩니다.
+
+현재 목표는:
+
+```
+분석
+ ↓
+팀장에게 이동
+ ↓
+대화 / 판단 대기
+ ↓
+승인 / 거절
+ ↓
+거래
+ ↓
+자리 복귀
+ ↓
+복기
+```
+
+를 2D 화면에서 자연스럽게 보여주는 것입니다.
+
+---
+
+## 24. Trading Persistence
+
+localStorage key:
+
+```
+crypto-ai-office.trading.v1
+```
+
+저장:
+
+- balance
+- positions
+- trades
+- reviews
+- scenarios
+- requests
+- profiles
+- settings
+- memories
+- activities
+
+기존 저장 데이터에 새 필드가 없어도 기본값으로 보정하는 migration 방어가 포함되어 있습니다.
+
+---
+
+# 25. GLOBAL RESET
+
+현재 RESET은 Trading Room만 초기화하는 기능이 아니라 **전체 Workspace 데이터를 초기화**합니다.
+
+사이드바의:
+
+**RESET ALL DATA**
+
+버튼으로 실행합니다.
+
+초기화 대상:
+
+- Meeting
+- Meeting Report
+- Archive
+- Meeting Memory
+- AI Import text
+- AI Import preview
+- Trading balance
+- Positions
+- Trades
+- Reviews
+- Scenarios
+- Requests
+- Trader Memory
+- Trader Activities
+- Trader Settings
+
+초기화 후:
+
+```
+RESET ALL DATA
+      ↓
+localStorage 앱 데이터 삭제
+      ↓
+Meeting 초기 상태
+Trading 초기 상태
+Report 초기 상태
+Archive 초기 상태
+Import 초기 상태
+      ↓
+OFFICE
+```
+
+초기 Trading balance는 다시 **$100,000**으로 돌아갑니다.
+
+초기화하지 않는 것:
+
+- 소스 코드
+- 코인 정의
+- 팀 정의
+- 기본 Trading Team
+- 기본 Trader Settings
+- Prompt 코드
+- Market service 구조
+
+초기화는 되돌릴 수 없다는 확인 메시지를 거칩니다.
+
+---
+
+## 26. 다회차 회의 Continuity
+
+이전 회의의 Memory:
+
+- session
+- 핵심 질문
+- key findings
+- open follow-ups
+- resolved follow-ups
+- watch items
+- turning point
+
+를 다음 회의에 전달합니다.
+
+특히 Trading Memory가 있으면:
+
+- 총 거래
+- 승 / 패
+- 현재 lesson
+- 전략 변경
+- 리스크 변경
+
+을 압축해서 다음 Prompt에 전달합니다.
+
+목표:
+
+```
+SESSION 01
+   ↓
+Trade
+   ↓
+Review
+   ↓
+Trader Memory
+   ↓
+SESSION 02
+   ↓
+Previous Lesson
+   ↓
+Strategy Improvement
+```
+
+과거 가격은 현재 가격의 근거로 재사용하지 않습니다.
+
+---
+
+## 27. 프로젝트 구조
 
 ```
 src/
@@ -571,17 +954,20 @@ src/
 ├── index.css
 │
 ├── components/
-│   └── Office.tsx
+│   ├── Office.tsx
+│   └── TradingRoom.tsx
 │
 ├── data/
 │   ├── coins.ts
 │   ├── team.ts
+│   ├── tradingTeam.ts
 │   └── demo.ts
 │
 ├── engine/
 │   ├── prompt.ts
 │   ├── parser.ts
 │   ├── meeting.ts
+│   ├── trading.ts
 │   └── report.ts
 │
 ├── services/
@@ -594,980 +980,210 @@ src/
     └── format.ts
 ```
 
-### 주요 파일
+주요 파일:
 
 | 파일 | 역할 |
 |---|---|
-| `App.tsx` | 앱 상태 / 화면 흐름 / 회의 진행 |
-| `types.ts` | 공통 TypeScript 모델 |
-| `Office.tsx` | 2D Office 렌더링 |
-| `coins.ts` | 5개 코인 메타데이터 |
-| `team.ts` | 6인 회의팀 |
-| `demo.ts` | fallback / demo data |
-| `prompt.ts` | Daily AI Research Prompt |
-| `parser.ts` | AI 결과 parsing / normalization |
-| `meeting.ts` | Story-driven Meeting Event 생성 |
-| `report.ts` | Meeting Report |
-| `market.ts` | CoinGecko + Binance market service |
-| `liveMeeting.ts` | 실시간 시장 신호 탐지 |
-| `storage.ts` | localStorage |
-| `clipboard.ts` | 복사 기능 |
-| `format.ts` | 숫자 / 가격 / 시간 formatting |
+| App.tsx | 전체 상태 / 화면 / 회의 진행 |
+| Office.tsx | 2D Meeting Office |
+| TradingRoom.tsx | 2D Trading Floor / 가상 거래 |
+| types.ts | TypeScript 모델 |
+| prompt.ts | External AI Prompt |
+| parser.ts | AI 결과 Parser / Validation |
+| meeting.ts | Meeting Event 생성 |
+| trading.ts | Trading Scenario / Position / Review |
+| report.ts | Report / Meeting Memory |
+| market.ts | CoinGecko + Binance |
+| liveMeeting.ts | 실시간 시장 신호 |
+| storage.ts | localStorage |
+| format.ts | 가격 / 시간 / live placeholder |
 
 ---
 
-## 18. 최근 회의 UX / 대화 개선
+# 28. 현재 개발 완료 단계
 
-### STEP 1 — 긴 발언 처리
-긴 AI 발언이 말풍선에서 잘리지 않도록 개선했습니다.
+### Phase 1 — 기본 구조
+- React / Vite / TypeScript
+- 5개 코인
+- 6인 회의팀
+- 공통 TypeScript 모델
 
-- 긴 발언을 약 92자 기준으로 문장 단위 분할
-- 하나의 긴 문장을 여러 `SPEAK` 이벤트로 분리
-- 분할된 발언을 순차적으로 재생
-- 말풍선의 기존 4줄 강제 절단 제거
-- 긴 텍스트는 말풍선 내부 스크롤 지원
-- 전체 발언은 Transcript에 유지
-
-목표는 긴 분석 문장을 억지로 한 화면에 넣는 것이 아니라 **실제 사람이 여러 호흡으로 말하는 것처럼 보여주는 것**입니다.
-
-### STEP 2 — 자연스러운 대화 흐름
-회의 대화 구조를 단순한 고정 멘트 나열에서 문맥 기반 대화로 개선했습니다.
-
-기본 흐름:
-
-```
-주장
- ↓
-반론
- ↓
-질문
- ↓
-재응답
- ↓
-Risk 반론
- ↓
-Leader 정리
- ↓
-다음 확인 항목
-```
-
-`replyTo`와 `intent`를 실제 대화 흐름에 활용하며, 다음 발언이 이전 발언의 핵심 내용을 받아서 응답하도록 구성합니다.
-
-### STEP 3 — 캐릭터별 나이 / 직책 / 성격 / 말투
-6인 회의팀에 고유한 캐릭터 프로필을 추가했습니다.
-
-| 캐릭터 | 나이 | 직책 | 대화 스타일 |
-|---|---:|---|---|
-| Alex | 42 | Team Leader | 차분하고 핵심을 정리 |
-| Mina | 36 | Market Analyst | 숫자·가격·거래량 중심 |
-| Jin | 39 | On-chain / Ecosystem | 배경과 맥락 설명 |
-| Noah | 31 | Altcoin Specialist | 활기차고 직설적 |
-| Rae | 45 | Macro / Risk Manager | 가정과 반대 시나리오 검증 |
-| Kai | 28 | Trader | 빠르고 구어체, 가격 행동 중심 |
-
-캐릭터 프로필은 UI 표시용 데이터에만 머무르지 않고 **External AI Prompt와 Meeting Engine 양쪽에 반영**합니다.
-
-목표:
-
-- 캐릭터마다 다른 문장 패턴
-- 지나치게 딱딱한 보고서체 감소
-- 질문 / 반론 / 정리 방식 차별화
-- 전문성을 유지하면서 실제 회의 같은 구어체 구현
-
-### STEP 4 — 시청자용 Highlight / Note
-### STEP 5 — 풍부한 시장 해석 / 검증 / 시청자 Takeaway
-
-### STEP 6 — 다회차 회의 Memory / 연속성
-
-하루에 여러 번 회의를 진행할 수 있도록 이전 회의의 핵심만 MeetingMemory로 저장하고 다음 회의의 External AI Prompt와 Meeting Engine에 전달합니다.
-
-저장 정보:
-- session — 같은 날의 회의 순번
-- question — 이전 회의의 핵심 질문
-- keyFindings — 핵심 발견
-- openFollowUps — 아직 확인하지 못한 질문
-- resolvedFollowUps — 확인이 끝난 항목
-- watchItems — 계속 관찰할 항목
-- turningPoint — 이전 회의의 전환점
-
-연속 회의 흐름:
-SESSION 01 → OPEN FOLLOW-UP → SESSION 02 → RESOLVED 또는 STILL OPEN → SESSION 03
-
-중요한 규칙:
-- 이전 회의 데이터는 역사적 문맥이며 현재 시장 사실이 아님
-- 과거 가격을 오늘 가격처럼 사용하지 않음
-- 실제로 확인된 근거가 있을 때만 이전 질문을 해결 처리
-- 확인되지 않은 항목은 다음 회의로 유지
-- 캐릭터가 회의 사이에 실제로 조사했다고 임의로 주장하지 않음
-- "그건 제가 확인해볼게요" 같은 약속은 다음 회의의 확인 항목으로 이어질 수 있음
-- 최신 이전 session만 전달해 토큰 사용량을 제한
-
-현재 구현에서는 Archive의 memory를 다음 회의에 전달하며, Meeting Engine이 미해결 항목을 회의 초반에 Alex의 질문으로 다시 꺼냅니다.
-
-Daily Prompt와 `CryptoMarketBrief`를 확장해 단순 뉴스 요약을 넘어 **사실 → 해석 → 반대 해석 → 검증 조건 → 시청자 메모** 흐름을 보존합니다.
-
-추가된 코인별 분석 필드:
-
-- `interpretation` — 데이터에 대한 해석
-- `counterView` — 반대 방향의 해석
-- `verification` — 해석을 확인하거나 무효화할 조건
-- `takeaways` — 시청자가 메모할 핵심
-
-시장 전체에는:
-
-- `viewerTakeaways` — 오늘의 핵심 메모 포인트 3~5개
-
-프롬프트 원칙:
-
-- 확인된 사실과 해석을 명확히 분리
-- 상관관계를 인과관계로 단정하지 않음
-- 확인된 이벤트와 예상 영향 구분
-- 각 논쟁에 반대 해석과 검증 조건 포함
-- 근거가 약하면 억지로 결론을 만들지 않음
-- 기존 `PROMPT_BUDGET.maxChars = 12000`을 유지해 입력량 증가를 제한
-
-Meeting Engine에서도 이 데이터를 사용합니다.
-
-```
-FACT
- ↓
-INTERPRETATION
- ↓
-COUNTER VIEW
- ↓
-VERIFICATION
- ↓
-VIEWER TAKEAWAY
-```
-
-이를 통해 회의가 단순히 "무슨 뉴스가 있었는가"를 말하는 것을 넘어 **왜 그렇게 해석할 수 있는지, 반대로 볼 근거는 무엇인지, 무엇을 확인해야 하는지**까지 토론하도록 확장했습니다.
-
-회의 중 중요한 내용을 시청자가 바로 메모할 수 있도록 `HIGHLIGHT` 이벤트를 추가했습니다.
-
-지원 유형:
-
-- `KEY_POINT` — 핵심 포인트
-- `EVIDENCE` — 근거 / 데이터
-- `RISK` — 위험 요소
-- `WATCH` — 계속 지켜볼 항목
-- `INSIGHT` — 해석 / 인사이트
-
-화면에는 해당 내용을 별도 카드로 표시합니다.
-
-예:
-
-```
-KEY POINT
-
-BTC 하락과 거래량 증가가 동시에 나타나는지 확인
-
-NOTE THIS
-```
-
-이 기능은 모든 발언을 강조하는 것이 아니라 **회의에서 실제로 메모할 가치가 있는 정보만 별도 표시**하는 것을 목표로 합니다.
-
----
-
-## 19. 현재 완료된 개발 단계
-
-### Phase 1 — 기반 구조
-- Mock / Coin / Team data 분리
-- TypeScript 모델 정리
-
-### Phase 2 — Market Data
-- MarketSnapshot
-- CoinGecko REST
-- 가격 / 거래량 / 시가총액 / 고가 / 저가
+### Phase 2 — Market
+- CoinGecko 초기 데이터
+- Binance WebSocket
+- 1초 buffer / flush
+- reconnect
 - cache / fallback
 - LIVE / STALE / MOCK
 
-### Phase 3 — Dashboard
-- 5개 코인 카드
-- 24H change
-- volume
-- market cap
-- 24H range
-- live 상태
+### Phase 3 — Research
+- Daily Prompt
+- External AI workflow
+- ONE CANVAS
+- compact market data
+- prompt budget
 
-### Phase 4 — Daily Research
-- Compact Prompt
-- 이전 회의 context
-- 외부 AI research workflow
-- token budget
-
-### Phase 5 — AI Import
-- JSON / Markdown / Text parser
-- 누락 코인 확인
+### Phase 4 — Parser
+- JSON
+- Markdown
+- Plain text
 - normalization
-- CryptoMarketBrief
+- validation
+- warning system
+- trading schema validation
 
-### Phase 6 — Story Engine
-- 9개 Story Mode
-- Hook / Central Question
-- Debate Topics
-- Turning Point
-- Surprise
-- Ending Question
-- Watch Items / Changes
-
-### Phase 7 — Meeting Engine
-- MeetingEvent
+### Phase 5 — Story / Meeting
+- Story Engine
+- Meeting Engine
+- 20분 기준 event sequence
 - 6인 역할
-- Story-driven event sequence
-- 대화 intent
-- 약 20분 normalization
+- 자연스러운 대화
+- Highlight
+- live price placeholder
 
-### Phase 8 — 2D Office / Meeting UX
-- 2D Office
-- 캐릭터 상태
-- Speech Bubble
-- Fullscreen overlay
-- terminal transcript
-- auto scroll
-- ESC 종료
-- active speaker
-- 가격 변화 animation
+### Phase 6 — 2D Office
+- 캐릭터 이동
+- speech bubble
+- transcript
+- fullscreen
+- price pulse
+- LIVE MARKET 표시
 
-### Phase 9 — Real-time Market Stream
-- Binance WebSocket ticker
-- 5개 코인 실시간 stream
-- 1초 buffer / flush
-- reconnect
-- subscriber architecture
-- CoinGecko market cap 유지
-
-### Phase 10 — Live Meeting Signal
-- 30초 가격 변화 window
-- 3회 연속 방향 확인
-- 약 0.7% 이상 움직임 조건
-- 120초 cooldown
-- 최대 5개 trigger
-- pending signal queue
-- safe point 주입
-- Live SPEAK / REPLY
-- LIVE MARKET 시각 표시
-
-### Phase 11 — Report / Archive
-- MeetingReport
-- ArchiveItem
-- localStorage
-- 최대 20개 archive
-- 보고서 복사 / 삭제
-
-### Phase 12 — External AI Output Hardening
-- JSON code block 강제
-- Canvas / Document 단일 출력 요구
-- URL / citation / markdown link 차단 요구
-- plain source name 요구
-- parser URL / citation sanitize
-- copy-once / paste-direct workflow
-
-
----
-
-## 18. Trading Room — 회의 기반 로컬 가상 트레이딩
-
-Trading Room은 **실제 거래소 주문 없이** 회의에서 만들어진 조건부 시나리오를 로컬 가상 거래로 검증하는 공간입니다.
-
-핵심 흐름:
-
-```
-Real-time Market
-      ↓
-Daily AI Research
-      ↓
-AI Meeting
-      ↓
-Meeting-derived Scenario
-      ↓
-TRADING ROOM
-      ↓
-Team Lead Decision
-      ↓
-Virtual LONG / SHORT
-      ↓
-Local PnL / Trade History
-      ↓
-Trade Review / Trader Memory
-      ↓
-Next Meeting
-```
-
-### 거래 원칙
-
-- 실제 거래소 API / 실제 주문 없음
-- Binance WebSocket은 현재 가격 확인용으로만 사용
-- 기본 가상자금: **$100,000**
-- SPOT / FUTURES 지원
-- LONG / SHORT 지원
-- 트레이더별 전략 / 리스크 / 레버리지 / 확인 조건을 별도로 설정
-- 자동 주문 실행 금지
-- 모든 주문은 팀장 승인 흐름을 거침
-- 화면에 `SIMULATION ONLY — NO REAL ORDERS` 개념을 유지
-
-### Trading Team
-
-| 트레이더 | 담당 | 역할 |
-|---|---|---|
-| 김태훈 | TEAM | Team Lead / 전체 리스크 |
-| 김민준 | BTC | BTC Specialist |
-| 이서준 | ETH | ETH Specialist |
-| 박도윤 | BNB | BNB Specialist |
-| 최현우 | XRP | XRP Specialist |
-| 정우진 | SOL | SOL Specialist |
-
-현재 회의의 `trader` 캐릭터는 **김태훈 팀장**과 연결됩니다.
-
-### 회의 → Trading Scenario
-
-External AI는 매매를 직접 결정하지 않습니다.
-
-코인별로 다음 정보를 제공합니다.
-
-- `tradingBias`: LONG / SHORT / WATCH
-- `tradingEntryCondition`
-- `tradingInvalidation`
-- `tradingMode`: SPOT / FUTURES / BOTH
-- `tradingApprovalCriteria`
-- `tradingRejectionCriteria`
-- `advancedSignals`
-
-특히 `tradingApprovalCriteria`와 `tradingRejectionCriteria`는 **팀장의 판단 기준**입니다.
-
-```
-External AI
-  ↓
-"어떤 조건이면 승인할지"
-"어떤 조건이면 거절할지"
-  ↓
-Meeting Script
-  ↓
-김태훈 팀장
-  ↓
-APPROVE / REJECT
-  ↓
-Virtual Order
-```
-
-AI가 최종 승인 또는 거절을 출력하지 않는 것이 핵심입니다.
-
-### 회의 안의 Trading Desk 장면
-
-회의 후반에 Trading Desk 장면이 들어갑니다.
-
-- 분석 담당자가 상방 / 하방 조건 설명
-- Trader가 확인 조건 질문
-- Risk가 무효화 조건 제시
-- 김태훈 팀장이 승인 기준 확인
-- Risk가 거절 기준 확인
-- 자동 주문이 아니라 판단 기준만 Trading Room으로 전달
-
-따라서 Trading Room은 회의와 별개의 단순 주문 화면이 아니라 **회의에서 만들어진 가설을 검증하는 다음 장면**입니다.
-
-### 승인 요청 흐름
-
-회의 종료 후 LONG / SHORT 시나리오는 팀장에게 `PENDING` 요청으로 전달됩니다.
-
-```
-PENDING
-  ↓
-Team Lead Review
-  ├── APPROVE → local simulated position
-  └── REJECT  → request rejected
-```
-
-실제 포지션 생성은 승인 이후에만 수행합니다.
-
-### 포지션 / PnL
-
-현재 Trading Engine은 다음을 처리합니다.
-
-- 현재 시장가격 반영
-- LONG / SHORT PnL
-- ROI
-- SPOT / FUTURES margin
-- leverage
-- stop loss
-- take profit
-- 수동 청산
-- TP / SL 자동 청산
-- 거래 기록
-
-### 거래 후 복기 / 기억
-
-거래가 종료되면 자동으로 Trade Review를 만들고 트레이더 Memory에 반영합니다.
-
-기록 대상:
-
-- 거래 사실
-- 진입 / 청산 가격
-- PnL
-- 청산 사유
-- 결과 해석
-- 가능한 원인
-- lesson
-- regret
-- improvement
-- strategy change
-- risk change
-- open questions
-
-목표:
-
-```
-Trade
- ↓
-Review
- ↓
-Trader Memory
- ↓
-Next Daily Prompt
- ↓
-Next Meeting
- ↓
-개선된 조건
-```
-
-손실 결과를 단순히 실패로 끝내지 않고 **다음 회의에서 같은 실수를 반복하지 않도록 학습 데이터로 연결**하는 구조입니다.
-
-### Trading Room 2D Office
-
-Trading Room에도 별도의 2D Trading Floor를 구현했습니다.
-
-- TEAM LEAD / 김태훈
-- BTC DESK
-- ETH DESK
-- BNB DESK
-- XRP DESK
-- SOL DESK
-- specialist별 현재 활동 상태
-- REQUEST / ANALYZE / TALK / THINK / TRADE / RETURN / WATCH
-- WALK / COFFEE / OUTSIDE / RESTROOM 등의 생활형 상태 확장 기반
-
-목표는 정적인 주문 테이블이 아니라 **실제로 사람들이 일하는 Trading Floor처럼 보이는 2D 공간**입니다.
-
----
-
-## 19. Trading Room 저장 / 초기화
-
-Trading Room 전용 localStorage key:
-
-```
-crypto-ai-office.trading.v1
-```
-
-저장 대상:
-
-- balance
-- positions
-- trades
-- reviews
-- scenarios
-- requests
-- trader profiles
-- trader settings
-- trader memories
-- activities
-
-기존 저장 데이터가 일부 필드를 빠뜨려도 기본 배열 / 객체로 정규화하는 migration 방어가 추가되었습니다.
-
-### Trading Room RESET
-
-Trading Room에는 전체 가상 거래 상태를 초기화하는 RESET 기능을 추가했습니다.
-
-초기화 대상:
-
-- 가상 잔액
-- 포지션
-- 거래 기록
-- 복기
-- 시나리오
-- 승인 요청
-- trader memory
-- trader activity
-- trader settings
-
-초기화하지 않는 대상:
-
-- Market
-- Daily AI Research
+### Phase 7 — Report / Archive
 - Meeting Report
 - Archive
-- 전체 앱 설정
+- Meeting Memory
+- 다회차 continuity
 
-현재 RESET 버튼은 Trading Room 헤더 우측의 `TRADING ROOM RESET` 버튼으로 배포되어 있습니다.
-
-확인된 디버깅 과정:
-
-1. 버튼 JSX 존재 확인
-2. `button--ghost` 미정의 문제 확인
-3. `button--outline` 기반으로 변경
-4. Trading Room 전용 header action으로 이동
-5. `TRADING ROOM RESET` / `LOCAL STATE` 표시 추가
-6. `index.css`에서 literal `\\n` 문자열이 실제 줄바꿈이 아닌 상태로 삽입된 문제 발견
-7. stylesheet의 literal `\\n` 제거 커밋 진행
-8. GitHub Actions build / deploy 확인
-9. 실제 GitHub Pages 화면에서 Trading Room 탭과 RESET 버튼 표시 확인
-
-참고로 화면 폭이 1160px 이하이면 사이드바 메뉴의 텍스트 라벨은 숨겨지고 아이콘만 표시됩니다. Trading Room 아이콘을 선택하면 헤더의 RESET 버튼을 사용할 수 있습니다.
-
----
-
-## 20. 오늘 작업한 핵심 변경사항
-
-오늘은 Market → Meeting 구조를 Trading Room까지 확장했습니다.
-
-### 1) Trading Team 추가
-
-6명의 로컬 가상 트레이딩팀을 만들었습니다.
-
-- 김태훈 — Team Lead
-- 김민준 — BTC
-- 이서준 — ETH
-- 박도윤 — BNB
-- 최현우 — XRP
-- 정우진 — SOL
-
-### 2) Trader별 설정
-
-트레이더마다 다음 설정을 다르게 둘 수 있습니다.
-
+### Phase 8 — Trading Room
+- 6인 한국인 Trading Team
 - SPOT / FUTURES
-- strategy
-- risk percent
-- leverage
-- stop loss
-- take profit
-- confirmation rules
-- LONG 허용 여부
-- SHORT 허용 여부
-- auto simulation 설정
+- LONG / SHORT
+- virtual balance
+- positions
+- PnL / ROI
+- TP / SL
+- trade history
 
-회의 결과에 따라 이후 설정을 변경할 수 있는 구조를 준비했습니다.
+### Phase 9 — Team Lead Decision
+- Meeting → Trading Scenario
+- Specialist Request
+- PENDING
+- Team Lead APPROVE
+- Team Lead REJECT
+- APPROVED → EXECUTED
+- REJECTED → Re-review
 
-### 3) Trading Scenario Engine
-
-`createMeetingScenarios()`를 추가하여 `CryptoMarketBrief`에서 Trading Scenario를 생성합니다.
-
-AI 결과의:
-
-- bias
-- entry condition
-- invalidation
-- trading mode
-- approval criteria
-- rejection criteria
-
-를 Trading Room에서 사용합니다.
-
-### 4) Team Lead 승인 / 거절
-
-회의가 끝나면 LONG / SHORT 가능 시나리오가 자동 주문되지 않고 `PENDING` 요청으로 생성됩니다.
-
-김태훈 팀장이:
-
-- APPROVE
-- REJECT
-
-를 직접 결정합니다.
-
-승인 전에는 실제 가상 포지션이 생성되지 않습니다.
-
-### 5) External AI의 역할 제한
-
-External AI는 다음만 제공합니다.
-
-```
-시장 근거
-↓
-조건
-↓
-승인 기준
-↓
-거절 기준
-```
-
-External AI가:
-
-- 자동 주문
-- 최종 승인
-- 최종 거절
-
-을 하지 않습니다.
-
-### 6) Trading Prompt 확장
-
-Daily Research Prompt에 Trading Room의 과거 memory를 압축해서 전달합니다.
-
-전달되는 핵심:
-
-- total trades
-- wins / losses
-- current lessons
-- strategy changes
-- risk changes
-
-따라서 이전 거래 결과가 다음 리서치와 회의의 문맥으로 이어질 수 있습니다.
-
-### 7) Trade Review / Trader Memory
-
-거래 종료 후:
-
-```
-Trade
- ↓
-TradeReview
- ↓
-TraderMemory
- ↓
-다음 회의
-```
-
-구조를 만들었습니다.
-
-특히 손실 거래는:
-
-- 진입 확인 조건 재검토
-- 리스크 크기 재검토
-- 개선점
+### Phase 10 — Trade Review
+- TradeReview
 - regret
+- lesson
+- improvement
+- TraderMemory
+- next meeting continuity
 
-을 기록하도록 구성했습니다.
+### Phase 11 — Trading Floor
+- 2D trader activity
+- ANALYZE
+- TALK
+- THINK
+- TRADE
+- RETURN
+- WATCH
 
-### 8) Trading Floor 활동 연출
-
-Trading Room을 단순 테이블이 아니라 2D Office로 확장했습니다.
-
-트레이더가:
-
-- 업무
-- 분석
-- 대화
-- 생각
-- 거래
-- 복귀
-- 이동
-
-등의 상태를 시각적으로 표현합니다.
-
-향후 커피 / 외출 / 화장실 / 자리 이동 등의 생활형 상태를 더 자연스럽게 확장할 수 있습니다.
-
-### 9) LocalStorage migration 방어
-
-기존 Trading Room 저장 데이터에 새로운 필드가 없더라도:
-
-- requests
-- profiles
-- settings
-- memories
-- activities
-- scenarios
-- reviews
-
-등을 안전하게 기본값으로 보정하도록 수정했습니다.
-
-### 10) 실시간 시장 데이터와 Trading 연결
-
-Trading Room은 실제 거래소 주문 없이 기존 Binance WebSocket의 현재 가격을 이용합니다.
-
-```
-Binance WS
- ↓
-MarketSnapshot
- ↓
-Trading Position
- ↓
-Live PnL
- ↓
-TP / SL
- ↓
-Trade Review
-```
-
-### 11) Meeting Timer 안정화
-
-실시간 시장 데이터가 업데이트될 때 React effect가 회의 timer를 계속 재시작하던 문제가 발견되었습니다.
-
-결과:
-
-- progress가 1%에 머무름
-- transcript 미진행
-- speech bubble 미표시
-
-문제를 수정하여 meeting timer가 live market 업데이트 때문에 다시 시작되지 않도록 했습니다.
-
-### 12) 회의 발언의 현재 가격 실시간화
-
-회의 생성 시 AI가 제공한 가격을 발언에 고정하지 않고:
-
-```
-{{PRICE:BTC}}
-{{CHANGE:BTC}}
-```
-
-placeholder를 사용합니다.
-
-실제 발언 시점에 최신 Binance WebSocket 값으로 치환합니다.
-
-따라서:
-
-- AI Research → 분석 / 뉴스 / 해석
-- Binance WS → 현재 가격 / 24h 변화
-- Meeting Speech → 현재 Binance 값
-
-으로 책임을 분리했습니다.
-
-### 13) Native Fullscreen
-
-기존 CSS 기반 fullscreen을 브라우저 Fullscreen API 기반으로 변경했습니다.
-
-- `requestFullscreen()`
-- `exitFullscreen()`
-- `fullscreenchange`
-- ESC 종료
-
-를 사용합니다.
-
-### 14) Parser / Research 검증 강화
-
-Trading 관련 필드도 Parser가 검증합니다.
-
-검증 대상:
-
-- `advancedSignals`
-- `tradingBias`
-- `tradingEntryCondition`
-- `tradingInvalidation`
-- `tradingMode`
-- `tradingApprovalCriteria`
-- `tradingRejectionCriteria`
-
-불완전한 결과는 WARNING으로 표시하고 일부 필드는 자동 보정합니다.
-
-`advancedSignals`에 단순 가격 조건이나 "확인 필요" 같은 약한 항목이 들어오면 `verification`으로 이동시키는 정규화도 추가했습니다.
-
-### 15) Import Preview 상태
-
-AI Import 결과는:
-
-```
-PARSING
- ↓
-VALID
-또는
-WARNING
-또는
-INVALID
-```
-
-상태로 표시됩니다.
-
-자동 보정이나 검증 경고가 있는 경우 WARNING으로 사용자에게 보여줍니다.
-
-### 16) 다회차 Meeting Continuity
-
-이전 회의의:
-
-- 핵심 질문
-- 핵심 발견
-- 미해결 follow-up
-- 해결된 follow-up
-- watch items
-- turning point
-
-를 다음 회의에 연결합니다.
-
-또한 실제 완료된 가상 거래가 있다면 다음 회의에서 거래 결과를 복기하는 장면을 구성할 수 있도록 Meeting Engine을 확장했습니다.
+### Phase 12 — Global Reset
+- 전체 앱 데이터 초기화
+- Meeting / Report / Archive / Trading / Import 동시 초기화
+- Trading-only reset 제거
 
 ---
 
-## 21. 오늘 기준 핵심 전체 구조
-
-현재 목표 구조:
+# 29. 현재 핵심 전체 구조
 
 ```
-REAL-TIME MARKET
-      ↓
-DAILY AI RESEARCH
-      ↓
-CRYPTO MARKET BRIEF
-      ↓
-STORY ENGINE
-      ↓
-2D AI MEETING
-      ↓
-TRADING DESK SCENE
-      ↓
-TRADING ROOM
-      ↓
-TEAM LEAD APPROVE / REJECT
-      ↓
-VIRTUAL TRADE
-      ↓
-PnL
-      ↓
-TRADE REVIEW
-      ↓
-TRADER MEMORY
-      ↓
-NEXT DAILY PROMPT
-      ↓
-NEXT MEETING
-```
-
-이 구조가 현재 프로젝트의 핵심 확장 방향입니다.
-
-
----
-
-## 22. 현재 확인된 핵심 파이프라인
-
-```
-CoinGecko
-    ↓
-Initial MarketSnapshot
-    ↓
-Binance WebSocket
-    ↓
-Live Market Stream
-    ↓
-┌─────────────────────────┐
-│                         │
-↓                         ↓
-Daily Prompt          Live Detector
-↓                         ↓
-External AI           Live Signal
-↓                         │
-Parser                    │
-↓                         │
-CryptoMarketBrief         │
-↓                         │
-Story Engine              │
-↓                         │
-Meeting Engine ←──────────┘
-↓
-MeetingEvent[]
-↓
-2D Office
-↓
-Meeting Report
-↓
-Archive
-```
-
-회의 중 AI API를 다시 호출하지 않습니다.
-
-```
-Meeting 중
-❌ AI API 호출
-❌ HTML 직접 실행
-❌ AI가 UI를 직접 변경
-
-Meeting 중
-✓ 기존 CryptoMarketBrief 사용
-✓ MeetingEvent 재생
-✓ Binance live market 표시
-✓ Live signal 처리
-✓ 캐릭터 상태 변경
-✓ Transcript 출력
+┌─────────────────────┐
+│ Binance WebSocket   │
+│ Real-time Market    │
+└─────────┬───────────┘
+          ↓
+   MarketSnapshot
+          ↓
+┌─────────────────────┐
+│ Daily AI Research   │
+└─────────┬───────────┘
+          ↓
+ CryptoMarketBrief
+          ↓
+    Story Engine
+          ↓
+   2D AI Meeting
+          ↓
+    Trading Desk
+          ↓
+┌─────────────────────┐
+│ Trading Specialists │
+└─────────┬───────────┘
+          ↓
+    Trade Request
+          ↓
+┌─────────────────────┐
+│ 김태훈 Team Lead    │
+│                     │
+│ APPROVE / REJECT    │
+└─────────┬───────────┘
+          ↓
+    Virtual Trade
+          ↓
+      Live PnL
+          ↓
+     TP / SL / Close
+          ↓
+     Trade Review
+          ↓
+    Trader Memory
+          ↓
+    Next AI Prompt
+          ↓
+    Next Meeting
 ```
 
 ---
 
-## 23. 현재 알려진 안정화 과제
+# 30. 중요한 설계 원칙
 
-현재 핵심 기능은 연결되어 있지만, **실제 브라우저 장시간 실행 전 안정화 테스트가 필요합니다.**
+### Data First
+시장 데이터와 AI 해석을 분리합니다.
 
-우선순위:
+### Normalize First
+AI 결과는 바로 UI에 사용하지 않고 `CryptoMarketBrief`로 정규화합니다.
 
-1. Live Detector가 시장 신호를 항상 먼저 기록하고 안전한 회의 지점에서 queue로 주입하도록 분리
-2. Binance WebSocket 상태와 Market Data 상태 분리
-3. WebSocket reconnect / duplicate socket / timer / listener 장시간 검증
-4. Live signal 삽입으로 회의 시간이 과도하게 늘어나지 않도록 duration 정책 보정
-5. Market source label을 데이터별 실제 provider와 일치시킴
-6. Parser에 URL / citation 잔여 데이터가 들어왔을 때의 sanitize 강화
-7. localStorage schema / migration 정책
-8. 실제 브라우저에서 20분 회의 + 실시간 stream 장시간 테스트
-9. Report / Archive 재실행 테스트
-10. 모바일 / 작은 화면 검증
+### Event Driven
+회의는 HTML 문자열이 아니라 `MeetingEvent[]`로 표현합니다.
 
-### 중요한 설계 원칙
+### Story Before Animation
+애니메이션보다 회의 논리와 대화 흐름을 먼저 만듭니다.
 
-앞으로 live 기능은 다음 구조로 안정화합니다.
+### Evidence Before Drama
+극적인 장면을 만들더라도 근거 없는 시장 사실을 만들지 않습니다.
 
-```
-Binance WebSocket
-      ↓
-Market Stream
-      ↓
-Live Detector
-      ↓
-Signal Queue
-      ↓
-Meeting Safe Point
-      ↓
-Live Dialogue
-      ↓
-Existing Meeting Flow
-      ↓
-Report / Archive
-```
+### Live Detection ≠ Live Insertion
+시장 움직임 탐지와 회의 발언 삽입을 분리합니다.
 
-실시간 탐지와 회의 이벤트 삽입을 분리하는 것이 핵심입니다.
+### AI Criteria ≠ Team Decision
+External AI는 승인/거절 기준을 만들지만 최종 선택은 김태훈 팀장이 합니다.
+
+### Simulation Only
+Trading Room은 실제 주문을 실행하지 않습니다.
+
+### Memory Driven Improvement
+거래 결과는 복기와 Trader Memory를 거쳐 다음 회의의 개선 요소가 됩니다.
+
+### Token Conscious
+시장 데이터와 이전 Memory를 압축하여 불필요한 AI 입력을 줄입니다.
 
 ---
 
-## 24. 아직 구현되지 않은 주요 확장
-
-### Market
-- Provider 상태 전용 모델
-- Provider failover
-- freshness 정책 강화
-- rate-limit / reconnect 안정화
-
-### Research
-- 앱 내부 AI API 연동 검토
-- 자동 뉴스 수집
-- 뉴스 출처 검증 강화
-- 날짜 / 이벤트 검증 강화
-
-### Meeting
-- queue 기반 실시간 끼어들기
-- 자연스러운 반박 / 재반박
-- 캐릭터별 interjection
-- Story Mode 전용 장면
-- 카메라 연출
-- 장면 전환
-- 감정 상태 확장
-
-### Report
-- 전체 transcript 저장
-- Turning Point 자동 기록
-- HTML / PDF 보고서
-- Story 기반 보고서
-
-### Persistence
-- IndexedDB
-- export / import
-- cloud archive
-
----
-
-## 25. STEP 6 — 회의 화면 / 보고서 시각화
-
-STEP 5에서 추가한 해석 데이터를 실제 사용자 화면까지 연결했습니다.
-
-- Meeting HIGHLIGHT 이벤트를 2D Office 상단 메모 카드로 표시
-- KEY_POINT / EVIDENCE / RISK / WATCH / INSIGHT 구분 표시
-- AI 분석 Import Preview에 VIEWER TAKEAWAYS와 코인별 INTERPRETATION 표시
-- Daily Report에 INTERPRETATION / COUNTER VIEW / VERIFICATION / TAKEAWAYS 기록
-- Report text export에도 새 분석 필드 포함
-
-현재 흐름:
-
-AI Research → CryptoMarketBrief → Interpretation / Counter View / Verification → Meeting Highlight → Report / Archive
-
-## 26. 실행
+# 31. 실행
 
 개발:
 
@@ -1576,140 +1192,154 @@ npm install
 npm run dev
 ```
 
-기본 흐름은 `OFFICE → MARKET → DAILY PROMPT → AI IMPORT → MEETING → REPORT → ARCHIVE` 순서로 확인합니다.
+Production build:
 
-AI 없이 테스트하려면 `AI IMPORT`에서 **데모 결과 채우기 → 분석 결과 가져오기 → 회의 준비**를 사용합니다.
+```bash
+npm run build
+```
 
-회의에서는 `START MEETING → 1x/2x → PAUSE/RESUME → NEXT EVENT → 전체화면 → ESC → 회의 종료 → 보고서 → Archive`를 확인합니다.
+Preview:
 
-### Parser 테스트
+```bash
+npm run preview
+```
 
-다음 입력을 각각 확인합니다.
+기본 확인 순서:
+
+```
+OFFICE
+ ↓
+MARKET
+ ↓
+DAILY PROMPT
+ ↓
+AI IMPORT
+ ↓
+MEETING
+ ↓
+TRADING ROOM
+ ↓
+REPORT
+ ↓
+ARCHIVE
+```
+
+AI 없이 테스트하려면 AI IMPORT에서 데모 결과를 채워 사용할 수 있습니다.
+
+---
+
+# 32. 권장 브라우저 테스트
+
+### Market
+
+1. BTC / ETH / BNB / XRP / SOL 실시간 가격 확인
+2. 24H change / volume / high / low 확인
+3. Binance WS 표시 확인
+4. 가격 pulse 확인
+5. reconnect 확인
+
+### AI Import
 
 1. 정상 JSON
 2. JSON code fence
 3. Markdown
 4. Plain text
-5. URL이 포함된 news/source
-6. `[Reuters](https://...)` 형태의 Markdown link
-7. `【citation】` 형태의 citation marker
-8. 일부 코인이 누락된 결과
-9. 잘못된 JSON
+5. 누락 코인
+6. 잘못된 JSON
+7. URL / citation marker
+8. 불완전한 trading schema
 
-URL / Markdown link / citation marker가 들어와도 정규화된 Brief에 그대로 남지 않는지 확인합니다.
+### Meeting
 
-### 실시간 Market / Meeting 테스트
+1. START MEETING
+2. 1x / 2x
+3. PAUSE / RESUME
+4. NEXT EVENT
+5. 캐릭터 이동
+6. Speech Bubble
+7. Transcript
+8. Highlight
+9. Fullscreen / ESC
+10. live signal
+11. 회의 timer 장시간 유지
 
-- BTC / ETH / BNB / XRP / SOL 가격 갱신
-- 24H change / volume / high / low 갱신
-- Binance WS source 표시
-- 가격 pulse
-- 회의 중 live signal 탐지
-- safe point에서 Live SPEAK / REPLY 삽입
-- `LIVE MARKET` 표시
-- WebSocket 오류 반복 여부
-- 전체회의 흐름 유지
+### Trading Room
 
-가능하면 10~20분 이상 실행해 reconnect, duplicate socket, timer/listener 문제를 확인합니다.
+1. 회의 종료
+2. Trading Scenario 생성
+3. Specialist Request 생성
+4. PENDING 확인
+5. 김태훈 팀장 APPROVE
+6. APPROVED → EXECUTED 확인
+7. Virtual Position 확인
+8. 실시간 PnL 확인
+9. TP / SL 확인
+10. Manual Close
+11. Trade Review
+12. Trader Memory
+13. Team Lead REJECT
+14. REJECTED → Re-review 확인
 
-### Production build
+### Continuity
 
-```bash
-npm run build
-npm run preview
-```
+1. SESSION 01 종료
+2. Trade 생성 / 종료
+3. Review / Memory 생성
+4. SESSION 02 시작
+5. Previous Memory가 Prompt에 포함되는지 확인
+6. 이전 미해결 질문 재등장 확인
+7. 이전 거래 lesson이 다음 회의에 연결되는지 확인
 
-Production build는 `vite build`, 로컬 확인은 `vite preview`로 진행합니다.
+### Global Reset
 
-### 테스트 기록
+1. RESET ALL DATA
+2. 확인 메시지
+3. Meeting 초기화
+4. Report 초기화
+5. Archive 초기화
+6. Trading 초기화
+7. Import 초기화
+8. Trading balance $100,000 복구
+9. OFFICE 화면으로 이동
 
-| 테스트 | 결과 | 비고 |
-|---|---|---|
-| Install | ⬜ | |
-| Dev Server | ⬜ | |
-| Market REST | ⬜ | |
-| Binance WebSocket | ⬜ | |
-| Price Pulse | ⬜ | |
-| Prompt / Clipboard | ⬜ | |
-| JSON / Markdown / Text Parser | ⬜ | |
-| Parser Sanitize | ⬜ | |
-| Meeting Playback | ⬜ | |
-| Speech Bubble / Transcript | ⬜ | |
-| Highlight / Takeaway | ⬜ | |
-| Live Signal | ⬜ | |
-| Report | ⬜ | |
-| Archive / Persistence | ⬜ | |
-| Fullscreen / ESC | ⬜ | |
-| 10~20min Long Run | ⬜ | |
-| Production Build | ⬜ | |
-
-**현재 테스트 상태는 모두 미검증(⬜)으로 기록합니다.**
-
-### 브라우저 테스트 순서
-
-#### A. 기본 실행
-1. npm install
-2. npm run dev
-3. OFFICE → MARKET에서 BTC / ETH / BNB / XRP / SOL 갱신 확인
-4. 가격 / 24H / 거래량 / 고가 / 저가와 BINANCE WS 표시 확인
-
-#### B. Daily Prompt / AI Import
-5. DAILY PROMPT 생성
-6. Copy 버튼으로 전체 prompt 복사
-7. AI IMPORT에서 데모 결과 입력
-8. JSON / Markdown / Plain Text parser 확인
-9. Preview의 INTERPRETATION / COUNTER VIEW / VERIFICATION / VIEWER TAKEAWAYS 확인
-10. URL / citation marker가 정규화 결과에 남지 않는지 확인
-
-#### C. 1차 회의
-11. MEETING 준비
-12. START MEETING
-13. 1x / 2x 재생 확인
-14. PAUSE / RESUME / NEXT EVENT 확인
-15. 캐릭터 이동 → 발언 → 반론 → 정리 흐름 확인
-16. Speech Bubble / Transcript / Highlight 확인
-17. fullscreen / ESC 확인
-18. 회의 종료 → Report 확인
-19. Archive에 SESSION 01 memory가 저장되는지 확인
-
-#### D. 2차 회의 — 핵심 연속성 테스트
-20. 같은 데이터 또는 새 AI 결과로 다시 회의 준비
-21. External AI Prompt에 PREVIOUS MEETING MEMORY가 포함되는지 확인
-22. 이전 회의의 OPEN FOLLOW-UP이 Prompt에 전달되는지 확인
-23. START MEETING
-24. Alex가 이전 회의의 미해결 질문을 자연스럽게 다시 꺼내는지 확인
-25. 이전 회의의 과거 가격이 현재 가격으로 잘못 발언되지 않는지 확인
-26. 오늘 자료로 확인되지 않은 항목이 다음 회의 항목으로 남는지 확인
-27. Archive에서 SESSION 01 → SESSION 02가 연결되는지 확인
-
-#### E. 실시간 회의
-28. 회의 중 Binance WebSocket 가격 변화 확인
-29. live signal 발생 시 LIVE MARKET 표시 확인
-30. Live SPEAK / REPLY가 기존 회의 흐름을 깨지 않는지 확인
-31. live signal 삽입 후 progress가 1%로 초기화되지 않는지 확인
-32. 10~20분 실행하며 reconnect / duplicate socket / timer / listener 확인
-
-#### F. 종료 / 저장
-33. Report가 회의 시작 snapshot을 기준으로 생성되는지 확인
-34. Archive 저장 / 삭제 확인
-35. 브라우저 새로고침 후 Archive 유지 확인
-36. npm run build
-37. npm run preview
-
-### 테스트 중 특히 볼 문제
-
-- 회의 progress가 다시 1%에서 멈추는지
-- WebSocket이 멈춘 뒤 자동 reconnect하는지
-- reconnect 후 socket / timer / listener가 중복되지 않는지
-- live signal 삽입 후 회의 timer가 초기화되지 않는지
-- 긴 발언 / Highlight가 화면에서 잘리지 않는지
-- Report가 회의 시작 snapshot을 사용하는지
-- 새로고침 후 Archive가 유지되는지
-
-실제 테스트 결과는 이 표를 `PASS / FAIL`로 갱신하고, FAIL 항목은 재현 조건과 수정 commit을 함께 기록합니다.
 ---
 
-## 27. 환경 변수
+# 33. 현재 안정화 과제
+
+핵심 기능은 연결되어 있으며 다음 단계는 실제 브라우저 장시간 실행을 통한 안정화입니다.
+
+우선순위:
+
+1. Binance WebSocket 상태와 Market Data 상태 분리
+2. reconnect / duplicate socket / interval / listener 장시간 검증
+3. Live Detector와 Meeting Signal Queue 분리 강화
+4. live signal 삽입 후 meeting duration 정책 검증
+5. Parser sanitize 추가 강화
+6. localStorage schema / migration 확장
+7. 20분 Meeting + WebSocket 장시간 테스트
+8. Trading Room 장시간 PnL / TP / SL 테스트
+9. Report / Archive persistence 테스트
+10. 작은 화면 / 반응형 UI 테스트
+
+향후 핵심 안정화 구조:
+
+```
+Market Stream
+    ↓
+Live Detector
+    ↓
+Signal Queue
+    ↓
+Meeting Safe Point
+    ↓
+Meeting Event
+    ↓
+2D Renderer
+```
+
+---
+
+# 34. 환경 변수
 
 선택적으로 CoinGecko Demo API Key를 사용할 수 있습니다.
 
@@ -1717,52 +1347,55 @@ Production build는 `vite build`, 로컬 확인은 `vite preview`로 진행합�
 VITE_COINGECKO_DEMO_API_KEY=your_key
 ```
 
-`VITE_` 접두사가 붙은 값은 브라우저 번들에 노출될 수 있으므로 비밀 키를 저장하면 안 됩니다.
+`VITE_` 값은 브라우저 번들에 노출될 수 있으므로 비밀 키를 저장하지 않습니다.
 
 ---
 
-## 28. 권장 External AI 출력 구조
-
-Daily Prompt는 다음과 같은 구조의 JSON을 요구합니다.
+# 35. External AI 권장 출력 예시
 
 ```json
 {
   "date": "YYYY-MM-DD",
-  "marketSummary": "간결한 시장 요약",
+  "marketSummary": "시장 요약",
   "story": {
     "mode": "DIVERGENCE",
-    "title": "오늘의 회의 제목",
-    "openingHook": "회의 시작 질문",
+    "title": "오늘의 회의",
+    "openingHook": "시작 질문",
     "centralQuestion": "핵심 질문",
-    "debateTopics": ["논쟁점 1", "논쟁점 2"],
+    "debateTopics": ["논쟁점"],
     "turningPoint": "전환점",
     "surprise": "의외의 관찰",
-    "endingQuestion": "시청자가 지켜볼 질문",
+    "endingQuestion": "시청자가 볼 질문",
     "watchItems": ["관찰 항목"],
-    "changes": ["오늘 달라진 점"]
+    "changes": ["변화"]
   },
   "coins": [
     {
       "id": "BTC",
       "summary": "요약",
       "technical": ["기술적 관찰"],
-      "news": ["제목 | 출처 | 짧은 요약"],
+      "news": ["뉴스"],
       "bullScenario": "상방 조건",
       "bearScenario": "하방 조건",
       "risks": ["리스크"],
+      "interpretation": "해석",
+      "counterView": "반대 해석",
+      "verification": ["검증 조건"],
+      "takeaways": ["시청자 메모"],
+      "advancedSignals": [],
       "tradingBias": "WATCH",
       "tradingEntryCondition": "",
       "tradingInvalidation": "",
       "tradingMode": "BOTH",
       "tradingApprovalCriteria": "",
-      "tradingRejectionCriteria": "",
-      "advancedSignals": []
+      "tradingRejectionCriteria": ""
     }
   ],
   "globalFactors": [],
   "events": [],
   "risks": [],
   "correlations": [],
+  "viewerTakeaways": [],
   "sources": []
 }
 ```
@@ -1771,82 +1404,63 @@ Daily Prompt는 다음과 같은 구조의 JSON을 요구합니다.
 
 ---
 
-## 29. 설계 철학
+# 36. 프로젝트 상태
 
-### 1. Data First
-시장 데이터와 AI 해석을 분리합니다.
+**현재 단계: Real-time + Story-driven 2D Crypto AI Meeting + Local Trading Room Prototype**
 
-### 2. Normalize First
-AI 결과는 바로 UI에 사용하지 않고 `CryptoMarketBrief`로 정규화합니다.
+현재 연결된 핵심 기능:
 
-### 3. Event Driven Meeting
-회의는 텍스트를 직접 화면에 출력하는 것이 아니라 `MeetingEvent[]`로 표현합니다.
-
-### 4. Story Before Animation
-애니메이션보다 먼저 회의의 논리와 이야기 구조를 만듭니다.
-
-### 5. Evidence Before Drama
-재미있는 회의를 만들되 근거 없는 데이터나 사건을 만들지 않습니다.
-
-### 6. External AI First
-현재는 외부 AI를 사용자가 선택할 수 있도록 앱과 AI 공급자를 분리합니다.
-
-### 7. Token Conscious
-반복되는 시장 데이터와 이전 context를 압축해 불필요한 AI 입력을 줄입니다.
-
-### 8. Live Detection ≠ Live Insertion
-시장 움직임을 탐지하는 것과 회의에 발언을 삽입하는 것을 분리합니다.
-
----
-
-## 30. 프로젝트 상태
-
-**현재 단계: Real-time / Story-driven 2D Crypto AI Meeting + Local Trading Room Prototype**
-
-현재:
-
-- 5개 핵심 코인 데이터
+- 5개 핵심 코인
 - CoinGecko 초기 snapshot
 - Binance WebSocket live stream
-- Daily external AI research
+- Daily External AI Research
 - ONE CANVAS copy/paste workflow
 - JSON / Markdown / Text parser
 - CryptoMarketBrief normalization
-- 9개 Story Mode
-- 20분 Meeting Engine
-- 6인 2D Office
-- Live Market Speech
+- Story Engine
+- 2D Meeting
+- Live Market Signal
 - Meeting Report
 - Archive
+- 6인 Korean Trading Team
+- Meeting-derived Trading Scenario
+- Team Lead approval / rejection
+- Local virtual trading
+- PnL / TP / SL
+- Trade Review
+- Trader Memory
+- Global Reset
 
-까지 연결되어 있습니다.
-
-다음 핵심 단계는 **로컬 브라우저에서 build → market stream → parser → meeting → live signal → report → archive 전체 흐름을 실제로 검증하고 발견된 런타임 문제를 순차적으로 수정하는 것**입니다.
-
-전체 구조는 앞으로도 다음 흐름을 유지합니다.
+최종 목표 구조:
 
 ```
-Market Data
-    ↓
-Research
-    ↓
-Normalized Brief
-    ↓
-Story
-    ↓
-Meeting Events
-    ↓
-2D Renderer
-    ↓
-Report / Archive
+MARKET
+  ↓
+RESEARCH
+  ↓
+BRIEF
+  ↓
+STORY
+  ↓
+MEETING
+  ↓
+TRADING
+  ↓
+REVIEW
+  ↓
+MEMORY
+  ↓
+NEXT MEETING
 ```
 
 ---
 
-## 31. Disclaimer
+## Disclaimer
 
-이 프로젝트는 암호화폐 시장 데이터와 리서치 결과를 시각화하고 시나리오를 검토하기 위한 소프트웨어입니다.
+이 프로젝트의 Trading Room은 **로컬 가상 거래 시뮬레이션**이며 실제 거래소 주문을 실행하지 않습니다.
 
-시장 데이터는 외부 API 및 WebSocket 상태에 따라 지연되거나 실패할 수 있으며, AI가 생성한 뉴스 / 해석 / 시나리오는 별도의 검증이 필요합니다.
+시장 데이터는 외부 API / WebSocket 상태에 따라 지연되거나 실패할 수 있습니다.
 
-회의의 Bull / Bear 내용은 조건부 시나리오이며 투자 자문 또는 매매 지시가 아닙니다.
+External AI가 생성한 뉴스, 해석, 시나리오 및 거래 조건은 별도의 검증이 필요합니다.
+
+Bull / Bear / LONG / SHORT는 조건부 시나리오이며 투자 자문 또는 실제 매매 지시가 아닙니다.
